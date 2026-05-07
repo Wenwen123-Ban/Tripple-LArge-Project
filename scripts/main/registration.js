@@ -1,3 +1,6 @@
+import { sendConfirmationEmail, checkConfirmationToken } from '../../services/api/auth.js';
+import { showNotification } from '../shared/notification.js';
+
 const COLLEGE_YEARS = [
   { value: '1', label: '1st Year' },
   { value: '2', label: '2nd Year' },
@@ -88,12 +91,94 @@ function validateLbc(value) {
   return value === '' || /^\d{4}-\d+$/.test(value);
 }
 
+
+let confirmationToken = null;
+let pollInterval = null;
+let pollTimeout = null;
+
+function validateGmail(value) {
+  return /^[^\s@]+@gmail\.com$/i.test(value);
+}
+
+function stopPolling() {
+  if (pollInterval) clearInterval(pollInterval);
+  if (pollTimeout) clearTimeout(pollTimeout);
+  pollInterval = null;
+  pollTimeout = null;
+}
+
+function startPolling(checkboxEl) {
+  stopPolling();
+
+  pollInterval = setInterval(async () => {
+    if (!confirmationToken) return;
+
+    try {
+      const data = await checkConfirmationToken(confirmationToken);
+
+      if (data.confirmed) {
+        stopPolling();
+        checkboxEl.checked = true;
+        checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
+        showNotification('Email confirmed! Your registration is verified.', 'success');
+      }
+    } catch (err) {
+      console.error('Polling error:', err);
+    }
+  }, 4000);
+
+  pollTimeout = setTimeout(() => {
+    stopPolling();
+    if (!checkboxEl.checked) {
+      confirmationToken = null;
+      showNotification('Confirmation link expired. Please resend.', 'error');
+    }
+  }, 15 * 60 * 1000);
+}
+
+async function handleGmailConfirmation({ gmailInput, nameInput, checkboxEl, buttonEl }) {
+  const gmail = gmailInput.value.trim();
+  const name = nameInput.value.trim() || 'Student';
+
+  if (!validateGmail(gmail)) {
+    showNotification('Please enter a valid Gmail address.', 'error');
+    gmailInput.focus();
+    return;
+  }
+
+  buttonEl.disabled = true;
+  buttonEl.textContent = 'Sending...';
+
+  try {
+    const data = await sendConfirmationEmail({ gmail, name });
+
+    if (data.status === 'sent') {
+      confirmationToken = data.token;
+      checkboxEl.checked = false;
+      showNotification('Confirmation email sent! Check your Gmail inbox.', 'success');
+      startPolling(checkboxEl);
+    } else {
+      showNotification('Failed to send confirmation. Try again.', 'error');
+    }
+  } catch (err) {
+    console.error('Failed to send confirmation:', err);
+    showNotification(err.message || 'Failed to send confirmation. Try again.', 'error');
+  } finally {
+    buttonEl.disabled = false;
+    buttonEl.textContent = 'Confirm gmail';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const schoolLink = document.querySelector('.school-link');
   const registrationForm = document.getElementById('registrationForm');
   const courseSelect = document.getElementById('course-select');
   const idInput = document.getElementById('id-input');
   const lbcInput = document.getElementById('lbc-input');
+  const nameInput = document.getElementById('registrationName');
+  const gmailInput = document.getElementById('registrationGmail');
+  const confirmationCheckbox = document.getElementById('registrationAgreement');
+  const confirmGmailButton = document.getElementById('confirm-gmail-btn');
 
   if (schoolLink) {
     schoolLink.addEventListener('click', (event) => {
@@ -105,6 +190,25 @@ document.addEventListener('DOMContentLoaded', () => {
     courseSelect.addEventListener('change', (e) => {
       const isHighSchool = e.target.value === 'NA';
       updateYearOptions(isHighSchool);
+    });
+  }
+
+  if (confirmationCheckbox) {
+    confirmationCheckbox.addEventListener('click', (event) => {
+      if (!confirmationCheckbox.checked) return;
+      event.preventDefault();
+      showNotification('Please confirm your Gmail from the email link first.', 'info');
+    });
+  }
+
+  if (confirmGmailButton && gmailInput && nameInput && confirmationCheckbox) {
+    confirmGmailButton.addEventListener('click', () => {
+      handleGmailConfirmation({
+        gmailInput,
+        nameInput,
+        checkboxEl: confirmationCheckbox,
+        buttonEl: confirmGmailButton,
+      });
     });
   }
 

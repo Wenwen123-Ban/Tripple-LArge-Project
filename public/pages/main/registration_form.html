@@ -87,17 +87,17 @@
                 </label>
 
                 <label class="checkbox-row" for="registrationAgreement">
-                    <input type="checkbox" id="registrationAgreement" name="agreement" required>
+                    <input type="checkbox" id="registrationAgreement" name="agreement" required readonly>
                     <span>I confirm that the information provided is accurate and that this Gmail account can receive my verification and account notices.</span>
                 </label>
 
                 <hr class="form-divider">
-                <button type="submit" class="btn-primary">Confirm gmail</button>
+                <button type="button" id="confirm-gmail-btn" class="btn-primary">Confirm gmail</button>
                 <p class="form-note">A confirmation code will be sent to your Gmail account before registration is finalized.</p>
             </form>
         </section>
     </main>
 
-    <script src="../../../scripts/main/registration.js"></script>
+    <script type="module" src="../../../scripts/main/registration.js"></script>
 </body>
 </html>
