@@ -3,62 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome - Click & Collect</title>
+    <title>Welcome - Click &amp; Collect</title>
     <link rel="stylesheet" href="../../styles/main/welcome.css">
 </head>
 <body>
-    <div class="top-bar">
+    <div class="top-bar" aria-hidden="true">
         <div class="status-dots">
-            <div class="dot blue"></div>
-            <div class="dot yellow"></div>
-            <div class="dot red"></div>
+            <span class="dot dot-blue"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-red"></span>
         </div>
         <div class="center-lines">
-            <div class="line"></div>
-            <div class="line"></div>
+            <span class="center-line"></span>
+            <span class="center-line"></span>
         </div>
     </div>
 
-    <main class="hero-container">
-        <!-- Background Decorative Hexagons -->
-        <div class="bg-decorations" id="bgDecorations">
-            <!-- Will be populated by JS for randomness or hardcoded in CSS -->
-            <div class="decor-hex" style="width: 120px; height: 120px; top: 10%; right: 20%;"></div>
-            <div class="decor-hex" style="width: 80px; height: 80px; top: 40%; right: 10%;"></div>
-            <div class="decor-hex" style="width: 140px; height: 140px; top: 70%; right: 25%;"></div>
-            <div class="decor-hex" style="width: 100px; height: 100px; top: 15%; right: 40%;"></div>
-            <div class="decor-hex" style="width: 90px; height: 90px; top: 60%; right: 5%;"></div>
-            <div class="decor-hex" style="width: 130px; height: 130px; top: 85%; right: 45%;"></div>
-            <div class="decor-hex" style="width: 110px; height: 110px; top: 30%; right: 30%;"></div>
-            <div class="decor-hex" style="width: 140px; height: 140px; top: 5%; right: 5%;"></div>
+    <main class="welcome-hero" aria-label="Click and Collect welcome page">
+        <div class="hex-background" aria-hidden="true">
+            <span class="decor-hex decor-hex-one"></span>
+            <span class="decor-hex decor-hex-two"></span>
+            <span class="decor-hex decor-hex-three"></span>
+            <span class="decor-hex decor-hex-four"></span>
+            <span class="decor-hex decor-hex-five"></span>
+            <span class="decor-hex decor-hex-six"></span>
+            <span class="decor-hex decor-hex-seven"></span>
+            <span class="decor-hex decor-hex-eight"></span>
+            <span class="decor-hex decor-hex-nine"></span>
         </div>
 
-        <div class="left-block">
-            <h1 class="welcome-text">WELCOME</h1>
-            <p class="to-text">TO</p>
-            <div class="brand-row">
-                <span class="brand-text">Click & Collect</span>
-                <img src="../../assets/logo/Book_logo.png" alt="Book Icon" class="book-logo">
+        <section class="welcome-copy" aria-labelledby="welcome-heading">
+            <h1 id="welcome-heading" class="welcome-heading">WELCOME</h1>
+            <p class="welcome-to">TO</p>
+            <div class="brand-lockup">
+                <span class="brand-name">Click &amp; Collect</span>
+                <img src="../../assets/logo/Book_logo.png" alt="" class="brand-book" aria-hidden="true">
             </div>
-        </div>
+        </section>
 
-        <div class="center-cta">
-            <p>Click Anywhere in this page to Sign in</p>
-        </div>
+        <p class="signin-prompt">Click Anywhere in this page to Sign in</p>
 
-        <div class="attribution-block">
-            <span class="made-for">MADE FOR</span>
-            <img src="../../assets/logo/NMSC LOGO.jpg" alt="NMSC Logo" class="nmsc-logo">
-            <a href="#" class="school-link" id="schoolLink">
-                North Western Mindanao State College of Science and Technology
-            </a>
-        </div>
+        <aside class="attribution" aria-label="Institution attribution">
+            <p class="made-for">MADE FOR</p>
+            <img src="../../assets/logo/NMSC LOGO.jpg" alt="NMSC institutional seal" class="nmsc-seal">
+            <a href="#" class="school-link">North Western Mindanao State College of Science and Technology</a>
+        </aside>
 
-        <div class="hex-cluster">
-            <div class="hex-icon"><img src="../../assets/icons/hex-book-1.svg" alt="Hex 1"></div>
-            <div class="hex-icon"><img src="../../assets/icons/hex-book-2.svg" alt="Hex 2"></div>
-            <div class="hex-icon"><img src="../../assets/icons/hex-book-3.svg" alt="Hex 3"></div>
-            <div class="hex-icon"><img src="../../assets/icons/hex-book-4.svg" alt="Hex 4"></div>
+        <div class="hex-icon-cluster" aria-hidden="true">
+            <span class="hex-book hex-book-top-left">
+                <img src="../../assets/icons/hex-book-1.svg" alt="">
+            </span>
+            <span class="hex-book hex-book-top-right">
+                <img src="../../assets/icons/hex-book-2.svg" alt="">
+            </span>
+            <span class="hex-book hex-book-bottom-left">
+                <img src="../../assets/icons/hex-book-3.svg" alt="">
+            </span>
+            <span class="hex-book hex-book-bottom-right">
+                <img src="../../assets/icons/hex-book-4.svg" alt="">
+            </span>
         </div>
     </main>
 
