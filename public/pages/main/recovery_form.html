@@ -34,13 +34,15 @@
 
             <form id="recoveryForm" class="recovery-form">
                 <div class="id-lbc-row">
-                    <label class="box-field" for="recoveryIdNo">
+                    <label class="box-field" for="id-input">
                         <span>ID No:</span>
-                        <input type="text" id="recoveryIdNo" name="id_no" class="input-box js-id-no" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="10" placeholder="0000-00000" pattern="\d{4}-\d{5}" title="Use ID No. format 0000-00000" required>
+                        <input type="text" id="id-input" name="id_no" class="input-box" placeholder="YYYY-NNNNN" maxlength="10" inputmode="numeric" autocomplete="off" spellcheck="false" required>
+                        <span class="field-note">Year of enrollment – Entry number</span>
                     </label>
-                    <label class="box-field" for="recoveryLbcNo">
+                    <label class="box-field" for="lbc-input">
                         <span>LBC No:</span>
-                        <input type="text" id="recoveryLbcNo" name="lbc_no" class="input-box js-lbc-no" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="14" placeholder="0000-00000" pattern="\d{4}-\d{1,9}" title="Use LBC No. format 0000-0 or longer" required>
+                        <input type="text" id="lbc-input" name="lbc_no" class="input-box" placeholder="0000-00000" maxlength="14" inputmode="numeric" autocomplete="off" spellcheck="false">
+                        <span class="field-note">Assigned by admin — check your LBC card</span>
                     </label>
                 </div>
 
