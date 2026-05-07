@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Recovery - Click &amp; Collect</title>
+    <link rel="stylesheet" href="../../styles/main/recoveryform.css">
+</head>
+<body>
+    <header class="top-bar" aria-label="Window controls">
+        <div class="status-dots" aria-hidden="true">
+            <span class="dot dot-blue"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-red"></span>
+        </div>
+        <div class="center-lines" aria-hidden="true">
+            <span class="center-line"></span>
+            <span class="center-line"></span>
+        </div>
+        <button class="exit-button" type="button" aria-label="Return to welcome page" onclick="window.location.href = 'welcome.html'">→</button>
+    </header>
+
+    <main class="page-content">
+        <section class="form-card" aria-labelledby="recovery-title">
+            <div class="card-header">
+                <img src="../../assets/logo/NMSC LOGO.jpg" alt="NMSC seal" class="nmsc-seal">
+                <a href="#" class="school-link">North Western Mindanao State College of Science and Technology</a>
+                <div class="brand-lockup">
+                    <span class="brand-name">Click &amp; Collect</span>
+                    <img src="../../assets/logo/Book_logo.png" alt="" class="brand-book" aria-hidden="true">
+                </div>
+                <p class="form-subtitle" id="recovery-title">Account Recovery form</p>
+            </div>
+
+            <form id="recoveryForm" class="recovery-form">
+                <div class="id-lbc-row">
+                    <label class="box-field" for="recoveryIdNo">
+                        <span>ID No:</span>
+                        <input type="text" id="recoveryIdNo" name="id_no" class="input-box js-id-no" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="10" placeholder="0000-00000" pattern="\d{4}-\d{5}" title="Use ID No. format 0000-00000" required>
+                    </label>
+                    <label class="box-field" for="recoveryLbcNo">
+                        <span>LBC No:</span>
+                        <input type="text" id="recoveryLbcNo" name="lbc_no" class="input-box js-lbc-no" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="14" placeholder="0000-00000" pattern="\d{4}-\d{1,9}" title="Use LBC No. format 0000-0 or longer" required>
+                    </label>
+                </div>
+
+                <label class="box-field" for="recoveryGmail">
+                    <span>Gmail:</span>
+                    <input type="email" id="recoveryGmail" name="gmail" class="input-box" autocomplete="email" required>
+                </label>
+
+                <label class="box-field" for="recoveryPassword">
+                    <span>Change password:</span>
+                    <input type="password" id="recoveryPassword" name="new_password" class="input-box" autocomplete="new-password" required>
+                </label>
+                <p class="field-note">Use a new password that is easy for you to remember and hard for others to guess.</p>
+
+                <label class="box-field" for="recoveryCode">
+                    <span>Confirm recovery code:</span>
+                    <input type="text" id="recoveryCode" name="recovery_code" class="input-box recovery-code" autocomplete="off" spellcheck="false" required>
+                </label>
+                <p class="field-note">Enter the code sent to your Gmail account to confirm account recovery.</p>
+
+                <hr class="form-divider">
+                <button type="submit" class="btn-primary">Done &amp; Sign in</button>
+            </form>
+        </section>
+    </main>
+
+    <script src="../../../scripts/main/recovery.js"></script>
+</body>
+</html>
