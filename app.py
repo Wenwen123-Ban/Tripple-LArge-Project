@@ -1,5 +1,14 @@
-from flask import Flask, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
 import os
+
+from src.api.auth import (
+    build_confirm_success_html,
+    build_confirm_url,
+    create_confirmation_token,
+    is_token_confirmed,
+    mark_token_confirmed,
+    send_confirmation_email,
+)
 
 app = Flask(__name__, 
             static_folder='public/assets',
@@ -9,6 +18,37 @@ app = Flask(__name__,
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PUBLIC_DIR = os.path.join(BASE_DIR, 'public')
 PAGES_DIR = os.path.join(PUBLIC_DIR, 'pages')
+
+
+@app.route('/api/auth/send-confirmation', methods=['POST'])
+def send_auth_confirmation():
+    """Send a Gmail confirmation email for registration testing."""
+    data = request.get_json(silent=True) or {}
+    gmail = (data.get('gmail') or '').strip()
+    name = (data.get('name') or 'Student').strip() or 'Student'
+
+    if not gmail.lower().endswith('@gmail.com'):
+        return jsonify({'error': 'Valid Gmail address required'}), 400
+
+    token = create_confirmation_token(gmail)
+    send_confirmation_email(gmail, name, build_confirm_url(token))
+    return jsonify({'status': 'sent', 'token': token})
+
+
+@app.route('/api/auth/confirm-email')
+def confirm_auth_email():
+    """Mark a token confirmed after the student clicks the email button."""
+    token = request.args.get('token', '')
+    if mark_token_confirmed(token):
+        return build_confirm_success_html()
+    return '<p>Invalid or expired confirmation link.</p>', 400
+
+
+@app.route('/api/auth/check-token')
+def check_auth_token():
+    """Report whether a pending confirmation token has been confirmed."""
+    token = request.args.get('token', '')
+    return jsonify({'confirmed': is_token_confirmed(token)})
 
 @app.route('/')
 def welcome():
@@ -24,6 +64,24 @@ def serve_pages(filename):
 def serve_assets(filename):
     """Serve assets from public/assets directory"""
     return send_from_directory(os.path.join(PUBLIC_DIR, 'assets'), filename)
+
+@app.route('/styles/<path:filename>')
+def serve_styles(filename):
+    """Serve stylesheets from public/styles directory."""
+    return send_from_directory(os.path.join(PUBLIC_DIR, 'styles'), filename)
+
+
+@app.route('/scripts/<path:filename>')
+def serve_scripts(filename):
+    """Serve frontend scripts from the scripts directory."""
+    return send_from_directory(os.path.join(BASE_DIR, 'scripts'), filename)
+
+
+@app.route('/services/<path:filename>')
+def serve_services(filename):
+    """Serve frontend service modules from the services directory."""
+    return send_from_directory(os.path.join(BASE_DIR, 'services'), filename)
+
 
 if __name__ == '__main__':
     print("🚀 Click & Collect - Welcome Page")
