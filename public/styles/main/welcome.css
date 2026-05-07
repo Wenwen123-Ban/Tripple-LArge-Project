@@ -1,0 +1,349 @@
+@import url('../../assets/fonts/fonts.css');
+
+:root {
+    --deep-purple: #4B0082;
+    --mid-purple: #5B2EBF;
+    --dark-navy: #1A1A6E;
+    --gold-accent: #FFD700;
+    --background: #FFFFFF;
+    --dot-blue: #4FC3F7;
+    --dot-red: #F44336;
+    --hex-outline: rgba(204, 204, 204, 0.2);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    min-height: 100%;
+}
+
+body {
+    max-width: 100vw;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    background: var(--background);
+    color: #111111;
+    cursor: pointer;
+    font-family: var(--font-body);
+}
+
+.top-bar {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 32px;
+    background: var(--deep-purple);
+}
+
+.status-dots {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    display: flex;
+    gap: 6px;
+    transform: translateY(-50%);
+}
+
+.dot {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+}
+
+.dot-blue {
+    background: var(--dot-blue);
+}
+
+.dot-yellow {
+    background: var(--gold-accent);
+}
+
+.dot-red {
+    background: var(--dot-red);
+}
+
+.center-lines {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    display: flex;
+    gap: 8px;
+    transform: translate(-50%, -50%);
+}
+
+.center-line {
+    display: block;
+    width: 3px;
+    height: 18px;
+    background: var(--gold-accent);
+}
+
+.welcome-hero {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: 1fr;
+    align-items: center;
+    min-height: calc(100vh - 32px);
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 5vh clamp(40px, 6vw, 100px) 100px clamp(40px, 6vw, 100px);
+    overflow: hidden;
+    background: var(--background);
+}
+
+.hex-background {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.decor-hex {
+    position: absolute;
+    display: block;
+    opacity: 1;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    background: var(--hex-outline);
+}
+
+.decor-hex::after {
+    position: absolute;
+    content: "";
+    inset: 3px;
+    clip-path: inherit;
+    background: var(--background);
+}
+
+.decor-hex-one {
+    width: 128px;
+    height: 128px;
+    top: 7%;
+    right: 22%;
+}
+
+.decor-hex-two {
+    width: 86px;
+    height: 86px;
+    top: 21%;
+    right: 6%;
+}
+
+.decor-hex-three {
+    width: 142px;
+    height: 142px;
+    top: 39%;
+    right: 16%;
+}
+
+.decor-hex-four {
+    width: 108px;
+    height: 108px;
+    top: 15%;
+    right: 41%;
+}
+
+.decor-hex-five {
+    width: 94px;
+    height: 94px;
+    top: 61%;
+    right: 4%;
+}
+
+.decor-hex-six {
+    width: 124px;
+    height: 124px;
+    bottom: 5%;
+    right: 33%;
+}
+
+.decor-hex-seven {
+    width: 116px;
+    height: 116px;
+    top: 51%;
+    right: 43%;
+}
+
+.decor-hex-eight {
+    width: 138px;
+    height: 138px;
+    top: -2%;
+    right: 2%;
+}
+
+.decor-hex-nine {
+    width: 82px;
+    height: 82px;
+    bottom: 18%;
+    right: 19%;
+}
+
+.welcome-copy,
+.signin-prompt,
+.attribution,
+.hex-icon-cluster {
+    position: relative;
+    z-index: 2;
+}
+
+.welcome-copy {
+    grid-column: 1;
+    align-self: center;
+    margin-top: 0;
+    flex: 0 0 auto;
+}
+
+.welcome-heading {
+    font-family: var(--font-heading);
+    font-size: clamp(3.5rem, 6vw, 5.5rem);
+    font-weight: 900;
+    line-height: 0.92;
+    color: #000000;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+}
+
+.welcome-to {
+    margin-top: 2px;
+    margin-left: clamp(20px, 4vw, 64px);
+    color: var(--dark-navy);
+    font-family: var(--font-body);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.03em;
+}
+
+.brand-lockup {
+    display: flex;
+    align-items: center;
+    margin-top: -1px;
+    margin-left: clamp(24px, 5vw, 82px);
+    white-space: nowrap;
+}
+
+.brand-name {
+    color: var(--deep-purple);
+    font-family: var(--font-cursive);
+    font-size: clamp(2.25rem, 4vw, 2.625rem);
+    line-height: 1.05;
+}
+
+.brand-book {
+    height: 48px;
+    width: auto;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.signin-prompt {
+    grid-column: 2;
+    align-self: center;
+    justify-self: center;
+    max-width: 320px;
+    color: var(--dark-navy);
+    font-family: var(--font-body);
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.attribution {
+    display: flex;
+    grid-column: 3;
+    flex: unset;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: clamp(150px, 15vw, 200px);
+    margin-right: 0;
+    text-align: center;
+}
+
+.made-for {
+    margin-bottom: 10px;
+    color: #222222;
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.nmsc-seal {
+    width: 98px;
+    height: 98px;
+    margin-bottom: 13px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.school-link {
+    max-width: 160px;
+    color: var(--mid-purple);
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.hex-icon-cluster {
+    position: absolute;
+    left: clamp(12px, 2vw, 24px);
+    bottom: clamp(12px, 2vh, 28px);
+    width: clamp(160px, 15vw, 220px);
+    height: clamp(160px, 15vw, 220px);
+    background-image: url('../../assets/resuable/Icons.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 2;
+}
+
+@media (max-width: 900px) {
+    body {
+        overflow-y: auto;
+    }
+
+    .welcome-hero {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        min-height: calc(100vh - 32px);
+        padding: 48px 28px 200px;
+        gap: 36px;
+    }
+
+    .welcome-copy {
+        align-self: flex-start;
+        margin-top: 0;
+    }
+
+    .signin-prompt {
+        align-self: center;
+        width: 100%;
+        text-align: center;
+    }
+
+    .attribution {
+        align-self: center;
+        width: auto;
+        margin-right: 0;
+    }
+}
