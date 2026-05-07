@@ -23,8 +23,10 @@ body {
 }
 
 body {
+    max-width: 100vw;
     min-height: 100vh;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: hidden;
     background: var(--background);
     color: #111111;
     cursor: pointer;
@@ -88,11 +90,15 @@ body {
 .welcome-hero {
     position: relative;
     z-index: 1;
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: 1fr;
     align-items: center;
-    justify-content: space-between;
     min-height: calc(100vh - 32px);
-    padding: 7vh clamp(48px, 8vw, 118px) 110px clamp(56px, 9vw, 128px);
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 5vh clamp(40px, 6vw, 100px) 100px clamp(40px, 6vw, 100px);
     overflow: hidden;
     background: var(--background);
 }
@@ -192,13 +198,15 @@ body {
 }
 
 .welcome-copy {
-    margin-top: -3vh;
+    grid-column: 1;
+    align-self: center;
+    margin-top: 0;
     flex: 0 0 auto;
 }
 
 .welcome-heading {
     font-family: var(--font-heading);
-    font-size: clamp(4.5rem, 7vw, 5rem);
+    font-size: clamp(3.5rem, 6vw, 5.5rem);
     font-weight: 900;
     line-height: 0.92;
     color: #000000;
@@ -208,7 +216,7 @@ body {
 
 .welcome-to {
     margin-top: 2px;
-    margin-left: 64px;
+    margin-left: clamp(20px, 4vw, 64px);
     color: var(--dark-navy);
     font-family: var(--font-body);
     font-size: 22px;
@@ -221,7 +229,7 @@ body {
     display: flex;
     align-items: center;
     margin-top: -1px;
-    margin-left: 82px;
+    margin-left: clamp(24px, 5vw, 82px);
     white-space: nowrap;
 }
 
@@ -240,11 +248,10 @@ body {
 }
 
 .signin-prompt {
-    position: absolute;
-    left: 50%;
-    top: 51%;
+    grid-column: 2;
+    align-self: center;
+    justify-self: center;
     max-width: 320px;
-    transform: translate(-50%, -50%);
     color: var(--dark-navy);
     font-family: var(--font-body);
     font-size: 18px;
@@ -254,11 +261,13 @@ body {
 
 .attribution {
     display: flex;
-    flex: 0 0 180px;
+    grid-column: 3;
+    flex: unset;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-right: clamp(4px, 1.5vw, 24px);
+    width: clamp(150px, 15vw, 200px);
+    margin-right: 0;
     text-align: center;
 }
 
@@ -295,10 +304,11 @@ body {
 
 .hex-icon-cluster {
     position: absolute;
-    left: 20px;
-    bottom: 20px;
+    left: clamp(12px, 2vw, 24px);
+    bottom: clamp(12px, 2vh, 28px);
     width: 180px;
     height: 180px;
+    z-index: 2;
 }
 
 .hex-book {
@@ -342,15 +352,17 @@ body {
 
 @media (max-width: 900px) {
     body {
-        overflow: auto;
+        overflow-y: auto;
     }
 
     .welcome-hero {
-        min-height: calc(100vh - 32px);
-        padding: 56px 28px 220px;
+        display: flex;
         flex-direction: column;
+        align-items: flex-start;
         justify-content: flex-start;
-        gap: 44px;
+        min-height: calc(100vh - 32px);
+        padding: 48px 28px 200px;
+        gap: 36px;
     }
 
     .welcome-copy {
@@ -359,13 +371,14 @@ body {
     }
 
     .signin-prompt {
-        position: relative;
-        left: auto;
-        top: auto;
-        transform: none;
+        align-self: center;
+        width: 100%;
+        text-align: center;
     }
 
     .attribution {
+        align-self: center;
+        width: auto;
         margin-right: 0;
     }
 }
