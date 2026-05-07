@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Click &amp; Collect</title>
+    <link rel="stylesheet" href="../../styles/main/sign_in.css">
+</head>
+<body>
+    <header class="top-bar" aria-label="Window controls">
+        <div class="status-dots" aria-hidden="true">
+            <span class="dot dot-blue"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-red"></span>
+        </div>
+        <div class="center-lines" aria-hidden="true">
+            <span class="center-line"></span>
+            <span class="center-line"></span>
+        </div>
+        <button class="exit-button" type="button" aria-label="Return to welcome page" onclick="window.location.href = 'welcome.html'">→</button>
+    </header>
+
+    <main class="page-content">
+        <section class="form-card" aria-labelledby="signin-title">
+            <div class="card-header">
+                <img src="../../assets/logo/NMSC LOGO.jpg" alt="NMSC seal" class="nmsc-seal">
+                <a href="#" class="school-link">North Western Mindanao State College of Science and Technology</a>
+                <div class="brand-lockup" id="signin-title">
+                    <span class="brand-name">Click &amp; Collect</span>
+                    <img src="../../assets/logo/Book_logo.png" alt="" class="brand-book" aria-hidden="true">
+                </div>
+            </div>
+
+            <form id="signInForm" class="signin-form">
+                <div class="input-row">
+                    <label class="input-label" for="signinIdNo">ID No. :</label>
+                    <input type="text" id="signinIdNo" name="id_no" class="input-pill js-id-no" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="10" placeholder="0000-00000" pattern="\d{4}-\d{5}" title="Use ID No. format 0000-00000" required>
+                </div>
+                <div class="input-row">
+                    <label class="input-label" for="signinPassword">Password:</label>
+                    <input type="password" id="signinPassword" name="password" class="input-pill" autocomplete="current-password" required>
+                </div>
+
+                <hr class="form-divider">
+                <button type="submit" class="btn-primary">Sign in</button>
+            </form>
+
+            <p class="form-footer-links">
+                <a href="registration_form.html" class="footer-link">New user click this.</a>
+                <span class="link-sep"> / </span>
+                <a href="recovery_form.html" class="footer-link">forgot password click this.</a>
+            </p>
+        </section>
+    </main>
+
+    <script src="../../../scripts/main/sign_in.js"></script>
+</body>
+</html>
