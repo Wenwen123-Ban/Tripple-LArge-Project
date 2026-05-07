@@ -9,6 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.body.addEventListener('click', () => {
-    window.location.href = '../main/sign_in.html';
+    window.location.href = '/main/sign_in';
   });
 });

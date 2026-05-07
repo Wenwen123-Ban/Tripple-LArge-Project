@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, render_template, request, send_from_directory
 import os
 
 from src.api.auth import (
@@ -10,9 +10,11 @@ from src.api.auth import (
     send_confirmation_email,
 )
 
-app = Flask(__name__, 
-            static_folder='public/assets',
-            static_url_path='/assets')
+app = Flask(
+    __name__,
+    template_folder='public/pages',
+    static_folder='public'
+)
 
 # Base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -50,10 +52,81 @@ def check_auth_token():
     token = request.args.get('token', '')
     return jsonify({'confirmed': is_token_confirmed(token)})
 
+
+# ─── Main pages ───────────────────────────────────────────
 @app.route('/')
 def welcome():
-    """Serve the welcome page"""
+    """Serve the welcome page."""
     return send_from_directory(os.path.join(PAGES_DIR, 'main'), 'welcome.html')
+
+
+@app.route('/main/sign_in')
+def sign_in():
+    """Serve the sign-in page."""
+    return send_from_directory(os.path.join(PAGES_DIR, 'main'), 'sign_in.html')
+
+
+@app.route('/main/registration')
+def registration():
+    """Serve the registration page."""
+    return send_from_directory(os.path.join(PAGES_DIR, 'main'), 'registration_form.html')
+
+
+@app.route('/main/recovery')
+def recovery():
+    """Serve the account recovery page."""
+    return send_from_directory(os.path.join(PAGES_DIR, 'main'), 'recovery_form.html')
+
+
+@app.route('/main/about')
+def about():
+    """Serve the about page."""
+    return send_from_directory(os.path.join(PAGES_DIR, 'main'), 'about.html')
+
+
+@app.route('/main/help')
+def help_page():
+    """Serve the help page."""
+    return send_from_directory(os.path.join(PAGES_DIR, 'main'), 'help.html')
+
+
+# ─── User pages ───────────────────────────────────────────
+@app.route('/user/books')
+def user_books():
+    """Serve the user book display page."""
+    return send_from_directory(os.path.join(PAGES_DIR, 'user'), 'userBookdisplay.html')
+
+
+@app.route('/user/account')
+def user_account():
+    """Serve the user account management page."""
+    return send_from_directory(os.path.join(PAGES_DIR, 'user'), 'userManagement.html')
+
+
+# ─── Admin pages ──────────────────────────────────────────
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    """Serve the admin dashboard page."""
+    return send_from_directory(os.path.join(PAGES_DIR, 'admin'), 'adminDashboard.html')
+
+
+@app.route('/admin/books')
+def admin_books():
+    """Serve the admin book management page."""
+    return send_from_directory(os.path.join(PAGES_DIR, 'admin'), 'adminBookmanagement.html')
+
+
+@app.route('/admin/users')
+def admin_users():
+    """Serve the admin user management page."""
+    return send_from_directory(os.path.join(PAGES_DIR, 'admin'), 'adminusersManagement.html')
+
+
+@app.route('/admin/reports')
+def admin_reports():
+    """Serve the admin security reports page."""
+    return send_from_directory(os.path.join(PAGES_DIR, 'admin'), 'adminSecurityreports.html')
+
 
 @app.route('/pages/<path:filename>')
 def serve_pages(filename):
