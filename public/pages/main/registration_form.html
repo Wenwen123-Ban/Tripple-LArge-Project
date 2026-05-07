@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Form - Click &amp; Collect</title>
+    <link rel="stylesheet" href="../../styles/main/registrationForm.css">
+</head>
+<body>
+    <header class="top-bar" aria-label="Window controls">
+        <div class="status-dots" aria-hidden="true">
+            <span class="dot dot-blue"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-red"></span>
+        </div>
+        <div class="center-lines" aria-hidden="true">
+            <span class="center-line"></span>
+            <span class="center-line"></span>
+        </div>
+        <button class="exit-button" type="button" aria-label="Return to welcome page" onclick="window.location.href = 'welcome.html'">→</button>
+    </header>
+
+    <main class="page-content">
+        <section class="form-card" aria-labelledby="registration-title">
+            <p class="lbc-display">LBC No: <span id="registrationLbcNo">0000-00000</span></p>
+
+            <div class="card-header">
+                <img src="../../assets/logo/NMSC LOGO.jpg" alt="NMSC seal" class="nmsc-seal">
+                <a href="#" class="school-link">North Western Mindanao State College of Science and Technology</a>
+                <div class="brand-lockup">
+                    <span class="brand-name">Click &amp; Collect</span>
+                    <img src="../../assets/logo/Book_logo.png" alt="" class="brand-book" aria-hidden="true">
+                </div>
+                <p class="form-subtitle" id="registration-title">Registration form</p>
+            </div>
+
+            <form id="registrationForm" class="registration-form">
+                <div class="name-row">
+                    <label class="underline-field name-field" for="registrationName">
+                        <span>Name:</span>
+                        <input type="text" id="registrationName" name="name" class="input-underline" autocomplete="name" required>
+                    </label>
+                    <p class="id-display">ID No: <span id="registrationIdNo">0000-00000</span></p>
+                </div>
+
+                <label class="underline-field" for="registrationAddress">
+                    <span>Address:</span>
+                    <input type="text" id="registrationAddress" name="address" class="input-underline" autocomplete="street-address" required>
+                </label>
+
+                <div class="course-year-row">
+                    <label class="select-field" for="registrationCourse">
+                        <span>Course:</span>
+                        <select id="registrationCourse" name="course" class="input-select" required>
+                            <option value="" selected disabled>Select course</option>
+                            <option value="BSIT">BSIT</option>
+                            <option value="BSED">BSED</option>
+                            <option value="BEED">BEED</option>
+                            <option value="BSHM">BSHM</option>
+                        </select>
+                    </label>
+                    <label class="select-field" for="registrationYear">
+                        <span>Year:</span>
+                        <select id="registrationYear" name="year" class="input-select" required>
+                            <option value="" selected disabled>Select year</option>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </label>
+                </div>
+
+                <label class="underline-field" for="registrationContactNo">
+                    <span>Contact No:</span>
+                    <input type="tel" id="registrationContactNo" name="contact_no" class="input-underline" inputmode="numeric" autocomplete="tel" required>
+                </label>
+
+                <label class="box-field" for="registrationGmail">
+                    <span>Gmail:</span>
+                    <input type="email" id="registrationGmail" name="gmail" class="input-gmail" autocomplete="email" required>
+                </label>
+
+                <label class="underline-field" for="registrationPassword">
+                    <span>Password:</span>
+                    <input type="password" id="registrationPassword" name="password" class="input-underline" autocomplete="new-password" required>
+                </label>
+
+                <label class="checkbox-row" for="registrationAgreement">
+                    <input type="checkbox" id="registrationAgreement" name="agreement" required>
+                    <span>I confirm that the information provided is accurate and that this Gmail account can receive my verification and account notices.</span>
+                </label>
+
+                <hr class="form-divider">
+                <button type="submit" class="btn-primary">Confirm gmail</button>
+                <p class="form-note">A confirmation code will be sent to your Gmail account before registration is finalized.</p>
+            </form>
+        </section>
+    </main>
+
+    <script src="../../../scripts/main/registration.js"></script>
+</body>
+</html>

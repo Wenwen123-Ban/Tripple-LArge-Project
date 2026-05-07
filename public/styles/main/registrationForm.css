@@ -1,0 +1,310 @@
+@import url('../../assets/fonts/fonts.css');
+
+:root {
+    --deep-purple: #4B0082;
+    --mid-purple: #5B2EBF;
+    --dark-navy: #1A1A6E;
+    --gold-accent: #FFD700;
+    --background: #FFFFFF;
+    --dot-blue: #4FC3F7;
+    --dot-red: #F44336;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    min-height: 100%;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--background);
+    font-family: var(--font-body);
+    overflow: hidden;
+}
+
+.top-bar {
+    position: relative;
+    flex: 0 0 32px;
+    width: 100%;
+    height: 32px;
+    background: var(--deep-purple);
+}
+
+.status-dots {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    display: flex;
+    gap: 6px;
+    transform: translateY(-50%);
+}
+
+.dot {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+}
+
+.dot-blue { background: var(--dot-blue); }
+.dot-yellow { background: var(--gold-accent); }
+.dot-red { background: var(--dot-red); }
+
+.center-lines {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    display: flex;
+    gap: 8px;
+    transform: translate(-50%, -50%);
+}
+
+.center-line {
+    display: block;
+    width: 3px;
+    height: 18px;
+    background: var(--gold-accent);
+}
+
+.exit-button {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid #FFFFFF;
+    border-radius: 4px;
+    background: transparent;
+    color: #FFFFFF;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    transform: translateY(-50%);
+}
+
+.page-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.form-card {
+    position: relative;
+    background: #FFFFFF;
+    border: 2px solid var(--dark-navy);
+    border-radius: 14px;
+    padding: clamp(20px, 3vh, 36px) clamp(24px, 4vw, 48px);
+    width: clamp(300px, 90vw, 540px);
+    max-height: calc(100vh - 32px - 32px);
+    overflow-y: auto;
+}
+
+.lbc-display {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    color: #000000;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.nmsc-seal {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 6px;
+}
+
+.school-link {
+    color: var(--mid-purple);
+    font-size: 12px;
+    text-decoration: underline;
+    max-width: 220px;
+    line-height: 1.4;
+    margin-bottom: 6px;
+}
+
+.brand-lockup {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand-name {
+    color: var(--deep-purple);
+    font-family: var(--font-cursive);
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+}
+
+.brand-book {
+    height: 36px;
+    width: auto;
+    vertical-align: middle;
+    margin-left: 6px;
+}
+
+.form-subtitle {
+    color: var(--dark-navy);
+    font-weight: 700;
+    font-size: 15px;
+    margin-top: 2px;
+}
+
+.registration-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.name-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.name-field { flex: 1; }
+
+.id-display {
+    flex: 0 0 auto;
+    color: var(--dark-navy);
+    font-size: 13px;
+    font-weight: 700;
+    padding-bottom: 3px;
+    white-space: nowrap;
+}
+
+.underline-field,
+.box-field,
+.select-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--dark-navy);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.underline-field span,
+.box-field span,
+.select-field span {
+    flex: 0 0 auto;
+}
+
+.input-underline {
+    border: none;
+    border-bottom: 1.5px solid #333;
+    width: 100%;
+    background: transparent;
+    font-size: 14px;
+    padding: 2px 4px;
+    outline: none;
+}
+
+.input-underline:focus { border-bottom-color: var(--mid-purple); }
+
+.course-year-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.input-select,
+.input-gmail {
+    width: 100%;
+    border: 1.5px solid #333;
+    border-radius: 4px;
+    background: #FFFFFF;
+    font-size: 14px;
+    padding: 5px 10px;
+    outline: none;
+}
+
+.input-select:focus,
+.input-gmail:focus { border-color: var(--mid-purple); }
+
+.input-gmail { flex: 1; }
+
+.checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #333333;
+    font-size: 12px;
+    font-style: italic;
+    line-height: 1.35;
+}
+
+.checkbox-row input {
+    flex: 0 0 auto;
+    margin-top: 2px;
+}
+
+.form-divider {
+    border: none;
+    border-top: 1.5px solid var(--dark-navy);
+    margin: 18px 0;
+}
+
+.btn-primary {
+    display: block;
+    margin: 0 auto;
+    padding: 8px 40px;
+    border: 1.5px solid var(--dark-navy);
+    border-radius: 999px;
+    background: #FFFFFF;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 700;
+    color: #000000;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background: var(--mid-purple);
+    color: #FFFFFF;
+}
+
+.form-note {
+    color: #333333;
+    font-size: 12px;
+    font-style: italic;
+    line-height: 1.35;
+    text-align: center;
+}
+
+@media (max-width: 480px) {
+    .form-card { padding: 16px 16px; }
+    .input-row { flex-direction: column; align-items: flex-start; }
+    .input-pill { width: 100%; }
+    .name-row { flex-direction: column; align-items: stretch; gap: 6px; }
+    .id-display { padding-bottom: 0; }
+    .id-lbc-row { grid-template-columns: 1fr; }
+    .course-year-row { grid-template-columns: 1fr; }
+    .underline-field,
+    .box-field,
+    .select-field { align-items: flex-start; }
+    .lbc-display { position: static; margin-bottom: 8px; text-align: right; }
+}
