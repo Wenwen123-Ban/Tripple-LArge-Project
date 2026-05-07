@@ -22,8 +22,6 @@
 
     <main class="page-content">
         <section class="form-card" aria-labelledby="registration-title">
-            <p class="lbc-display">LBC No: <span id="registrationLbcNo">0000-00000</span></p>
-
             <div class="card-header">
                 <img src="../../assets/logo/NMSC LOGO.jpg" alt="NMSC seal" class="nmsc-seal">
                 <a href="#" class="school-link">North Western Mindanao State College of Science and Technology</a>
@@ -35,12 +33,22 @@
             </div>
 
             <form id="registrationForm" class="registration-form">
-                <div class="name-row">
-                    <label class="underline-field name-field" for="registrationName">
-                        <span>Name:</span>
-                        <input type="text" id="registrationName" name="name" class="input-underline" autocomplete="name" required>
+                <label class="underline-field" for="registrationName">
+                    <span>Name:</span>
+                    <input type="text" id="registrationName" name="name" class="input-underline" autocomplete="name" required>
+                </label>
+
+                <div class="id-lbc-row">
+                    <label class="underline-field field-with-hint" for="id-input">
+                        <span>ID No:</span>
+                        <input type="text" id="id-input" name="id_no" class="input-underline" placeholder="YYYY-NNNNN" maxlength="10" inputmode="numeric" autocomplete="off" required>
+                        <span class="input-hint">Year of enrollment – Entry number</span>
                     </label>
-                    <p class="id-display">ID No: <span id="registrationIdNo">0000-00000</span></p>
+                    <label class="underline-field field-with-hint" for="lbc-input">
+                        <span>LBC No:</span>
+                        <input type="text" id="lbc-input" name="lbc_no" class="input-underline" placeholder="0000-00000" maxlength="14" inputmode="numeric" autocomplete="off">
+                        <span class="input-hint">Assigned by admin — check your LBC card</span>
+                    </label>
                 </div>
 
                 <label class="underline-field" for="registrationAddress">
@@ -49,24 +57,16 @@
                 </label>
 
                 <div class="course-year-row">
-                    <label class="select-field" for="registrationCourse">
+                    <label class="select-field" for="course-select">
                         <span>Course:</span>
-                        <select id="registrationCourse" name="course" class="input-select" required>
-                            <option value="" selected disabled>Select course</option>
-                            <option value="BSIT">BSIT</option>
-                            <option value="BSED">BSED</option>
-                            <option value="BEED">BEED</option>
-                            <option value="BSHM">BSHM</option>
+                        <select id="course-select" name="course" class="input-select" required>
+                            <option value="NA" selected>N/A</option>
                         </select>
                     </label>
-                    <label class="select-field" for="registrationYear">
+                    <label class="select-field" for="year-select">
                         <span>Year:</span>
-                        <select id="registrationYear" name="year" class="input-select" required>
-                            <option value="" selected disabled>Select year</option>
-                            <option value="1">1st Year</option>
-                            <option value="2">2nd Year</option>
-                            <option value="3">3rd Year</option>
-                            <option value="4">4th Year</option>
+                        <select id="year-select" name="year" class="input-select" required>
+                            <option value="">Year</option>
                         </select>
                     </label>
                 </div>

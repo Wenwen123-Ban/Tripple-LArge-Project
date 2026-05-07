@@ -213,6 +213,30 @@ body {
     flex: 0 0 auto;
 }
 
+.id-lbc-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.field-with-hint {
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.field-with-hint .input-underline {
+    flex: 1 1 130px;
+}
+
+.input-hint {
+    flex: 1 0 100%;
+    padding-left: 0;
+    color: #888;
+    font-size: 11px;
+    font-style: italic;
+    font-weight: 400;
+}
+
 .input-underline {
     border: none;
     border-bottom: 1.5px solid #333;
