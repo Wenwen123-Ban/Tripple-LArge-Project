@@ -208,6 +208,12 @@ body {
     margin-top: -8px;
 }
 
+.box-field .field-note {
+    color: #888;
+    font-size: 11px;
+    margin-top: 0;
+}
+
 .form-divider {
     border: none;
     border-top: 1.5px solid var(--dark-navy);
