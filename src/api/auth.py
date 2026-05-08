@@ -2,13 +2,22 @@
 
 import json
 import os
+import random
 import secrets
 import smtplib
+import string
 import time
+from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from html import escape
 from urllib.parse import quote
+
+import bcrypt
+import mysql.connector
+from flask import jsonify, request
+
+from src.core.db import get_db
 
 TOKEN_TTL_SECONDS = 15 * 60
 pending_tokens = {}
@@ -32,31 +41,65 @@ def _cleanup_expired_tokens():
 def create_confirmation_token(gmail):
     _cleanup_expired_tokens()
     token = secrets.token_urlsafe(32)
-    pending_tokens[token] = {
-        'gmail': gmail,
-        'confirmed': False,
-        'created_at': _now(),
-    }
+    expires_at = datetime.now() + timedelta(seconds=TOKEN_TTL_SECONDS)
+
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(
+        "DELETE FROM pending_confirmations WHERE gmail = %s OR expires_at <= NOW()",
+        (gmail,),
+    )
+    cursor.execute(
+        """
+        INSERT INTO pending_confirmations (token, gmail, expires_at)
+        VALUES (%s, %s, %s)
+        """,
+        (token, gmail, expires_at),
+    )
+    db.commit()
+    cursor.close()
     return token
 
 
 def mark_token_confirmed(token):
     _cleanup_expired_tokens()
-    payload = pending_tokens.get(token)
-    if not payload:
-        return False
-    payload['confirmed'] = True
-    return True
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(
+        """
+        UPDATE pending_confirmations
+        SET confirmed = 1
+        WHERE token = %s
+          AND expires_at > NOW()
+        """,
+        (token,),
+    )
+    db.commit()
+    confirmed = cursor.rowcount > 0
+    cursor.close()
+    return confirmed
 
 
 def is_token_confirmed(token):
     _cleanup_expired_tokens()
-    payload = pending_tokens.get(token)
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        """
+        SELECT confirmed
+        FROM pending_confirmations
+        WHERE token = %s
+          AND expires_at > NOW()
+        """,
+        (token,),
+    )
+    payload = cursor.fetchone()
+    cursor.close()
     return bool(payload and payload.get('confirmed'))
 
 
 def get_site_url():
-    return os.getenv('SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
+    return os.getenv('SITE_URL', 'http://127.0.0.1:5000').rstrip('/')
 
 
 def get_default_from_email():
@@ -230,6 +273,285 @@ def build_confirm_success_html():
     </body>
     </html>
     """
+
+
+def _json_payload():
+    return request.get_json(silent=True) or {}
+
+
+def _clean(value, default=''):
+    if value is None:
+        return default
+    return str(value).strip()
+
+
+def register_student():
+    data = _json_payload()
+    student_id = _clean(data.get('student_id'))
+    lbc_no = _clean(data.get('lbc_no'))
+    full_name = _clean(data.get('full_name'))
+    address = _clean(data.get('address'))
+    contact_no = _clean(data.get('contact_no'))
+    password = data.get('password') or ''
+    course = _clean(data.get('course'), 'N/A') or 'N/A'
+    year_level = _clean(data.get('year_level'))
+    gmail = _clean(data.get('gmail'))
+    token = _clean(data.get('token'))
+
+    required_fields = {
+        'student_id': student_id,
+        'full_name': full_name,
+        'password': password,
+        'gmail': gmail,
+        'token': token,
+    }
+    missing = [field for field, value in required_fields.items() if not value]
+    if missing:
+        return jsonify({'error': f"Missing required field(s): {', '.join(missing)}"}), 400
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        """
+        SELECT *
+        FROM pending_confirmations
+        WHERE token = %s
+          AND gmail = %s
+          AND confirmed = 1
+          AND expires_at > NOW()
+        """,
+        (token, gmail),
+    )
+    confirmation = cursor.fetchone()
+
+    if not confirmation:
+        cursor.close()
+        return jsonify({'error': 'Email not confirmed'}), 403
+
+    password_hash = bcrypt.hashpw(
+        password.encode('utf-8'),
+        bcrypt.gensalt(),
+    ).decode('utf-8')
+
+    try:
+        cursor.execute(
+            """
+            INSERT INTO students
+                (student_id, lbc_no, full_name, address,
+                 contact_no, password_hash, course,
+                 year_level, gmail, is_verified)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
+            """,
+            (
+                student_id, lbc_no, full_name, address,
+                contact_no, password_hash, course,
+                year_level, gmail,
+            ),
+        )
+        cursor.execute(
+            "DELETE FROM pending_confirmations WHERE token = %s",
+            (token,),
+        )
+        db.commit()
+        return jsonify({'status': 'registered'})
+    except mysql.connector.IntegrityError:
+        db.rollback()
+        return jsonify({'error': 'Student ID or Gmail already exists'}), 409
+    finally:
+        cursor.close()
+
+
+def build_recovery_email(name, code):
+    safe_name = escape(name or 'Student')
+    safe_code = escape(code or '')
+    return f"""
+    <!DOCTYPE html><html>
+    <body style="margin:0;padding:0;background:#f4f4f8;font-family:Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0"
+             style="background:#f4f4f8;padding:40px 0;">
+        <tr><td align="center">
+          <table width="520" cellpadding="0" cellspacing="0"
+                 style="background:#fff;border-radius:12px;
+                        border:2px solid #1A1A6E;overflow:hidden;">
+            <tr>
+              <td style="background:#4B0082;padding:24px 32px;text-align:center;">
+                <p style="margin:0;color:#FFD700;font-size:11px;
+                           letter-spacing:0.1em;text-transform:uppercase;">
+                  North Western Mindanao State College of Science and Technology
+                </p>
+                <h1 style="margin:8px 0 0;color:#fff;font-size:26px;font-weight:900;">
+                  Click &amp; Collect
+                </h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px 40px 16px;">
+                <p style="margin:0 0 8px;font-size:16px;
+                           color:#1A1A6E;font-weight:700;">
+                  Dear {safe_name},
+                </p>
+                <p style="margin:0 0 20px;font-size:14px;
+                           color:#333;line-height:1.6;">
+                  We received a request to recover your
+                  <strong>Click &amp; Collect</strong> account.
+                  Use the code below to reset your password.
+                  This code expires in <strong>15 minutes</strong>.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 40px 32px;text-align:center;">
+                <div style="display:inline-block;padding:18px 56px;
+                             background:#f4f4f8;border-radius:10px;
+                             border:2px dashed #4B0082;">
+                  <span style="font-size:36px;font-weight:900;
+                               letter-spacing:0.2em;color:#4B0082;">
+                    {safe_code}
+                  </span>
+                </div>
+                <p style="margin:16px 0 0;font-size:11px;color:#999;">
+                  Enter this code in the recovery form.
+                  If you did not request this, ignore this email.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#f4f4f8;padding:16px 40px;
+                          border-top:1px solid #e0e0e0;text-align:center;">
+                <p style="margin:0;font-size:11px;color:#aaa;">
+                  Click &amp; Collect &mdash; NMSC Library System &bull;
+                  Do not reply to this email.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+      </table>
+    </body></html>
+    """
+
+
+def send_recovery_email(gmail, name, code):
+    host = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    port = int(os.getenv('EMAIL_PORT', '587'))
+    username = os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com')
+    password = os.getenv('EMAIL_HOST_PASSWORD', 'your-app-password')
+    use_tls = os.getenv('EMAIL_USE_TLS', 'true').lower() in {'1', 'true', 'yes'}
+
+    message = MIMEMultipart('alternative')
+    message['Subject'] = 'Click & Collect — Account Recovery Code'
+    message['From'] = get_default_from_email()
+    message['To'] = gmail
+    message.attach(MIMEText(
+        f"Dear {name},\n\nUse this Click & Collect recovery code to reset your password: {code}\n\n"
+        'This code expires in 15 minutes.',
+        'plain',
+        'utf-8',
+    ))
+    message.attach(MIMEText(build_recovery_email(name, code), 'html', 'utf-8'))
+
+    with smtplib.SMTP(host, port) as smtp:
+        if use_tls:
+            smtp.starttls()
+        smtp.login(username, password)
+        smtp.send_message(message)
+
+
+def recovery_request():
+    data = _json_payload()
+    student_id = _clean(data.get('student_id'))
+    lbc_no = _clean(data.get('lbc_no'))
+    gmail = _clean(data.get('gmail'))
+
+    if not student_id or not lbc_no or not gmail:
+        return jsonify({'error': 'Student ID, LBC No, and Gmail are required.'}), 400
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        """
+        SELECT * FROM students
+        WHERE student_id = %s
+          AND lbc_no = %s
+          AND gmail = %s
+          AND is_verified = 1
+        """,
+        (student_id, lbc_no, gmail),
+    )
+    student = cursor.fetchone()
+
+    if not student:
+        cursor.close()
+        return jsonify({
+            'error': 'No matching account found. Check your ID, LBC No, and Gmail.',
+        }), 404
+
+    code = ''.join(random.choices(string.digits, k=6))
+    expires_at = datetime.now() + timedelta(minutes=15)
+
+    cursor.execute(
+        "DELETE FROM recovery_codes WHERE student_id = %s",
+        (student_id,),
+    )
+    cursor.execute(
+        """
+        INSERT INTO recovery_codes (student_id, code, expires_at)
+        VALUES (%s, %s, %s)
+        """,
+        (student_id, code, expires_at),
+    )
+    db.commit()
+    cursor.close()
+
+    send_recovery_email(gmail, student['full_name'], code)
+
+    return jsonify({'status': 'sent'})
+
+
+def recovery_verify():
+    data = _json_payload()
+    student_id = _clean(data.get('student_id'))
+    code = _clean(data.get('code'))
+    new_pass = data.get('new_password') or ''
+
+    if not student_id or not code or not new_pass:
+        return jsonify({'error': 'Student ID, recovery code, and new password are required.'}), 400
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        """
+        SELECT * FROM recovery_codes
+        WHERE student_id = %s
+          AND code = %s
+          AND used = 0
+          AND expires_at > NOW()
+        """,
+        (student_id, code),
+    )
+    record = cursor.fetchone()
+
+    if not record:
+        cursor.close()
+        return jsonify({'error': 'Invalid or expired code'}), 400
+
+    new_hash = bcrypt.hashpw(
+        new_pass.encode('utf-8'),
+        bcrypt.gensalt(),
+    ).decode('utf-8')
+
+    cursor.execute(
+        "UPDATE students SET password_hash = %s WHERE student_id = %s",
+        (new_hash, student_id),
+    )
+    cursor.execute(
+        "UPDATE recovery_codes SET used = 1 WHERE id = %s",
+        (record['id'],),
+    )
+    db.commit()
+    cursor.close()
+
+    return jsonify({'status': 'password_updated'})
 
 
 def send_confirmation(request):
