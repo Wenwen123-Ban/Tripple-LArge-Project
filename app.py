@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, render_template, request, send_from_directory
 import os
 
+from src.api import auth
 from src.api.auth import (
     build_confirm_success_html,
     build_confirm_url,
@@ -9,12 +10,16 @@ from src.api.auth import (
     mark_token_confirmed,
     send_confirmation_email,
 )
+from src.core.db import close_db
+
 
 app = Flask(
     __name__,
     template_folder='public/pages',
     static_folder='public'
 )
+
+app.teardown_appcontext(close_db)
 
 # Base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -52,6 +57,26 @@ def check_auth_token():
     token = request.args.get('token', '')
     return jsonify({'confirmed': is_token_confirmed(token)})
 
+
+
+app.add_url_rule(
+    '/api/auth/register',
+    'register_student',
+    auth.register_student,
+    methods=['POST'],
+)
+app.add_url_rule(
+    '/api/auth/recovery/request',
+    'recovery_request',
+    auth.recovery_request,
+    methods=['POST'],
+)
+app.add_url_rule(
+    '/api/auth/recovery/verify',
+    'recovery_verify',
+    auth.recovery_verify,
+    methods=['POST'],
+)
 
 # ─── Main pages ───────────────────────────────────────────
 @app.route('/')

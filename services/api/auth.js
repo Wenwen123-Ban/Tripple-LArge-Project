@@ -27,3 +27,33 @@ export async function checkConfirmationToken(token) {
 
   return parseJsonResponse(response);
 }
+
+export async function saveStudentRegistration(payload) {
+  const response = await fetch(`${AUTH_BASE_URL}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function requestRecoveryCode({ student_id, lbc_no, gmail }) {
+  const response = await fetch(`${AUTH_BASE_URL}/recovery/request`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ student_id, lbc_no, gmail }),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function verifyRecoveryCode({ student_id, code, new_password }) {
+  const response = await fetch(`${AUTH_BASE_URL}/recovery/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ student_id, code, new_password }),
+  });
+
+  return parseJsonResponse(response);
+}
