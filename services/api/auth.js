@@ -57,3 +57,34 @@ export async function verifyRecoveryCode({ student_id, code, new_password }) {
 
   return parseJsonResponse(response);
 }
+
+
+export async function checkAccountType(student_id) {
+  const response = await fetch(`${AUTH_BASE_URL}/check-type`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ student_id }),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function requestAdminRecoveryCode({ student_id, gmail }) {
+  const response = await fetch(`${AUTH_BASE_URL}/admin-recovery/request`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ student_id, gmail }),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function verifyAdminRecoveryCode({ student_id, gmail_code, recovery_key, new_password }) {
+  const response = await fetch(`${AUTH_BASE_URL}/admin-recovery/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ student_id, gmail_code, recovery_key, new_password }),
+  });
+
+  return parseJsonResponse(response);
+}

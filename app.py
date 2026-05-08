@@ -87,6 +87,24 @@ app.add_url_rule(
     auth.recovery_verify,
     methods=['POST'],
 )
+app.add_url_rule(
+    '/api/auth/check-type',
+    'check_account_type',
+    auth.check_account_type,
+    methods=['POST'],
+)
+app.add_url_rule(
+    '/api/auth/admin-recovery/request',
+    'admin_recovery_request',
+    auth.admin_recovery_request,
+    methods=['POST'],
+)
+app.add_url_rule(
+    '/api/auth/admin-recovery/verify',
+    'admin_recovery_verify',
+    auth.admin_recovery_verify,
+    methods=['POST'],
+)
 
 
 # ─── Admin API endpoints ─────────────────────────────────
