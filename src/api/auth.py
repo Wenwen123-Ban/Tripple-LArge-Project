@@ -13,11 +13,11 @@ from email.mime.text import MIMEText
 from html import escape
 from urllib.parse import quote
 
-import bcrypt
 import mysql.connector
 from flask import jsonify, request
 
 from src.core.db import get_db
+from src.core.security import hash_password, verify_password
 
 TOKEN_TTL_SECONDS = 15 * 60
 pending_tokens = {}
@@ -340,10 +340,7 @@ def register_student():
         cursor.close()
         return jsonify({'error': 'Email not confirmed'}), 403
 
-    password_hash = bcrypt.hashpw(
-        password.encode('utf-8'),
-        bcrypt.gensalt(),
-    ).decode('utf-8')
+    password_hash = hash_password(password)
 
     try:
         cursor.execute(
@@ -373,7 +370,7 @@ def register_student():
         cursor.close()
 
 
-def build_recovery_email(name, code):
+def build_recovery_email(name, code, expires_minutes=15):
     safe_name = escape(name or 'Student')
     safe_code = escape(code or '')
     return f"""
@@ -407,7 +404,7 @@ def build_recovery_email(name, code):
                   We received a request to recover your
                   <strong>Click &amp; Collect</strong> account.
                   Use the code below to reset your password.
-                  This code expires in <strong>15 minutes</strong>.
+                  This code expires in <strong>{expires_minutes} minutes</strong>.
                 </p>
               </td>
             </tr>
@@ -443,7 +440,7 @@ def build_recovery_email(name, code):
     """
 
 
-def send_recovery_email(gmail, name, code):
+def send_recovery_email(gmail, name, code, expires_minutes=15):
     host = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
     port = int(os.getenv('EMAIL_PORT', '587'))
     username = os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com')
@@ -456,11 +453,11 @@ def send_recovery_email(gmail, name, code):
     message['To'] = gmail
     message.attach(MIMEText(
         f"Dear {name},\n\nUse this Click & Collect recovery code to reset your password: {code}\n\n"
-        'This code expires in 15 minutes.',
+        f'This code expires in {expires_minutes} minutes.',
         'plain',
         'utf-8',
     ))
-    message.attach(MIMEText(build_recovery_email(name, code), 'html', 'utf-8'))
+    message.attach(MIMEText(build_recovery_email(name, code, expires_minutes), 'html', 'utf-8'))
 
     with smtplib.SMTP(host, port) as smtp:
         if use_tls:
@@ -480,6 +477,7 @@ def recovery_request():
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
+    _ensure_account_type_column(cursor)
     cursor.execute(
         """
         SELECT * FROM students
@@ -487,6 +485,7 @@ def recovery_request():
           AND lbc_no = %s
           AND gmail = %s
           AND is_verified = 1
+          AND COALESCE(account_type, 'student') <> 'admin'
         """,
         (student_id, lbc_no, gmail),
     )
@@ -531,6 +530,26 @@ def recovery_verify():
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
+    _ensure_account_type_column(cursor)
+    cursor.execute(
+        """
+        SELECT COALESCE(account_type, 'student') AS account_type
+        FROM students
+        WHERE student_id = %s
+        """,
+        (student_id,),
+    )
+    account = cursor.fetchone()
+    if account and account.get('account_type') == 'admin':
+        cursor.close()
+        log_security_event(
+            student_id=student_id,
+            event_type='ADMIN_RECOVERY_LEGACY_BLOCK',
+            ip_address=_client_ip(),
+            description='Admin recovery attempted through student endpoint',
+        )
+        return jsonify({'error': 'Use secure admin recovery for admin accounts.'}), 403
+
     cursor.execute(
         """
         SELECT * FROM recovery_codes
@@ -547,10 +566,7 @@ def recovery_verify():
         cursor.close()
         return jsonify({'error': 'Invalid or expired code'}), 400
 
-    new_hash = bcrypt.hashpw(
-        new_pass.encode('utf-8'),
-        bcrypt.gensalt(),
-    ).decode('utf-8')
+    new_hash = hash_password(new_pass)
 
     cursor.execute(
         "UPDATE students SET password_hash = %s WHERE student_id = %s",
@@ -565,6 +581,235 @@ def recovery_verify():
 
     return jsonify({'status': 'password_updated'})
 
+
+
+def _client_ip():
+    forwarded_for = request.headers.get('X-Forwarded-For', '')
+    if forwarded_for:
+        return forwarded_for.split(',')[0].strip()
+    return request.remote_addr
+
+
+def log_security_event(student_id, event_type, ip_address, description):
+    """Reusable logger that writes recovery events to the security_logs table."""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute(
+            """
+            INSERT INTO security_logs
+                (student_id, event_type, ip_address, description)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (student_id or 'UNKNOWN', event_type, ip_address, description[:255]),
+        )
+        db.commit()
+        cursor.close()
+    except Exception as exc:
+        print(f"Security log error: {exc}")
+
+
+def _admin_recovery_window_allows(now=None):
+    now = now or datetime.now()
+    start_str = os.getenv('ADMIN_RECOVERY_START', '08:00')
+    end_str = os.getenv('ADMIN_RECOVERY_END', '17:00')
+    days_str = os.getenv('ADMIN_RECOVERY_DAYS', 'Mon,Tue,Wed,Thu,Fri')
+
+    start_h, start_m = map(int, start_str.split(':'))
+    end_h, end_m = map(int, end_str.split(':'))
+
+    allowed_days = [day.strip() for day in days_str.split(',') if day.strip()]
+    current_day = now.strftime('%a')
+    current_mins = now.hour * 60 + now.minute
+    window_start = start_h * 60 + start_m
+    window_end = end_h * 60 + end_m
+
+    return current_day in allowed_days and window_start <= current_mins <= window_end
+
+
+def check_account_type():
+    """Return whether an account is a student or admin for recovery routing."""
+    data = _json_payload()
+    student_id = _clean(data.get('student_id'))
+
+    if not student_id:
+        return jsonify({'error': 'Student ID is required.'}), 400
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    _ensure_account_type_column(cursor)
+    cursor.execute(
+        """
+        SELECT COALESCE(account_type, 'student') AS account_type
+        FROM students
+        WHERE student_id = %s
+        """,
+        (student_id,),
+    )
+    account = cursor.fetchone()
+    cursor.close()
+
+    if not account:
+        return jsonify({'error': 'No matching account found.'}), 404
+
+    return jsonify({'account_type': account['account_type'] or 'student'})
+
+
+def admin_recovery_request():
+    """Step 1: verify the admin recovery time window and send a Gmail code."""
+    now = datetime.now()
+    ip_address = _client_ip()
+
+    if not _admin_recovery_window_allows(now):
+        log_security_event(
+            student_id='ADMIN',
+            event_type='ADMIN_RECOVERY_TIME_BLOCK',
+            ip_address=ip_address,
+            description=f'Recovery attempted outside window at {now}',
+        )
+        return jsonify({
+            'error': 'Admin recovery is only available Mon-Fri 8AM-5PM.',
+        }), 403
+
+    data = _json_payload()
+    student_id = _clean(data.get('student_id'))
+    gmail = _clean(data.get('gmail'))
+
+    if not student_id or not gmail:
+        return jsonify({'error': 'Admin ID and Gmail are required.'}), 400
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    _ensure_account_type_column(cursor)
+    cursor.execute(
+        """
+        SELECT * FROM students
+        WHERE student_id = %s
+          AND gmail = %s
+          AND account_type = 'admin'
+          AND is_verified = 1
+        """,
+        (student_id, gmail),
+    )
+    admin = cursor.fetchone()
+
+    if not admin:
+        cursor.close()
+        log_security_event(
+            student_id=student_id or 'UNKNOWN',
+            event_type='ADMIN_RECOVERY_FAIL',
+            ip_address=ip_address,
+            description='Invalid admin credentials on recovery attempt',
+        )
+        return jsonify({'error': 'No matching admin account found.'}), 404
+
+    code = ''.join(secrets.choice(string.digits) for _ in range(6))
+    expires_at = datetime.now() + timedelta(minutes=5)
+
+    cursor.execute("DELETE FROM recovery_codes WHERE student_id = %s", (student_id,))
+    cursor.execute(
+        """
+        INSERT INTO recovery_codes (student_id, code, expires_at)
+        VALUES (%s, %s, %s)
+        """,
+        (student_id, code, expires_at),
+    )
+    db.commit()
+    cursor.close()
+
+    send_recovery_email(gmail, admin['full_name'], code, expires_minutes=5)
+
+    log_security_event(
+        student_id=student_id,
+        event_type='ADMIN_RECOVERY_CODE_SENT',
+        ip_address=ip_address,
+        description='Recovery code sent to admin Gmail',
+    )
+
+    return jsonify({'status': 'code_sent'})
+
+
+def admin_recovery_verify():
+    """Step 2: verify Gmail code plus physical key and update admin password."""
+    data = _json_payload()
+    student_id = _clean(data.get('student_id'))
+    gmail_code = _clean(data.get('gmail_code') or data.get('code'))
+    recovery_key = _clean(data.get('recovery_key'))
+    new_password = data.get('new_password') or ''
+    ip_address = _client_ip()
+
+    if not student_id or not gmail_code or not recovery_key or not new_password:
+        return jsonify({
+            'error': 'Admin ID, Gmail code, recovery key, and new password are required.',
+        }), 400
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT * FROM recovery_codes
+        WHERE student_id = %s
+          AND code = %s
+          AND used = 0
+          AND expires_at > NOW()
+        """,
+        (student_id, gmail_code),
+    )
+    code_record = cursor.fetchone()
+
+    if not code_record:
+        cursor.close()
+        log_security_event(
+            student_id=student_id,
+            event_type='ADMIN_RECOVERY_WRONG_CODE',
+            ip_address=ip_address,
+            description='Wrong or expired Gmail code on admin recovery',
+        )
+        return jsonify({'error': 'Invalid or expired code.'}), 400
+
+    cursor.execute(
+        """
+        SELECT recovery_key_hash FROM students
+        WHERE student_id = %s AND account_type = 'admin'
+        """,
+        (student_id,),
+    )
+    admin = cursor.fetchone()
+
+    if not admin or not verify_password(recovery_key, admin.get('recovery_key_hash')):
+        cursor.close()
+        log_security_event(
+            student_id=student_id,
+            event_type='ADMIN_RECOVERY_WRONG_KEY',
+            ip_address=ip_address,
+            description='Wrong physical recovery key on admin recovery',
+        )
+        return jsonify({'error': 'Invalid recovery key.'}), 400
+
+    new_hash = hash_password(new_password)
+    cursor.execute(
+        """
+        UPDATE students SET password_hash = %s
+        WHERE student_id = %s AND account_type = 'admin'
+        """,
+        (new_hash, student_id),
+    )
+    cursor.execute(
+        "UPDATE recovery_codes SET used = 1 WHERE student_id = %s",
+        (student_id,),
+    )
+    db.commit()
+    cursor.close()
+
+    log_security_event(
+        student_id=student_id,
+        event_type='ADMIN_RECOVERY_SUCCESS',
+        ip_address=ip_address,
+        description='Admin password successfully recovered',
+    )
+
+    return jsonify({'status': 'password_updated'})
 
 def send_confirmation(request):
     from django.http import JsonResponse
@@ -634,7 +879,7 @@ def register_admin():
     db = get_db()
     cursor = db.cursor(dictionary=True)
     _ensure_account_type_column(cursor)
-    password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    password_hash = hash_password(password)
 
     try:
         cursor.execute(

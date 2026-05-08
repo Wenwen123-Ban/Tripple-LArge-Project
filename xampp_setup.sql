@@ -45,6 +45,21 @@ ALTER TABLE pending_confirmations
 ALTER TABLE students
     ADD COLUMN IF NOT EXISTS account_type VARCHAR(20) DEFAULT 'student' AFTER is_verified;
 
+-- Admin recovery hardening and login audit fields.
+ALTER TABLE students
+    ADD COLUMN IF NOT EXISTS recovery_key_hash VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS last_login_ip VARCHAR(45) DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS last_login_time DATETIME DEFAULT NULL;
+
+CREATE TABLE IF NOT EXISTS security_logs (
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    student_id   VARCHAR(10)  NOT NULL,
+    event_type   VARCHAR(50)  NOT NULL,
+    ip_address   VARCHAR(45),
+    description  VARCHAR(255),
+    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Admin-managed courses.
 CREATE TABLE IF NOT EXISTS courses (
     id         INT AUTO_INCREMENT PRIMARY KEY,

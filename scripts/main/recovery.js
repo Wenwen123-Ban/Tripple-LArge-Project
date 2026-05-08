@@ -1,4 +1,10 @@
-import { requestRecoveryCode, verifyRecoveryCode } from '../../services/api/auth.js';
+import {
+  checkAccountType,
+  requestAdminRecoveryCode,
+  requestRecoveryCode,
+  verifyAdminRecoveryCode,
+  verifyRecoveryCode,
+} from '../../services/api/auth.js';
 import { showNotification } from '../shared/notification.js';
 
 function applyIdFormat(inputEl) {
@@ -35,8 +41,13 @@ function validateLbc(value) {
   return /^\d{4}-\d+$/.test(value);
 }
 
-function validateRecoveryIdentity({ idInput, lbcInput, gmailInput }) {
+function isAdminRecovery(recoveryKeyRow) {
+  return recoveryKeyRow?.dataset.accountType === 'admin';
+}
+
+function validateRecoveryIdentity({ idInput, lbcInput, gmailInput, recoveryKeyRow }) {
   let valid = true;
+  const adminRecovery = isAdminRecovery(recoveryKeyRow);
 
   if (idInput && !validateId(idInput.value)) {
     idInput.setCustomValidity('Enter a complete ID No. in YYYY-NNNNN format.');
@@ -45,7 +56,7 @@ function validateRecoveryIdentity({ idInput, lbcInput, gmailInput }) {
     idInput.setCustomValidity('');
   }
 
-  if (lbcInput && !validateLbc(lbcInput.value)) {
+  if (!adminRecovery && lbcInput && !validateLbc(lbcInput.value)) {
     lbcInput.setCustomValidity('Enter an LBC No. with 4 digits, a hyphen, and at least 1 digit after it.');
     valid = false;
   } else if (lbcInput) {
@@ -67,6 +78,22 @@ function buildIdentityPayload({ idInput, lbcInput, gmailInput }) {
   };
 }
 
+function setAdminRecoveryMode({ recoveryKeyRow, recoveryKeyInput, lbcInput }, enabled) {
+  if (recoveryKeyRow) {
+    recoveryKeyRow.style.display = enabled ? 'flex' : 'none';
+    recoveryKeyRow.dataset.accountType = enabled ? 'admin' : 'student';
+  }
+
+  if (recoveryKeyInput) {
+    recoveryKeyInput.required = enabled;
+    if (!enabled) recoveryKeyInput.value = '';
+  }
+
+  if (lbcInput) {
+    lbcInput.required = !enabled;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const schoolLink = document.querySelector('.school-link');
   const recoveryForm = document.getElementById('recoveryForm');
@@ -75,6 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const gmailInput = document.getElementById('recoveryGmail');
   const passwordInput = document.getElementById('recoveryPassword');
   const codeInput = document.getElementById('recoveryCode');
+  const recoveryKeyRow = document.getElementById('recovery-key-row');
+  const recoveryKeyInput = document.getElementById('recovery-key-input');
   const sendCodeButton = document.getElementById('send-recovery-code-btn');
 
   if (schoolLink) {
@@ -85,22 +114,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
   applyIdFormat(idInput);
   applyLbcFormat(lbcInput);
+  setAdminRecoveryMode({ recoveryKeyRow, recoveryKeyInput, lbcInput }, false);
+
+  if (idInput) {
+    idInput.addEventListener('input', () => {
+      setAdminRecoveryMode({ recoveryKeyRow, recoveryKeyInput, lbcInput }, false);
+    });
+  }
 
   if (sendCodeButton) {
     sendCodeButton.addEventListener('click', async () => {
-      if (!validateRecoveryIdentity({ idInput, lbcInput, gmailInput })) {
+      if (!idInput?.value.trim() || !validateId(idInput.value)) {
+        idInput?.setCustomValidity('Enter a complete ID No. in YYYY-NNNNN format.');
         recoveryForm?.reportValidity();
         return;
       }
+      idInput.setCustomValidity('');
 
       sendCodeButton.disabled = true;
-      sendCodeButton.textContent = 'Sending...';
+      sendCodeButton.textContent = 'Checking account...';
 
       try {
-        const result = await requestRecoveryCode(buildIdentityPayload({ idInput, lbcInput, gmailInput }));
+        const payload = buildIdentityPayload({ idInput, lbcInput, gmailInput });
+        const account = await checkAccountType(payload.student_id);
+        const adminRecovery = account.account_type === 'admin';
+        setAdminRecoveryMode({ recoveryKeyRow, recoveryKeyInput, lbcInput }, adminRecovery);
 
-        if (result.status === 'sent') {
-          showNotification('Recovery code sent! Check your Gmail inbox.', 'success');
+        if (!validateRecoveryIdentity({ idInput, lbcInput, gmailInput, recoveryKeyRow })) {
+          recoveryForm?.reportValidity();
+          return;
+        }
+
+        sendCodeButton.textContent = 'Sending...';
+        const result = adminRecovery
+          ? await requestAdminRecoveryCode({ student_id: payload.student_id, gmail: payload.gmail })
+          : await requestRecoveryCode(payload);
+
+        if (result.status === 'sent' || result.status === 'code_sent') {
+          if (adminRecovery) {
+            showNotification('Admin account detected. Gmail code sent; physical recovery key required.', 'info');
+          } else {
+            showNotification('Recovery code sent! Check your Gmail inbox.', 'success');
+          }
           codeInput?.focus();
         } else {
           showNotification(result.error || 'Could not send recovery code.', 'error');
@@ -119,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     recoveryForm.addEventListener('submit', async (event) => {
       event.preventDefault();
 
-      if (!validateRecoveryIdentity({ idInput, lbcInput, gmailInput })) {
+      if (!validateRecoveryIdentity({ idInput, lbcInput, gmailInput, recoveryKeyRow })) {
         recoveryForm.reportValidity();
         return;
       }
@@ -130,11 +185,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        const result = await verifyRecoveryCode({
-          student_id: idInput?.value.trim() || '',
-          code: codeInput?.value.trim() || '',
-          new_password: passwordInput?.value || '',
-        });
+        const adminRecovery = isAdminRecovery(recoveryKeyRow);
+        const result = adminRecovery
+          ? await verifyAdminRecoveryCode({
+            student_id: idInput?.value.trim() || '',
+            gmail_code: codeInput?.value.trim() || '',
+            recovery_key: recoveryKeyInput?.value.trim() || '',
+            new_password: passwordInput?.value || '',
+          })
+          : await verifyRecoveryCode({
+            student_id: idInput?.value.trim() || '',
+            code: codeInput?.value.trim() || '',
+            new_password: passwordInput?.value || '',
+          });
 
         if (result.status === 'password_updated') {
           showNotification('Password updated! Redirecting to sign in...', 'success');

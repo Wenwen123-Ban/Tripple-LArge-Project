@@ -65,6 +65,12 @@
                 </label>
                 <p class="field-note">Enter the code sent to your Gmail account to confirm account recovery.</p>
 
+                <label class="box-field" for="recovery-key-input" id="recovery-key-row" style="display:none;">
+                    <span>Recovery Key:</span>
+                    <input type="text" id="recovery-key-input" name="recovery_key" class="input-box" placeholder="NMSC-ADM-XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false">
+                    <span class="field-note">Admin accounts require the physical recovery key stored offline.</span>
+                </label>
+
                 <hr class="form-divider">
                 <button type="submit" class="btn-primary">Done &amp; Sign in</button>
             </form>
