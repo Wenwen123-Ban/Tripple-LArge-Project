@@ -1,6 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
   const idInputs = document.querySelectorAll('.js-id-no');
+  const passwordInput = document.getElementById('signinPassword');
+  const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+  const signInForm = document.getElementById('signInForm');
+  const errorMessage = document.getElementById('errorMessage');
+  const loadingMessage = document.getElementById('loadingMessage');
+  const signInBtn = document.getElementById('signInBtn');
+  const unavailableMessage = document.getElementById('unavailableMessage');
 
+  // Format ID input
   idInputs.forEach((inputEl) => {
     inputEl.setAttribute('maxlength', '10');
     inputEl.setAttribute('placeholder', '0000-00000');
@@ -24,4 +32,72 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  // Password visibility toggle (shown only after account is verified)
+  if (togglePasswordBtn) {
+    togglePasswordBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      togglePasswordBtn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+      togglePasswordBtn.classList.toggle('active');
+    });
+  }
+
+  // Handle sign in form submission
+  if (signInForm) {
+    signInForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const studentId = document.getElementById('signinIdNo').value.trim();
+      const password = passwordInput.value;
+
+      // Show loading state
+      loadingMessage.style.display = 'block';
+      errorMessage.style.display = 'none';
+      signInBtn.disabled = true;
+
+      try {
+        // Call login API
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            student_id: studentId,
+            password: password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Login failed');
+        }
+
+        // Login successful - show password toggle and handle redirection
+        if (togglePasswordBtn) {
+          togglePasswordBtn.style.display = 'inline-block';
+        }
+
+        loadingMessage.style.display = 'none';
+
+        // Handle redirection based on account type
+        if (data.account_type === 'admin') {
+          // Redirect admin to admin dashboard
+          window.location.href = '/admin/dashboard';
+        } else if (data.account_type === 'student') {
+          // Show unavailable message for students
+          signInForm.style.display = 'none';
+          unavailableMessage.style.display = 'block';
+        }
+      } catch (err) {
+        loadingMessage.style.display = 'none';
+        errorMessage.textContent = err.message;
+        errorMessage.style.display = 'block';
+        signInBtn.disabled = false;
+      }
+    });
+  }
 });

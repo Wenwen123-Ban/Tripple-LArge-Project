@@ -901,3 +901,62 @@ def register_admin():
         return jsonify({'error': 'ID or Gmail already exists'}), 409
     finally:
         cursor.close()
+
+
+def login_student():
+    """Login endpoint for both students and admins with proper redirection."""
+    data = _json_payload()
+    student_id = _clean(data.get('student_id'))
+    password = data.get('password') or ''
+
+    if not student_id or not password:
+        return jsonify({'error': 'Student ID and password are required.'}), 400
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    _ensure_account_type_column(cursor)
+    
+    cursor.execute(
+        """
+        SELECT id, student_id, full_name, account_type, password_hash, is_verified
+        FROM students
+        WHERE student_id = %s AND is_verified = 1
+        """,
+        (student_id,),
+    )
+    student = cursor.fetchone()
+    cursor.close()
+
+    if not student:
+        log_security_event(
+            student_id=student_id,
+            event_type='LOGIN_FAILED_NOT_FOUND',
+            ip_address=_client_ip(),
+            description='Login attempted with non-existent or unverified account',
+        )
+        return jsonify({'error': 'Invalid student ID or password.'}), 401
+
+    if not verify_password(password, student['password_hash']):
+        log_security_event(
+            student_id=student_id,
+            event_type='LOGIN_FAILED_WRONG_PASSWORD',
+            ip_address=_client_ip(),
+            description='Login attempted with wrong password',
+        )
+        return jsonify({'error': 'Invalid student ID or password.'}), 401
+
+    account_type = student.get('account_type') or 'student'
+
+    log_security_event(
+        student_id=student_id,
+        event_type='LOGIN_SUCCESS',
+        ip_address=_client_ip(),
+        description=f'Successful login as {account_type}',
+    )
+
+    return jsonify({
+        'status': 'success',
+        'account_type': account_type,
+        'student_id': student_id,
+        'full_name': student['full_name'],
+    })
