@@ -40,3 +40,53 @@ CREATE TABLE IF NOT EXISTS recovery_codes (
 -- Keep existing XAMPP databases compatible if the table was created before confirmed tracking.
 ALTER TABLE pending_confirmations
     ADD COLUMN IF NOT EXISTS confirmed TINYINT(1) DEFAULT 0 AFTER gmail;
+
+-- Admin account typing (student/admin) for management screens.
+ALTER TABLE students
+    ADD COLUMN IF NOT EXISTS account_type VARCHAR(20) DEFAULT 'student' AFTER is_verified;
+
+-- Admin-managed courses.
+CREATE TABLE IF NOT EXISTS courses (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    name       VARCHAR(120) NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Admin-managed book categories.
+CREATE TABLE IF NOT EXISTS categories (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    name       VARCHAR(120) NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Admin-managed books.
+CREATE TABLE IF NOT EXISTS books (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    book_no        VARCHAR(60) NOT NULL UNIQUE,
+    title          VARCHAR(255) NOT NULL,
+    category_id    INT NULL,
+    status         VARCHAR(40) DEFAULT 'Available',
+    reserved_count INT DEFAULT 0,
+    borrowed_count INT DEFAULT 0,
+    created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Admin rules and audit logs.
+CREATE TABLE IF NOT EXISTS admin_rules (
+    id               INT PRIMARY KEY,
+    nearest_day_rule TINYINT(1) DEFAULT 1,
+    return_days      INT NULL,
+    return_hours     INT NULL,
+    expire_days      INT NULL,
+    expire_hours     INT NULL,
+    expire_mins      INT DEFAULT 30,
+    updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS admin_logs (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    student_id VARCHAR(40),
+    direction  VARCHAR(20),
+    action     VARCHAR(120),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
