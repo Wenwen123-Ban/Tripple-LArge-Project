@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Security — Click &amp; Collect</title>
+  <link rel="stylesheet" href="/styles/main/welcome.css">
+  <link rel="stylesheet" href="/styles/admin/admin_shared.css">
+  <link rel="stylesheet" href="/styles/admin/admin_securityreports.css">
+</head>
+<body class="admin-page" data-page="security">
+  <div id="header-placeholder"></div>
+  <div id="navbar-placeholder"></div>
+  <div class="admin-body">
+    <div id="sidebar-placeholder"></div>
+    <main class="security-main main-content">
+      <div class="card logs-card">
+        <div class="card-header-row"><h3>Logs Report</h3><span class="menu-icon">☰</span></div>
+        <div class="logs-body" id="logs-list"></div>
+      </div>
+      <div class="card server-health-card">
+        <div class="card-header-row"><h3>Server Health</h3><span class="menu-icon">☰</span></div>
+        <p>Server Load: <input id="server-load" readonly> %</p>
+        <p>Server Status: <span id="server-status" class="status-badge status-normal">Normal</span><button id="check-btn">Check</button></p>
+      </div>
+      <div class="card rules-card">
+        <h3>Reserve and Borrow Rules Control</h3>
+        <div class="rules-body">
+          <div class="rule-section">
+            <p>Reserved books listed in declared Holiday Days and some days of No Library Operation, the system will pick the most nearer operation Day to be picked up. The box is default checked to enable it.</p>
+            <input type="checkbox" id="nearest-day-rule" checked>
+          </div>
+          <div class="rule-section">
+            <p>Borrowed Books will be returned in a declared amount of days or time based on here. If no inputs default N/A:</p>
+            <div class="rule-inputs">
+              <input type="number" id="return-days" placeholder="Days" min="0">
+              <input type="number" id="return-hours" placeholder="Hours" min="0" max="23">
+            </div>
+          </div>
+          <div class="rule-section">
+            <p>Unapproved Reserved Books listed will expire in:</p>
+            <div class="rule-inputs">
+              <input type="number" id="expire-days" placeholder="Days" min="0">
+              <input type="number" id="expire-hours" placeholder="Hours" min="0" max="23">
+              <input type="number" id="expire-mins" value="30" min="0" max="59">
+            </div>
+            <p>Failure to approve within the time will make the book status back to available again. Default 30 minutes. No inputs = Default N/A.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div id="footer-placeholder"></div>
+  <script src="/scripts/shared/components.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const page = document.body.dataset.page;
+      loadComponent('#header-placeholder', '/components/header.html', () => setPortalLabel('/ Librarian Portal /'));
+      loadComponent('#navbar-placeholder', '/components/navbar.html', () => { setActiveNav(page); initHamburger(); initNavSearch(); });
+      loadComponent('#sidebar-placeholder', '/components/sidebar.html', () => initSidebar(page));
+      loadComponent('#footer-placeholder', '/components/footer.html', () => startClock());
+    });
+  </script>
+  <script src="/scripts/admin/reports.js"></script>
+</body>
+</html>
