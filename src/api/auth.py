@@ -586,3 +586,61 @@ def check_token(request):
 
     token = request.GET.get('token', '')
     return JsonResponse({'confirmed': is_token_confirmed(token)})
+
+
+def _ensure_account_type_column(cursor):
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN account_type VARCHAR(20) DEFAULT 'student'")
+    except mysql.connector.Error as exc:
+        if exc.errno != 1060:
+            raise
+
+
+def register_admin():
+    """Register an admin account directly without email confirmation."""
+    data = _json_payload()
+    student_id = _clean(data.get('student_id'))
+    lbc_no = _clean(data.get('lbc_no'))
+    full_name = _clean(data.get('full_name'))
+    address = _clean(data.get('address'))
+    contact_no = _clean(data.get('contact_no'))
+    password = data.get('password') or ''
+    course = _clean(data.get('course'), 'N/A') or 'N/A'
+    year_level = _clean(data.get('year_level'))
+    gmail = _clean(data.get('gmail'))
+
+    required_fields = {
+        'student_id': student_id,
+        'full_name': full_name,
+        'password': password,
+        'gmail': gmail,
+    }
+    missing = [field for field, value in required_fields.items() if not value]
+    if missing:
+        return jsonify({'error': f"Missing required field(s): {', '.join(missing)}"}), 400
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    _ensure_account_type_column(cursor)
+    password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    try:
+        cursor.execute(
+            """
+            INSERT INTO students
+                (student_id, lbc_no, full_name, address, contact_no,
+                 password_hash, course, year_level, gmail, is_verified, account_type)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1, 'admin')
+            """,
+            (
+                student_id, lbc_no, full_name, address, contact_no,
+                password_hash, course, year_level, gmail,
+            ),
+        )
+        db.commit()
+        return jsonify({'status': 'registered', 'account_type': 'admin'}), 201
+    except mysql.connector.IntegrityError:
+        db.rollback()
+        return jsonify({'error': 'ID or Gmail already exists'}), 409
+    finally:
+        cursor.close()
