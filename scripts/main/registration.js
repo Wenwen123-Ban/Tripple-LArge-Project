@@ -1,4 +1,4 @@
-import { sendConfirmationEmail, checkConfirmationToken } from '../../services/api/auth.js';
+import { sendConfirmationEmail, checkConfirmationToken, saveStudentRegistration } from '../../services/api/auth.js';
 import { showNotification } from '../shared/notification.js';
 
 const COLLEGE_YEARS = [
@@ -120,7 +120,8 @@ function startPolling(checkboxEl) {
         stopPolling();
         checkboxEl.checked = true;
         checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
-        showNotification('Email confirmed! Your registration is verified.', 'success');
+        showNotification('Email confirmed! Saving registration...', 'success');
+        await saveRegistration();
       }
     } catch (err) {
       console.error('Polling error:', err);
@@ -134,6 +135,43 @@ function startPolling(checkboxEl) {
       showNotification('Confirmation link expired. Please resend.', 'error');
     }
   }, 15 * 60 * 1000);
+}
+
+
+async function saveRegistration() {
+  const registrationForm = document.getElementById('registrationForm');
+
+  if (registrationForm && !registrationForm.checkValidity()) {
+    registrationForm.reportValidity();
+    showNotification('Complete all registration fields before saving.', 'error');
+    return;
+  }
+
+  const payload = {
+    student_id: document.getElementById('id-input')?.value.trim() || '',
+    lbc_no: document.getElementById('lbc-input')?.value.trim() || '',
+    full_name: document.getElementById('registrationName')?.value.trim() || '',
+    address: document.getElementById('registrationAddress')?.value.trim() || '',
+    contact_no: document.getElementById('registrationContactNo')?.value.trim() || '',
+    password: document.getElementById('registrationPassword')?.value || '',
+    course: document.getElementById('course-select')?.value || 'N/A',
+    year_level: document.getElementById('year-select')?.value || '',
+    gmail: document.getElementById('registrationGmail')?.value.trim() || '',
+    token: confirmationToken,
+  };
+
+  try {
+    const result = await saveStudentRegistration(payload);
+
+    if (result.status === 'registered') {
+      showNotification('Registration complete! You may now sign in.', 'success');
+    } else {
+      showNotification(result.error || 'Registration failed.', 'error');
+    }
+  } catch (err) {
+    console.error('Could not save registration:', err);
+    showNotification(err.message || 'Could not save registration. Try again.', 'error');
+  }
 }
 
 async function handleGmailConfirmation({ gmailInput, nameInput, checkboxEl, buttonEl }) {
