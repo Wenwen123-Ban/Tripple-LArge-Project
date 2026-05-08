@@ -114,29 +114,41 @@ def build_confirm_url(token):
 
 
 def send_confirmation_email(gmail, name, confirm_url):
-    host = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-    port = int(os.getenv('EMAIL_PORT', '587'))
-    username = os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com')
-    password = os.getenv('EMAIL_HOST_PASSWORD', 'your-app-password')
-    use_tls = os.getenv('EMAIL_USE_TLS', 'true').lower() in {'1', 'true', 'yes'}
+    try:
+        host = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+        port = int(os.getenv('EMAIL_PORT', '587'))
+        username = os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com')
+        password = os.getenv('EMAIL_HOST_PASSWORD', 'your-app-password')
+        use_tls = os.getenv('EMAIL_USE_TLS', 'true').lower() in {'1', 'true', 'yes'}
 
-    message = MIMEMultipart('alternative')
-    message['Subject'] = 'Click & Collect — Confirm Your Email'
-    message['From'] = get_default_from_email()
-    message['To'] = gmail
-    message.attach(MIMEText(
-        f"Dear {name},\n\nPlease confirm your Click & Collect email address: {confirm_url}\n\n"
-        'This link expires in 15 minutes.',
-        'plain',
-        'utf-8',
-    ))
-    message.attach(MIMEText(build_email_html(name, confirm_url), 'html', 'utf-8'))
+        message = MIMEMultipart('alternative')
+        message['Subject'] = 'Click & Collect — Confirm Your Email'
+        message['From'] = get_default_from_email()
+        message['To'] = gmail
+        message.attach(MIMEText(
+            f"Dear {name},\n\nPlease confirm your Click & Collect email address: {confirm_url}\n\n"
+            'This link expires in 15 minutes.',
+            'plain',
+            'utf-8',
+        ))
+        message.attach(MIMEText(build_email_html(name, confirm_url), 'html', 'utf-8'))
 
-    with smtplib.SMTP(host, port) as smtp:
-        if use_tls:
-            smtp.starttls()
-        smtp.login(username, password)
-        smtp.send_message(message)
+        with smtplib.SMTP(host, port) as smtp:
+            if use_tls:
+                smtp.starttls()
+            smtp.login(username, password)
+            smtp.send_message(message)
+        
+        print(f"✓ Email sent successfully to {gmail}")
+    except smtplib.SMTPAuthenticationError:
+        print(f"✗ Email error: Invalid Gmail credentials. Check EMAIL_HOST_USER and EMAIL_HOST_PASSWORD in .env")
+        raise
+    except smtplib.SMTPException as e:
+        print(f"✗ Email error: {str(e)}")
+        raise
+    except Exception as e:
+        print(f"✗ Unexpected error sending email: {str(e)}")
+        raise
 
 
 def send_confirmation_email_django(gmail, name, confirm_url):
