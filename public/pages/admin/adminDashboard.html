@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Click &amp; Collect</title>
+  <link rel="stylesheet" href="/styles/main/welcome.css">
+  <link rel="stylesheet" href="/styles/admin/admin_shared.css">
+  <link rel="stylesheet" href="/styles/admin/admin_dashboard.css">
+</head>
+<body class="admin-page" data-page="dashboard">
+  <div id="header-placeholder"></div>
+  <div id="navbar-placeholder"></div>
+  <div class="admin-body">
+    <div id="sidebar-placeholder"></div>
+    <main class="dashboard-main main-content">
+      <div class="stats-row">
+        <div class="card overview-card">
+          <h3>Overview</h3>
+          <p>Total of books: <span id="total-books">—</span></p>
+          <p>Total of users: <span id="total-users">—</span></p>
+        </div>
+        <div class="card top-reserved-card">
+          <h3>Top 3 Most Reserved</h3>
+          <ol id="top-reserved"><li>—</li><li>—</li><li>—</li></ol>
+        </div>
+        <div class="card top-borrowed-card">
+          <h3>Top 3 Most Borrowed</h3>
+          <ol id="top-borrowed"><li>—</li><li>—</li><li>—</li></ol>
+        </div>
+        <button class="logout-side-btn" onclick="window.location.href='/main/sign_in'">Log Out →</button>
+      </div>
+      <div class="card reservation-card">
+        <h3>Reservation &amp; Borrowing Area</h3>
+        <div class="res-borrow-split">
+          <div class="res-col">
+            <div class="table-header">Book No / Book Title / User ID / Control</div>
+            <div class="table-body" id="reservation-list"></div>
+          </div>
+          <div class="col-divider"></div>
+          <div class="borrow-col">
+            <div class="table-header">Book No / Book Title / Category / User ID / Control</div>
+            <div class="table-body" id="borrowing-list"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div id="footer-placeholder"></div>
+  <script src="/scripts/shared/components.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const page = document.body.dataset.page;
+      loadComponent('#header-placeholder', '/components/header.html', () => setPortalLabel('/ Librarian Portal /'));
+      loadComponent('#navbar-placeholder', '/components/navbar.html', () => { setActiveNav(page); initHamburger(); initNavSearch(); });
+      loadComponent('#sidebar-placeholder', '/components/sidebar.html', () => initSidebar(page));
+      loadComponent('#footer-placeholder', '/components/footer.html', () => startClock());
+    });
+  </script>
+  <script src="/scripts/admin/dashboard.js"></script>
+</body>
+</html>

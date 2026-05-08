@@ -1,0 +1,9 @@
+.books-main { display: grid; grid-template-rows: auto 1fr; gap: 14px; }
+.top-actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.add-books-card, .add-category-card { min-height: 158px; }
+.table-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.books-table-card { display: flex; flex-direction: column; min-height: 0; }
+.books-table .table-row { display: grid; grid-template-columns: 1fr 2fr 1.3fr 1fr auto; }
+.books-table .table-row > span { flex: none; }
+.delete-book-btn { border: 0; background: #EF4444; color: #ffffff; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
+@media (max-width: 900px) { .top-actions-row { grid-template-columns: 1fr; } }

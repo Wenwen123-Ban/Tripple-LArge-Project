@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, render_template, request, send_from_directory
 import os
 
-from src.api import auth
+from src.api import admin, auth, books, users
 from src.api.auth import (
     build_confirm_success_html,
     build_confirm_url,
@@ -66,6 +66,12 @@ app.add_url_rule(
     methods=['POST'],
 )
 app.add_url_rule(
+    '/api/auth/register-admin',
+    'register_admin',
+    auth.register_admin,
+    methods=['POST'],
+)
+app.add_url_rule(
     '/api/auth/recovery/request',
     'recovery_request',
     auth.recovery_request,
@@ -77,6 +83,27 @@ app.add_url_rule(
     auth.recovery_verify,
     methods=['POST'],
 )
+
+
+# ─── Admin API endpoints ─────────────────────────────────
+app.add_url_rule('/api/books', 'get_books', books.get_books, methods=['GET'])
+app.add_url_rule('/api/books', 'add_book', books.add_book, methods=['POST'])
+app.add_url_rule('/api/books/<int:id>', 'delete_book', books.delete_book, methods=['DELETE'])
+
+app.add_url_rule('/api/categories', 'get_categories', books.get_categories, methods=['GET'])
+app.add_url_rule('/api/categories', 'add_category', books.add_category, methods=['POST'])
+app.add_url_rule('/api/categories/<int:id>', 'delete_category', books.delete_category, methods=['DELETE'])
+
+app.add_url_rule('/api/users', 'get_users', users.get_users, methods=['GET'])
+app.add_url_rule('/api/users/<int:id>', 'update_user', users.update_user, methods=['PATCH'])
+app.add_url_rule('/api/courses', 'get_courses', users.get_courses, methods=['GET'])
+app.add_url_rule('/api/courses', 'add_course', users.add_course, methods=['POST'])
+app.add_url_rule('/api/courses/<int:id>', 'delete_course', users.delete_course, methods=['DELETE'])
+
+app.add_url_rule('/api/admin/rules', 'get_rules', admin.get_rules, methods=['GET'])
+app.add_url_rule('/api/admin/rules', 'save_rules', admin.save_rules, methods=['POST'])
+app.add_url_rule('/api/admin/server-health', 'server_health', admin.server_health, methods=['GET'])
+app.add_url_rule('/api/admin/logs', 'get_logs', admin.get_logs, methods=['GET'])
 
 # ─── Main pages ───────────────────────────────────────────
 @app.route('/')
@@ -147,6 +174,7 @@ def admin_users():
     return send_from_directory(os.path.join(PAGES_DIR, 'admin'), 'adminusersManagement.html')
 
 
+@app.route('/admin/security')
 @app.route('/admin/reports')
 def admin_reports():
     """Serve the admin security reports page."""
@@ -157,6 +185,12 @@ def admin_reports():
 def serve_pages(filename):
     """Serve pages from public/pages directory"""
     return send_from_directory(PAGES_DIR, filename)
+
+@app.route('/components/<path:filename>')
+def serve_components(filename):
+    """Serve reusable HTML components."""
+    return send_from_directory(os.path.join(PUBLIC_DIR, 'components'), filename)
+
 
 @app.route('/assets/<path:filename>')
 def serve_assets(filename):

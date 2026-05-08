@@ -1,0 +1,10 @@
+.users-main { display: grid; grid-template-rows: auto 1fr; gap: 14px; }
+.users-actions-row { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr) auto; gap: 14px; align-items: stretch; }
+.add-admin-btn { height: 100%; min-width: 130px; border: 2px solid var(--dark-navy); border-radius: 10px; background: #ffffff; color: var(--dark-navy); font-weight: 900; cursor: pointer; }
+.users-table-card { display: flex; flex-direction: column; min-height: 0; }
+.users-table .table-row { display: grid; grid-template-columns: 0.9fr 1.4fr 0.9fr 1.4fr 1.6fr; cursor: pointer; }
+.users-table .table-row > span { flex: none; }
+.admin-sidebar.collapsed ~ .main-content .col-address, .admin-sidebar.collapsed ~ .users-main .col-address { display: none; }
+.registration-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.registration-grid .input-box, .registration-grid .input-select { width: 100%; }
+@media (max-width: 1000px) { .users-actions-row { grid-template-columns: 1fr; } .add-admin-btn { min-height: 44px; } }
