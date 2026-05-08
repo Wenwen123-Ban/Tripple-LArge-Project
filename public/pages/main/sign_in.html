@@ -36,14 +36,27 @@
                     <label class="input-label" for="signinIdNo">ID No. :</label>
                     <input type="text" id="signinIdNo" name="id_no" class="input-pill js-id-no" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="10" placeholder="0000-00000" pattern="\d{4}-\d{5}" title="Use ID No. format 0000-00000" required>
                 </div>
-                <div class="input-row">
+                <div class="input-row password-row">
                     <label class="input-label" for="signinPassword">Password:</label>
-                    <input type="password" id="signinPassword" name="password" class="input-pill" autocomplete="current-password" required>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="signinPassword" name="password" class="input-pill" autocomplete="current-password" required>
+                        <button type="button" id="togglePasswordBtn" class="toggle-password-btn" aria-label="Show password" style="display: none;">
+                            <span class="btn-eye-icon">👁️</span>
+                        </button>
+                    </div>
                 </div>
 
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+                <div id="loadingMessage" class="loading-message" style="display: none;">Signing in...</div>
+
                 <hr class="form-divider">
-                <button type="submit" class="btn-primary">Sign in</button>
+                <button type="submit" class="btn-primary" id="signInBtn">Sign in</button>
             </form>
+
+            <div id="unavailableMessage" class="unavailable-message" style="display: none;">
+                <p>Student features are currently unavailable.</p>
+                <p>Please try again later.</p>
+            </div>
 
             <p class="form-footer-links">
                 <a href="/main/registration" class="footer-link">New user click this.</a>

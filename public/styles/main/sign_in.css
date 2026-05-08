@@ -199,6 +199,88 @@ body {
     font-family: var(--font-body);
     font-size: 15px;
     font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: var(--dark-navy);
+    color: #FFFFFF;
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Password input wrapper with toggle button */
+.password-input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.toggle-password-btn:hover {
+    opacity: 1;
+}
+
+.toggle-password-btn.active {
+    opacity: 1;
+}
+
+/* Error and loading messages */
+.error-message {
+    color: #F44336;
+    font-size: 13px;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: #FFEBEE;
+    border-radius: 6px;
+    border-left: 3px solid #F44336;
+}
+
+.loading-message {
+    color: var(--deep-purple);
+    font-size: 13px;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: #F3E5F5;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Unavailable message for students */
+.unavailable-message {
+    text-align: center;
+    padding: 40px 24px;
+}
+
+.unavailable-message p {
+    color: var(--dark-navy);
+    font-size: 16px;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.unavailable-message p:first-child {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
     color: #000000;
     cursor: pointer;
 }
