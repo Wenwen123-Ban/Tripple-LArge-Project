@@ -8,3 +8,9 @@
 .registration-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .registration-grid .input-box, .registration-grid .input-select { width: 100%; }
 @media (max-width: 1000px) { .users-actions-row { grid-template-columns: 1fr; } .add-admin-btn { min-height: 44px; } }
+
+.users-header { grid-template-columns: 0.9fr 1.4fr 0.9fr 1.4fr 1.6fr; }
+.users-table .table-row { border: 1px solid #a7a7a7; border-radius: 4px; padding: 9px 10px; margin-bottom: 6px; }
+.users-table .table-row:nth-child(even) { background: #fff8cc; }
+.users-table .table-row:nth-child(odd) { background: #ffffff; }
+.users-table .table-row > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
