@@ -7,12 +7,9 @@ load_dotenv('C:\\CC-Config\\.env')
 
 from src.api import admin, auth, books, users
 from src.api.auth import (
-    build_admin_confirm_success_html,
-    build_confirm_success_html,
     build_confirm_url,
     create_confirmation_token,
-    get_confirmation_type,
-    mark_token_confirmed,
+    confirm_email_token,
     send_confirmation_email,
     _token_confirmation_status,
 )
@@ -57,14 +54,9 @@ def send_auth_confirmation():
 
 @app.route('/api/auth/confirm-email')
 def confirm_auth_email():
-    """Mark a token confirmed after a student or admin clicks the email button."""
-    token = request.args.get('token', '')
-    confirmation_type = get_confirmation_type(token)
-    if mark_token_confirmed(token):
-        if confirmation_type == 'admin':
-            return build_admin_confirm_success_html()
-        return build_confirm_success_html()
-    return '<p>Invalid or expired confirmation link.</p>', 400
+    """Mark a token confirmed and render the right confirmation page."""
+    html, status = confirm_email_token(request.args.get('token', ''))
+    return html, status
 
 
 @app.route('/api/auth/check-token')
@@ -102,11 +94,9 @@ app.add_url_rule(
 app.add_url_rule('/api/auth/logout', 'logout', auth.logout, methods=['POST'])
 app.add_url_rule('/api/admin/me', 'admin_get_me', admin.get_me, methods=['GET'])
 app.add_url_rule('/api/auth/verify-admin-setup', 'verify_admin_setup_code', auth.verify_admin_setup_code, methods=['POST'])
-app.add_url_rule('/api/auth/register-admin', 'register_admin', auth.register_admin, methods=['POST'])
 app.add_url_rule('/api/auth/admin-send-confirmation', 'admin_send_confirmation', auth.admin_send_confirmation, methods=['POST'])
 app.add_url_rule('/api/auth/check-type', 'check_account_type', auth.check_account_type, methods=['POST'])
 app.add_url_rule('/api/auth/admin/setup-verify', 'verify_admin_setup_code', auth.verify_admin_setup_code, methods=['POST'])
-app.add_url_rule('/api/auth/register-admin', 'register_admin', auth.register_admin, methods=['POST'])
 
 
 
