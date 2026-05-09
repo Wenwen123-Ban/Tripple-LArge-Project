@@ -30,6 +30,8 @@ let allUsers = [];
 let userSearch = '';
 let adminConfirmToken = null;
 let isAwaitingOneTimeCode = false;
+let adminConfirmPoll = null;
+let adminConfirmTimeout = null;
 
 function renderUsersTable(users) {
   const tbody = document.getElementById('users-tbody');
@@ -74,7 +76,15 @@ function openAdminModal() {
   document.getElementById('admin-modal-overlay').style.display = 'flex';
 }
 
+function stopAdminConfirmationPolling() {
+  if (adminConfirmPoll) clearInterval(adminConfirmPoll);
+  if (adminConfirmTimeout) clearTimeout(adminConfirmTimeout);
+  adminConfirmPoll = null;
+  adminConfirmTimeout = null;
+}
+
 function resetAdminForm() {
+  stopAdminConfirmationPolling();
   adminConfirmToken = null;
   isAwaitingOneTimeCode = false;
   document.getElementById('admin-form-section').style.display = 'flex';
@@ -84,7 +94,42 @@ function resetAdminForm() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  document.getElementById('admin-confirm-gmail-btn').disabled = false;
   document.getElementById('admin-confirm-gmail-btn').textContent = 'Confirm Gmail';
+}
+
+function startAdminConfirmationPolling(buttonEl) {
+  stopAdminConfirmationPolling();
+  buttonEl.disabled = true;
+  buttonEl.textContent = 'Waiting for Gmail confirmation...';
+
+  adminConfirmPoll = setInterval(async () => {
+    if (!adminConfirmToken) return;
+
+    try {
+      const res = await fetch(`/api/auth/check-token?token=${encodeURIComponent(adminConfirmToken)}`);
+      const data = res.ok ? await res.json() : {};
+
+      if (data.confirmed) {
+        stopAdminConfirmationPolling();
+        isAwaitingOneTimeCode = true;
+        buttonEl.disabled = false;
+        buttonEl.textContent = 'Get One-Time Code';
+        showNotification('Admin Gmail confirmed. You can now get the one-time code.', 'success');
+      }
+    } catch (err) {
+      console.error('Admin confirmation polling failed:', err);
+    }
+  }, 4000);
+
+  adminConfirmTimeout = setTimeout(() => {
+    stopAdminConfirmationPolling();
+    adminConfirmToken = null;
+    isAwaitingOneTimeCode = false;
+    buttonEl.disabled = false;
+    buttonEl.textContent = 'Confirm Gmail';
+    showNotification('Confirmation link expired. Please resend the admin Gmail confirmation.', 'error');
+  }, 15 * 60 * 1000);
 }
 
 async function confirmGmail() {
@@ -118,9 +163,9 @@ async function confirmGmail() {
     const data = await res.json();
     if (data.status === 'sent') {
       adminConfirmToken = data.token;
-      isAwaitingOneTimeCode = true;
-      document.getElementById('admin-confirm-gmail-btn').textContent = 'Get One-Time Code';
-      showNotification('Confirmation email sent to new admin Gmail.', 'success');
+      isAwaitingOneTimeCode = false;
+      startAdminConfirmationPolling(document.getElementById('admin-confirm-gmail-btn'));
+      showNotification('Confirmation email sent. Ask the new admin to click the Gmail link.', 'success');
     } else {
       showNotification(data.error || 'Failed to send email.', 'error');
     }
