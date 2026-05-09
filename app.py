@@ -7,9 +7,11 @@ load_dotenv('C:\\CC-Config\\.env')
 
 from src.api import admin, auth, books, users
 from src.api.auth import (
+    build_admin_confirm_success_html,
     build_confirm_success_html,
     build_confirm_url,
     create_confirmation_token,
+    get_confirmation_type,
     is_token_confirmed,
     mark_token_confirmed,
     send_confirmation_email,
@@ -51,9 +53,12 @@ def send_auth_confirmation():
 
 @app.route('/api/auth/confirm-email')
 def confirm_auth_email():
-    """Mark a token confirmed after the student clicks the email button."""
+    """Mark a token confirmed after a student or admin clicks the email button."""
     token = request.args.get('token', '')
+    confirmation_type = get_confirmation_type(token)
     if mark_token_confirmed(token):
+        if confirmation_type == 'admin':
+            return build_admin_confirm_success_html()
         return build_confirm_success_html()
     return '<p>Invalid or expired confirmation link.</p>', 400
 
