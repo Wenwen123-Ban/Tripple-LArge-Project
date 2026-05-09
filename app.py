@@ -187,6 +187,25 @@ def serve_services(filename):
     return send_from_directory(os.path.join(BASE_DIR, 'services'), filename)
 
 
+@app.route('/components/<path:filename>')
+def serve_components(filename):
+    """Serve component HTML files from public/components directory."""
+    return send_from_directory(os.path.join(PUBLIC_DIR, 'components'), filename)
+
+
+# ─── API Endpoints ────────────────────────────────────────
+@app.route('/api/books', methods=['GET'])
+def get_books():
+    """Fetch all books from the database."""
+    return jsonify({'books': [], 'message': 'Books API endpoint'}), 200
+
+
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    """Fetch all users from the database."""
+    return jsonify({'users': [], 'message': 'Users API endpoint'}), 200
+
+
 if __name__ == '__main__':
     print("🚀 Click & Collect - Welcome Page")
     print("📖 Starting development server...")
