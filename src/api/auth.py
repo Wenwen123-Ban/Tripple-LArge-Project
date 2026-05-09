@@ -323,7 +323,7 @@ def register_student():
     errors = validate_registration_fields(data, is_admin=False)
     if errors:
         return jsonify({'error': errors[0]}), 400
-    student_id = _clean(data.get('student_id'))
+    student_id = _clean(data.get('student_id') or data.get('admin_id'))
     lbc_no = _clean(data.get('lbc_no'))
     full_name = _clean(data.get('full_name'))
     address = _clean(data.get('address'))
@@ -872,8 +872,10 @@ def _ensure_account_type_column(cursor):
             raise
 
 
-def build_admin_invite_email(name):
+def build_admin_invite_email(name, registered_by, registered_at, expires_minutes=15):
     safe_name = escape(name or 'Administrator')
+    safe_registered_by = escape(registered_by or 'System')
+    safe_registered_at = escape(registered_at or 'N/A')
     return f"""
     <!DOCTYPE html><html>
     <body style="margin:0;padding:0;background:#f4f4f8;
@@ -889,16 +891,29 @@ def build_admin_invite_email(name):
                   North Western Mindanao State College of Science and Technology
                 </p>
                 <h1 style="margin:8px 0 0;color:#fff;font-size:26px;font-weight:900;">Click &amp; Collect</h1>
-                <p style="margin:6px 0 0;color:#FFD700;font-size:13px;font-weight:700;">Administrator Account Setup</p>
+                <p style="margin:6px 0 0;color:#FFD700;font-size:13px;font-weight:700;letter-spacing:0.05em;">
+                  ADMINISTRATOR ACCOUNT NOTICE
+                </p>
             </td></tr>
             <tr><td style="padding:32px 40px 16px;">
-                <p style="margin:0 0 8px;font-size:16px;color:#1A1A6E;font-weight:700;">Dear {safe_name},</p>
-                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.6;">An administrator account has been created for you on the <strong>Click &amp; Collect Library System</strong> at NMSC-ST.</p>
-                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.6;">To activate your account, return to the registration page and enter the <strong>one-time setup code</strong> provided to you by the administrator who created your account.</p>
-                <div style="background:#f4f4f8;border-radius:8px;border-left:4px solid #4B0082;padding:14px 20px;margin:0 0 16px;">
-                  <p style="margin:0;font-size:13px;color:#4B0082;font-weight:700;">Important Security Notice</p>
-                  <p style="margin:6px 0 0;font-size:13px;color:#555;line-height:1.5;">The setup code was shown only once to the registering administrator. This email does not contain the code for security reasons. Contact your administrator if you did not receive the code.</p>
+                <p style="margin:0 0 12px;font-size:16px;color:#1A1A6E;font-weight:700;">Dear {safe_name},</p>
+                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">You have been granted <strong>Administrator access</strong> to the <strong>Click &amp; Collect Library Borrowing System</strong> at NMSC-ST.</p>
+                <div style="background:#f4f4f8;border-left:4px solid #4B0082;border-radius:6px;padding:14px 20px;margin:0 0 20px;">
+                  <p style="margin:0;font-size:13px;color:#555;line-height:1.8;">
+                    <strong>Registered by:</strong> {safe_registered_by}<br>
+                    <strong>Registered at:</strong> {safe_registered_at}
+                  </p>
                 </div>
+                <p style="margin:0 0 12px;font-size:14px;color:#333;line-height:1.7;">To complete your account setup, return to the registration page and click the <strong>Get One-Time Code</strong> button. You will receive a physical recovery key that must be <strong>written down immediately</strong>.</p>
+                <div style="background:#fff3cd;border:1.5px solid #FFD700;border-radius:8px;padding:14px 20px;margin:0 0 20px;">
+                  <p style="margin:0;font-size:13px;color:#856404;line-height:1.7;">
+                    <strong>⚠ Security Notice:</strong><br>
+                    This confirmation link expires in <strong>{expires_minutes} minutes</strong>.<br>
+                    <strong>Do not save or share your one-time code.</strong> It is your physical recovery key.<br><br>
+                    If this was not your email or you did not request this account — <strong>disregard this email</strong>.
+                  </p>
+                </div>
+                <p style="margin:0;font-size:14px;color:#1A1A6E;font-weight:700;">Good luck, Librarian {safe_name}! 📚</p>
             </td></tr>
             <tr><td style="background:#f4f4f8;padding:16px 40px;border-top:1px solid #e0e0e0;text-align:center;">
               <p style="margin:0;font-size:11px;color:#aaa;">Click &amp; Collect &mdash; NMSC Library System &bull; Do not reply to this email.</p>
@@ -910,34 +925,9 @@ def build_admin_invite_email(name):
     """
 
 
-def send_admin_invite_email(gmail, name):
-    """Send admin registration notice without setup code in email."""
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = 'Click & Collect — Administrator Account Created'
-    msg['From'] = os.getenv('EMAIL_HOST_USER', get_default_from_email())
-    msg['To'] = gmail
-    msg.attach(MIMEText(build_admin_invite_email(name), 'html', 'utf-8'))
-
-    with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
-        smtp.ehlo()
-        smtp.starttls()
-        smtp.login(
-            os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com'),
-            os.getenv('EMAIL_HOST_PASSWORD', 'your-app-password'),
-        )
-        smtp.sendmail(
-            os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com'),
-            gmail,
-            msg.as_string(),
-        )
-def send_admin_invite_email(gmail, name):
+def send_admin_invite_email(gmail, name, registered_by, registered_at):
     """Send admin registration notice without setup code in email."""
     subject = 'Click & Collect — Admin Registration Notice'
-    body = (
-        f'Dear {name},\n\n'
-        'An administrator account was created for you in Click & Collect.\n'
-        'Please contact the registering admin for your one-time setup code.\n'
-    )
     host = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
     port = int(os.getenv('EMAIL_PORT', '587'))
     username = os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com')
@@ -947,7 +937,11 @@ def send_admin_invite_email(gmail, name):
     message['Subject'] = subject
     message['From'] = get_default_from_email()
     message['To'] = gmail
-    message.attach(MIMEText(body, 'plain', 'utf-8'))
+    message.attach(MIMEText(
+        build_admin_invite_email(name, registered_by, registered_at),
+        'html',
+        'utf-8',
+    ))
     with smtplib.SMTP(host, port) as smtp:
         if use_tls:
             smtp.starttls()
@@ -998,12 +992,43 @@ def register_admin():
         )
         cursor.execute("DELETE FROM pending_confirmations WHERE token=%s", (token,))
         db.commit()
-        send_admin_invite_email(gmail, full_name)
+        send_admin_invite_email(
+            gmail,
+            full_name,
+            data.get('registered_by', 'System'),
+            data.get('registered_at', 'N/A'),
+        )
         return jsonify({'status':'registered','setup_code':setup_code,'message':'Save this code. It will not be shown again.'}),201
     except mysql.connector.IntegrityError:
         db.rollback(); return jsonify({'error':'ID or Gmail already exists'}),409
     finally:
         cursor.close()
+
+
+def admin_send_confirmation():
+    if request.method != 'POST':
+        return jsonify({'error': 'Method not allowed'}), 405
+    data = _json_payload()
+    gmail = data.get('gmail')
+    name = data.get('name')
+    registered_by = data.get('registered_by', 'Administrator')
+    registered_at = data.get('registered_at', 'N/A')
+
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.now() + timedelta(minutes=15)
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(
+        """
+        INSERT INTO pending_confirmations (token, gmail, type, expires_at)
+        VALUES (%s, %s, 'admin', %s)
+        """,
+        (token, gmail, expires_at),
+    )
+    db.commit()
+    cursor.close()
+    send_admin_invite_email(gmail, name, registered_by, registered_at)
+    return jsonify({'status': 'sent', 'token': token})
 
 
 def verify_admin_setup_code():

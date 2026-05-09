@@ -1,60 +1,35 @@
-let allUsers = [];
-let userSearch = '';
-
-function notify(message, type = 'info') {
-  if (window.showNotification) {
-    window.showNotification(message, type);
-    return;
-  }
-  alert(message);
+function showNotification(message, type = 'info') {
+  if (window.showNotification) window.showNotification(message, type);
+  else console.log(`[${type}] ${message}`);
 }
 
-function ensureAdminModal() {
-  if (document.getElementById('admin-form-modal')) return;
-
-  const modal = document.createElement('div');
-  modal.id = 'admin-form-modal';
-  modal.className = 'modal-overlay';
-  modal.style.display = 'none';
-  modal.innerHTML = `
-    <div class="modal-card" style="max-width:640px;width:95%;background:#fff;border-radius:10px;padding:20px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <h3 style="margin:0;color:#1A1A6E;">Add Admin</h3>
-        <button type="button" data-close-modal style="border:none;background:transparent;font-size:20px;cursor:pointer;">&times;</button>
-      </div>
-      <form id="admin-register-form" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <input name="full_name" placeholder="Name" required />
-        <input name="student_id" placeholder="ID (YYYY-NNNNN)" required />
-        <input name="lbc_no" placeholder="LBC (YYYY-NNNNN)" required />
-        <input name="gmail" type="email" placeholder="Gmail" required />
-        <input name="address" placeholder="Address" required />
-        <input name="contact_no" placeholder="Contact No (11 digits)" required />
-        <input name="password" type="password" placeholder="Password" required />
-        <input name="token" placeholder="Confirmed Gmail token" required />
-        <div style="grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;">
-          <button type="button" data-close-modal>Cancel</button>
-          <button type="submit">Add Admin</button>
-        </div>
-      </form>
-    </div>`;
-
-  document.body.appendChild(modal);
-}
-
-function closeModals() {
-  document.querySelectorAll('.modal-overlay').forEach((m) => {
-    m.style.display = 'none';
+function applyIdFormat(inputEl) {
+  if (!inputEl) return;
+  inputEl.addEventListener('input', () => {
+    const digits = inputEl.value.replace(/\D/g, '').slice(0, 9);
+    inputEl.value = digits.length > 4 ? `${digits.slice(0, 4)}-${digits.slice(4)}` : digits;
   });
 }
 
-async function loadCourses() {
-  const res = await fetch('/api/courses');
-  const data = res.ok ? await res.json() : [];
-  const courseListSelect = document.getElementById('course-list-select');
-  if (courseListSelect) {
-    courseListSelect.innerHTML = '<option value="">— Select —</option>' + data.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
-  }
+function applyLbcFormat(inputEl) {
+  if (!inputEl) return;
+  inputEl.addEventListener('input', () => {
+    const digits = inputEl.value.replace(/\D/g, '').slice(0, 9);
+    inputEl.value = digits.length > 4 ? `${digits.slice(0, 4)}-${digits.slice(4)}` : digits;
+  });
 }
+
+function applyContactFormat(inputEl) {
+  if (!inputEl) return;
+  inputEl.addEventListener('input', () => {
+    inputEl.value = inputEl.value.replace(/\D/g, '').slice(0, 11);
+  });
+}
+
+let allUsers = [];
+let userSearch = '';
+let adminConfirmToken = null;
+let isAwaitingOneTimeCode = false;
 
 function renderUsersTable(users) {
   const tbody = document.getElementById('users-tbody');
@@ -68,8 +43,7 @@ function renderUsersTable(users) {
 }
 
 function renderUsers() {
-  const filterEl = document.getElementById('user-type-filter');
-  const type = filterEl ? filterEl.value : 'all';
+  const type = document.getElementById('user-type-filter')?.value || 'all';
   const rows = allUsers.filter((user) => {
     const accountType = String(user.account_type || 'student').toLowerCase();
     const matchesType = type === 'all' || accountType === type;
@@ -85,78 +59,153 @@ async function loadUsers() {
   renderUsers();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  ensureAdminModal();
+async function loadCourses() {
+  const res = await fetch('/api/courses');
+  const data = res.ok ? await res.json() : [];
+  const courseListSelect = document.getElementById('course-list-select');
+  if (courseListSelect) {
+    courseListSelect.innerHTML = '<option value="">— Select —</option>' + data.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+}
 
-  const addAdminBtn = document.getElementById('add-admin-btn');
-  if (addAdminBtn) {
-    addAdminBtn.addEventListener('click', () => {
-      const modal = document.getElementById('admin-form-modal');
-      if (modal) modal.style.display = 'flex';
-    });
+function openAdminModal() {
+  const adminName = document.querySelector('.sidebar-profile-name')?.textContent?.trim() || 'Administrator';
+  document.getElementById('registering-admin-name').textContent = adminName;
+  document.getElementById('admin-modal-overlay').style.display = 'flex';
+}
+
+function resetAdminForm() {
+  adminConfirmToken = null;
+  isAwaitingOneTimeCode = false;
+  document.getElementById('admin-form-section').style.display = 'flex';
+  document.getElementById('admin-code-section').style.display = 'none';
+  document.getElementById('admin-one-time-code').textContent = '—';
+  ['admin-fullname', 'admin-id-input', 'admin-lbc-input', 'admin-address', 'admin-contact', 'admin-gmail', 'admin-password'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('admin-confirm-gmail-btn').textContent = 'Confirm Gmail';
+}
+
+async function confirmGmail() {
+  const gmail = document.getElementById('admin-gmail').value.trim();
+  const name = document.getElementById('admin-fullname').value.trim();
+  const adminId = document.getElementById('admin-id-input').value.trim();
+
+  if (!gmail || !name || !adminId) {
+    showNotification('Fill in all fields first.', 'error');
+    return;
   }
 
-  document.body.addEventListener('click', (event) => {
-    if (event.target.matches('[data-close-modal]')) closeModals();
+  const registeredBy = document.getElementById('registering-admin-name').textContent;
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
   });
 
-  const saveCourseBtn = document.getElementById('save-course-btn');
-  if (saveCourseBtn) {
-    saveCourseBtn.addEventListener('click', async () => {
-      const name = document.getElementById('new-course')?.value.trim();
-      if (!name) return;
-      await fetch('/api/courses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      });
-      document.getElementById('new-course').value = '';
-      loadCourses();
+  try {
+    const res = await fetch('/api/auth/admin-send-confirmation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gmail,
+        name,
+        admin_id: adminId,
+        registered_by: registeredBy,
+        registered_at: timeStr,
+      }),
     });
+    const data = await res.json();
+    if (data.status === 'sent') {
+      adminConfirmToken = data.token;
+      isAwaitingOneTimeCode = true;
+      document.getElementById('admin-confirm-gmail-btn').textContent = 'Get One-Time Code';
+      showNotification('Confirmation email sent to new admin Gmail.', 'success');
+    } else {
+      showNotification(data.error || 'Failed to send email.', 'error');
+    }
+  } catch (err) {
+    showNotification('Connection error.', 'error');
+  }
+}
+
+async function getOneTimeCode() {
+  if (!adminConfirmToken) {
+    showNotification('Confirm Gmail first.', 'error');
+    return;
   }
 
-  const usersSearch = document.getElementById('users-search');
-  if (usersSearch) {
-    usersSearch.addEventListener('input', (event) => {
-      userSearch = event.target.value || '';
-      renderUsers();
+  const payload = {
+    admin_id: document.getElementById('admin-id-input').value.trim(),
+    lbc_no: document.getElementById('admin-lbc-input').value.trim(),
+    full_name: document.getElementById('admin-fullname').value.trim(),
+    address: document.getElementById('admin-address').value.trim(),
+    contact_no: document.getElementById('admin-contact').value.trim(),
+    password: document.getElementById('admin-password').value,
+    gmail: document.getElementById('admin-gmail').value.trim(),
+    token: adminConfirmToken,
+  };
+
+  try {
+    const res = await fetch('/api/auth/register-admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     });
-  }
+    const data = await res.json();
 
-  const userTypeFilter = document.getElementById('user-type-filter');
-  if (userTypeFilter) userTypeFilter.addEventListener('change', renderUsers);
-
-  const adminRegisterForm = document.getElementById('admin-register-form');
-  if (adminRegisterForm) {
-    adminRegisterForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const data = Object.fromEntries(new FormData(event.currentTarget).entries());
-      const res = await fetch('/api/auth/register-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        notify(payload.error || 'Failed to register admin.', 'error');
-        return;
-      }
-
-      if (payload.setup_code) {
-        const setupDisplay = document.getElementById('setup-code-display');
-        const setupValue = document.getElementById('setup-code-value');
-        if (setupDisplay && setupValue) {
-          setupValue.textContent = payload.setup_code;
-          setupDisplay.style.display = 'block';
-        }
-      }
-
-      notify(payload.message || 'Admin registered. Save setup code now.', 'success');
-      closeModals();
-      event.currentTarget.reset();
+    if (data.status === 'registered' && data.setup_code) {
+      document.getElementById('admin-form-section').style.display = 'none';
+      document.getElementById('admin-code-section').style.display = 'flex';
+      document.getElementById('admin-one-time-code').textContent = data.setup_code;
+      showNotification('Admin registered. Write down the code.', 'success');
       loadUsers();
-    });
+    } else {
+      showNotification(data.error || 'Registration failed.', 'error');
+    }
+  } catch (err) {
+    showNotification('Connection error.', 'error');
   }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyIdFormat(document.getElementById('admin-id-input'));
+  applyLbcFormat(document.getElementById('admin-lbc-input'));
+  applyContactFormat(document.getElementById('admin-contact'));
+
+  document.getElementById('add-admin-btn')?.addEventListener('click', openAdminModal);
+  document.getElementById('modal-close-btn')?.addEventListener('click', () => {
+    document.getElementById('admin-modal-overlay').style.display = 'none';
+    resetAdminForm();
+  });
+
+  document.getElementById('admin-confirm-gmail-btn')?.addEventListener('click', () => {
+    if (isAwaitingOneTimeCode) getOneTimeCode();
+    else confirmGmail();
+  });
+
+  document.getElementById('admin-done-btn')?.addEventListener('click', () => {
+    document.getElementById('admin-modal-overlay').style.display = 'none';
+    resetAdminForm();
+    showNotification('Admin account created. They may now log in.', 'success');
+    window.location.href = '/main/sign_in';
+  });
+
+  document.getElementById('save-course-btn')?.addEventListener('click', async () => {
+    const name = document.getElementById('new-course')?.value.trim();
+    if (!name) return;
+    await fetch('/api/courses', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }),
+    });
+    document.getElementById('new-course').value = '';
+    loadCourses();
+  });
+
+  document.getElementById('users-search')?.addEventListener('input', (event) => {
+    userSearch = event.target.value || '';
+    renderUsers();
+  });
+  document.getElementById('user-type-filter')?.addEventListener('change', renderUsers);
 
   loadCourses();
   loadUsers();
