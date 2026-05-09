@@ -14,7 +14,7 @@ from html import escape
 from urllib.parse import quote
 
 import mysql.connector
-from flask import jsonify, request
+from flask import jsonify, request, session
 
 from src.core.db import get_db
 from src.core.security import generate_setup_code, hash_password, verify_password
@@ -1054,4 +1054,6 @@ def login_student():
 
 
 def logout():
+    session.clear()
+    return jsonify({'status': 'logged_out'})
     return jsonify({'status':'logged_out','redirect':'/main/sign_in'})

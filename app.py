@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, render_template, request, send_from_directory, session
 import os
 from dotenv import load_dotenv
 
@@ -24,6 +24,7 @@ app = Flask(
     template_folder='public/pages',
     static_folder='public'
 )
+app.secret_key = os.getenv('FLASK_SECRET', 'dev-secret-change-in-prod')
 
 app.teardown_appcontext(close_db)
 
@@ -90,6 +91,9 @@ app.add_url_rule(
     methods=['POST'],
 )
 app.add_url_rule('/api/auth/logout', 'logout', auth.logout, methods=['POST'])
+app.add_url_rule('/api/auth/verify-admin-setup', 'verify_admin_setup_code', auth.verify_admin_setup_code, methods=['POST'])
+app.add_url_rule('/api/auth/register-admin', 'register_admin', auth.register_admin, methods=['POST'])
+app.add_url_rule('/api/auth/check-type', 'check_account_type', auth.check_account_type, methods=['POST'])
 app.add_url_rule('/api/auth/admin/setup-verify', 'verify_admin_setup_code', auth.verify_admin_setup_code, methods=['POST'])
 app.add_url_rule('/api/auth/register-admin', 'register_admin', auth.register_admin, methods=['POST'])
 
