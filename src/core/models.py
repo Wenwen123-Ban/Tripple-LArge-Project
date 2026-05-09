@@ -35,7 +35,29 @@ def initialize_schema():
             token VARCHAR(255) NOT NULL UNIQUE,
             gmail VARCHAR(255) NOT NULL,
             confirmed TINYINT(1) DEFAULT 0,
+            type VARCHAR(20) DEFAULT 'student',
             expires_at DATETIME NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS admins (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            admin_id VARCHAR(40) NOT NULL UNIQUE,
+            lbc_no VARCHAR(40),
+            full_name VARCHAR(160) NOT NULL,
+            address VARCHAR(255),
+            contact_no VARCHAR(40),
+            password_hash VARCHAR(255) NOT NULL,
+            gmail VARCHAR(255) NOT NULL UNIQUE,
+            is_verified TINYINT(1) DEFAULT 0,
+            setup_code_hash VARCHAR(255),
+            last_login_ip VARCHAR(80),
+            last_login_time DATETIME NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """
