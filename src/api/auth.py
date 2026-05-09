@@ -655,15 +655,28 @@ def check_account_type():
     db = get_db()
     cursor = db.cursor(dictionary=True)
     _ensure_account_type_column(cursor)
+    _ensure_admins_table(cursor)
     cursor.execute(
         """
-        SELECT COALESCE(account_type, 'student') AS account_type
-        FROM students
-        WHERE student_id = %s
+        SELECT 'admin' AS account_type
+        FROM admins
+        WHERE admin_id = %s
         """,
         (student_id,),
     )
     account = cursor.fetchone()
+
+    if not account:
+        cursor.execute(
+            """
+            SELECT COALESCE(account_type, 'student') AS account_type
+            FROM students
+            WHERE student_id = %s
+            """,
+            (student_id,),
+        )
+        account = cursor.fetchone()
+
     cursor.close()
 
     if not account:
@@ -872,10 +885,49 @@ def _ensure_account_type_column(cursor):
             raise
 
 
-def build_admin_invite_email(name, registered_by, registered_at, expires_minutes=15):
+def _ensure_pending_confirmation_type_column(cursor):
+    try:
+        cursor.execute("ALTER TABLE pending_confirmations ADD COLUMN type VARCHAR(20) DEFAULT 'student'")
+    except mysql.connector.Error as exc:
+        if exc.errno != 1060:
+            raise
+
+
+def _ensure_admins_table(cursor):
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS admins (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            admin_id VARCHAR(40) NOT NULL UNIQUE,
+            lbc_no VARCHAR(40),
+            full_name VARCHAR(160) NOT NULL,
+            address VARCHAR(255),
+            contact_no VARCHAR(40),
+            password_hash VARCHAR(255) NOT NULL,
+            gmail VARCHAR(255) NOT NULL UNIQUE,
+            is_verified TINYINT(1) DEFAULT 0,
+            setup_code_hash VARCHAR(255),
+            last_login_ip VARCHAR(80),
+            last_login_time DATETIME NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+
+def build_admin_invite_email(name, registered_by, registered_at, confirm_url=None, expires_minutes=15):
     safe_name = escape(name or 'Administrator')
     safe_registered_by = escape(registered_by or 'System')
     safe_registered_at = escape(registered_at or 'N/A')
+    safe_confirm_url = escape(confirm_url or '', quote=True)
+    confirm_button = ''
+    if safe_confirm_url:
+        confirm_button = f'''
+                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">Click the button below to confirm this Gmail address before the registering administrator generates your one-time setup code.</p>
+                <p style="margin:0 0 20px;text-align:center;">
+                  <a href="{safe_confirm_url}" style="display:inline-block;padding:12px 32px;background:#4B0082;color:#fff;text-decoration:none;border-radius:999px;font-weight:700;">Confirm Admin Gmail</a>
+                </p>
+        '''
     return f"""
     <!DOCTYPE html><html>
     <body style="margin:0;padding:0;background:#f4f4f8;
@@ -904,7 +956,8 @@ def build_admin_invite_email(name, registered_by, registered_at, expires_minutes
                     <strong>Registered at:</strong> {safe_registered_at}
                   </p>
                 </div>
-                <p style="margin:0 0 12px;font-size:14px;color:#333;line-height:1.7;">To complete your account setup, return to the registration page and click the <strong>Get One-Time Code</strong> button. You will receive a physical recovery key that must be <strong>written down immediately</strong>.</p>
+                {confirm_button}
+                <p style="margin:0 0 12px;font-size:14px;color:#333;line-height:1.7;">To complete your account setup, return to the registration page and click the <strong>Get One-Time Code</strong> button after Gmail confirmation. You will receive a physical recovery key that must be <strong>written down immediately</strong>.</p>
                 <div style="background:#fff3cd;border:1.5px solid #FFD700;border-radius:8px;padding:14px 20px;margin:0 0 20px;">
                   <p style="margin:0;font-size:13px;color:#856404;line-height:1.7;">
                     <strong>⚠ Security Notice:</strong><br>
@@ -925,7 +978,7 @@ def build_admin_invite_email(name, registered_by, registered_at, expires_minutes
     """
 
 
-def send_admin_invite_email(gmail, name, registered_by, registered_at):
+def send_admin_invite_email(gmail, name, registered_by, registered_at, confirm_url=None):
     """Send admin registration notice without setup code in email."""
     subject = 'Click & Collect — Admin Registration Notice'
     host = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
@@ -938,7 +991,7 @@ def send_admin_invite_email(gmail, name, registered_by, registered_at):
     message['From'] = get_default_from_email()
     message['To'] = gmail
     message.attach(MIMEText(
-        build_admin_invite_email(name, registered_by, registered_at),
+        build_admin_invite_email(name, registered_by, registered_at, confirm_url),
         'html',
         'utf-8',
     ))
@@ -966,6 +1019,8 @@ def register_admin():
     if not all([student_id, full_name, password, gmail, token]):
         return jsonify({'error': 'Missing required admin registration fields'}), 400
     db = get_db(); cursor = db.cursor(dictionary=True)
+    _ensure_admins_table(cursor)
+    _ensure_pending_confirmation_type_column(cursor)
     cursor.execute("SELECT * FROM pending_confirmations WHERE token=%s AND gmail=%s AND confirmed=1 AND expires_at>NOW()",(token,gmail))
     if not cursor.fetchone():
         cursor.close(); return jsonify({'error':'Email not confirmed'}),403
@@ -1009,25 +1064,30 @@ def admin_send_confirmation():
     if request.method != 'POST':
         return jsonify({'error': 'Method not allowed'}), 405
     data = _json_payload()
-    gmail = data.get('gmail')
-    name = data.get('name')
-    registered_by = data.get('registered_by', 'Administrator')
-    registered_at = data.get('registered_at', 'N/A')
+    gmail = _clean(data.get('gmail'))
+    name = _clean(data.get('name'), 'Administrator') or 'Administrator'
+    registered_by = _clean(data.get('registered_by'), 'Administrator') or 'Administrator'
+    registered_at = _clean(data.get('registered_at'), 'N/A') or 'N/A'
 
-    token = secrets.token_urlsafe(32)
-    expires_at = datetime.now() + timedelta(minutes=15)
+    if not re.match(r'^[^\s@]+@gmail\.com$', gmail, re.IGNORECASE):
+        return jsonify({'error': 'Valid Gmail address required'}), 400
+
+    token = create_confirmation_token(gmail)
     db = get_db()
     cursor = db.cursor()
+    _ensure_pending_confirmation_type_column(cursor)
     cursor.execute(
         """
-        INSERT INTO pending_confirmations (token, gmail, type, expires_at)
-        VALUES (%s, %s, 'admin', %s)
+        UPDATE pending_confirmations
+        SET type = 'admin'
+        WHERE token = %s
         """,
-        (token, gmail, expires_at),
+        (token,),
     )
     db.commit()
     cursor.close()
-    send_admin_invite_email(gmail, name, registered_by, registered_at)
+
+    send_admin_invite_email(gmail, name, registered_by, registered_at, build_confirm_url(token))
     return jsonify({'status': 'sent', 'token': token})
 
 
@@ -1038,6 +1098,7 @@ def verify_admin_setup_code():
     if not student_id or not setup_code:
         return jsonify({'error':'Student ID and setup code are required'}),400
     db=get_db(); cursor=db.cursor(dictionary=True)
+    _ensure_admins_table(cursor)
     cursor.execute("SELECT setup_code_hash FROM admins WHERE admin_id=%s",(student_id,))
     admin = cursor.fetchone()
     if not admin:
@@ -1060,6 +1121,7 @@ def login():
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
+    _ensure_admins_table(cursor)
     cursor.execute(
         """
         SELECT *, 'admin' AS account_type FROM admins
