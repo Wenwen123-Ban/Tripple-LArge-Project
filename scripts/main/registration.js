@@ -72,10 +72,12 @@ function applyIdFormat(inputEl) {
 
 function applyLbcFormat(inputEl) {
   if (!inputEl) return;
+  inputEl.setAttribute('maxlength', '10');
+  inputEl.setAttribute('placeholder', '0000-00000');
 
   inputEl.addEventListener('input', (e) => {
     let val = e.target.value.replace(/\D/g, '');
-    if (val.length > 13) val = val.slice(0, 13);
+    if (val.length > 9) val = val.slice(0, 9);
     e.target.value = val.length > 4
       ? `${val.slice(0, 4)}-${val.slice(4)}`
       : val;
@@ -88,7 +90,18 @@ function validateId(value) {
 }
 
 function validateLbc(value) {
-  return value === '' || /^\d{4}-\d+$/.test(value);
+  return /^\d{4}-\d{5}$/.test(value);
+}
+
+function applyContactFormat(inputEl) {
+  if (!inputEl) return;
+  inputEl.setAttribute('maxlength', '11');
+  inputEl.setAttribute('placeholder', '09XXXXXXXXX');
+  inputEl.setAttribute('inputmode', 'numeric');
+  inputEl.addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 11);
+    e.target.setCustomValidity('');
+  });
 }
 
 
@@ -215,6 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const courseSelect = document.getElementById('course-select');
   const idInput = document.getElementById('id-input');
   const lbcInput = document.getElementById('lbc-input');
+  const contactInput = document.getElementById('contact-input') || document.getElementById('registrationContactNo');
   const nameInput = document.getElementById('registrationName');
   const gmailInput = document.getElementById('registrationGmail');
   const confirmationCheckbox = document.getElementById('registrationAgreement');
@@ -264,6 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   applyIdFormat(idInput);
   applyLbcFormat(lbcInput);
+  applyContactFormat(contactInput);
   updateYearOptions(true);
   loadCourses();
 
@@ -276,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (lbcInput && !validateLbc(lbcInput.value)) {
-        lbcInput.setCustomValidity('Enter an LBC No. with 4 digits, a hyphen, and at least 1 digit after it.');
+        lbcInput.setCustomValidity('Enter a complete LBC No. in YYYY-NNNNN format.');
       } else if (lbcInput) {
         lbcInput.setCustomValidity('');
       }
