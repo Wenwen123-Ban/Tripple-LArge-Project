@@ -9,7 +9,7 @@ function statusClass(status) {
 }
 
 function renderBooks() {
-  const table = document.getElementById('books-table');
+  const tbody = document.getElementById('books-tbody');
   const filter = document.getElementById('book-status-filter').value;
   const rows = allBooks.filter((book) => {
     const status = String(book.status || 'available').toLowerCase();
@@ -17,14 +17,7 @@ function renderBooks() {
     const term = `${book.title || ''} ${book.book_no || ''}`.toLowerCase();
     return matchesStatus && term.includes(bookSearch.toLowerCase());
   });
-  table.innerHTML = rows.map((book) => `
-    <div class="table-row">
-      <span>${book.book_no || '—'}</span>
-      <span>${book.title || '—'}</span>
-      <span>${book.category || book.category_name || '—'}</span>
-      <span><span class="status-badge ${statusClass(book.status)}">${book.status || 'Available'}</span></span>
-      <button class="delete-book-btn" onclick="deleteBook(${book.id})">✕</button>
-    </div>`).join('') || '<div class="table-row"><span>No books found.</span></div>';
+  tbody.innerHTML = rows.map((book) => `\n    <tr>\n      <td>${book.book_no || '—'}</td>\n      <td>${book.title || '—'}</td>\n      <td>${book.category || book.category_name || '—'}</td>\n      <td class="${statusClass(book.status)}">${book.status || 'Available'}</td>\n    </tr>`).join('');\n  if (window.padTableRows) window.padTableRows('books-tbody', 4, 8);
 }
 
 async function loadCategories() {
@@ -86,7 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('add-book-btn').addEventListener('click', addBook);
   document.getElementById('save-book-btn').addEventListener('click', addBook);
   document.getElementById('book-status-filter').addEventListener('change', renderBooks);
-  document.addEventListener('admin:search', (event) => { bookSearch = event.detail || ''; renderBooks(); });
+  const booksSearch = document.getElementById('books-search');
+  const booksSearchClear = document.getElementById('books-search-clear');
+  if (booksSearch) booksSearch.addEventListener('input', (event) => { bookSearch = event.target.value || ''; renderBooks(); });
+  if (booksSearchClear) booksSearchClear.addEventListener('click', () => { if (booksSearch) { booksSearch.value=''; bookSearch=''; renderBooks(); booksSearch.focus(); } });
   loadCategories();
   loadBooks();
 });
