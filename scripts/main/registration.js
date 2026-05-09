@@ -218,6 +218,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const confirmationCheckbox = document.getElementById('registrationAgreement');
   const confirmGmailButton = document.getElementById('confirm-gmail-btn');
 
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('confirmed') === '1') {
+    const checkbox = document.getElementById('registrationAgreement');
+    if (checkbox) {
+      checkbox.checked = true;
+    }
+    showNotification('Email confirmation successful. You can continue registration.', 'success');
+    window.history.replaceState({}, document.title, '/main/registration');
+  }
+
   if (schoolLink) {
     schoolLink.addEventListener('click', (event) => {
       event.preventDefault();
