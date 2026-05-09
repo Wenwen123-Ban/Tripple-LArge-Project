@@ -174,6 +174,10 @@ document.addEventListener('DOMContentLoaded', () => {
   applyContactFormat(document.getElementById('admin-contact'));
 
   document.getElementById('add-admin-btn')?.addEventListener('click', openAdminModal);
+  document.getElementById('open-admin-registration-link')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    openAdminModal();
+  });
   document.getElementById('modal-close-btn')?.addEventListener('click', () => {
     document.getElementById('admin-modal-overlay').style.display = 'none';
     resetAdminForm();
