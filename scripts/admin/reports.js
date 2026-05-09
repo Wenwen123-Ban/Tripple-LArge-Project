@@ -7,13 +7,25 @@ function showInlineNotification(message, type = 'info') {
 }
 
 async function loadLogs() {
-  const res = await fetch('/api/admin/logs');
-  const data = res.ok ? await res.json() : [];
-  document.getElementById('logs-list').innerHTML = data.map((log) => `
-    <div class="log-row">
-      <span>${log.student_id || log.user_id || '—'} - ${log.direction || log.action || 'In'}</span>
-      <span>${log.timestamp || log.created_at || '—'}</span>
-    </div>`).join('') || '<div class="log-row"><span>No logs found.</span></div>';
+  try {
+    const res = await fetch('/api/admin/logs');
+    const logs = await res.json();
+    const list = document.getElementById('logs-list');
+    if (!logs.length) {
+      list.innerHTML = '<p class="no-logs">No logs yet.</p>';
+      return;
+    }
+    list.innerHTML = logs.map((log) => `
+      <div class="log-entry">
+        <span class="log-id">${log.account_id}</span>
+        <span class="log-type">${log.event_type}</span>
+        <span class="log-time">${log.created_at}</span>
+        <span class="log-desc">${log.description || ''}</span>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Failed to load logs:', err);
+  }
 }
 
 async function loadRules() {
@@ -54,10 +66,13 @@ document.addEventListener('DOMContentLoaded', () => {
     lastCheck = now;
     const res = await fetch('/api/admin/server-health');
     const data = await res.json();
-    document.getElementById('server-load').textContent = data.load ?? '—';
+    document.getElementById('server-load').value = `CPU: ${data.cpu}% | RAM: ${data.ram}%`;
     const status = document.getElementById('server-status');
     status.textContent = data.status;
-    status.className = `status-badge status-${String(data.status || 'normal').toLowerCase()}`;
+    status.style.background =
+      data.status === 'Normal' ? '#22C55E'
+        : data.status === 'Moderate' ? '#F59E0B' : '#EF4444';
+    showInlineNotification(`Server status: ${data.status}`, 'info');
   });
   document.querySelectorAll('#nearest-day-rule, #return-days, #return-hours, #expire-days, #expire-hours, #expire-mins')
     .forEach((el) => el.addEventListener('change', saveRules));
