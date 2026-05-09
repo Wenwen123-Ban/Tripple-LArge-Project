@@ -690,10 +690,11 @@ def admin_recovery_request():
 
     data = _json_payload()
     student_id = _clean(data.get('student_id'))
+    lbc_no = _clean(data.get('lbc_no'))
     gmail = _clean(data.get('gmail'))
 
-    if not student_id or not gmail:
-        return jsonify({'error': 'Admin ID and Gmail are required.'}), 400
+    if not student_id or not lbc_no or not gmail:
+        return jsonify({'error': 'Admin ID, LBC, and Gmail are required.'}), 400
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -702,11 +703,12 @@ def admin_recovery_request():
         """
         SELECT * FROM students
         WHERE student_id = %s
+          AND lbc_no = %s
           AND gmail = %s
           AND account_type = 'admin'
           AND is_verified = 1
         """,
-        (student_id, gmail),
+        (student_id, lbc_no, gmail),
     )
     admin = cursor.fetchone()
 
