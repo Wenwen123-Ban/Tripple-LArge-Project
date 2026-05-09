@@ -34,6 +34,21 @@ def _ensure_tables(cursor):
         )
         """
     )
+    _ensure_book_columns(cursor)
+
+
+def _ensure_book_columns(cursor):
+    cursor.execute("SHOW COLUMNS FROM books")
+    existing_columns = {row[0] for row in cursor.fetchall()}
+
+    if 'reserved_count' not in existing_columns:
+        cursor.execute(
+            "ALTER TABLE books ADD COLUMN reserved_count INT DEFAULT 0 AFTER status"
+        )
+    if 'borrowed_count' not in existing_columns:
+        cursor.execute(
+            "ALTER TABLE books ADD COLUMN borrowed_count INT DEFAULT 0 AFTER reserved_count"
+        )
 
 
 def get_categories():
