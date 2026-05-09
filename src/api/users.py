@@ -3,7 +3,14 @@
 import mysql.connector
 from flask import jsonify, request
 
-from src.core.db import get_db
+try:
+    from src.core.db import get_db
+except ModuleNotFoundError:
+    import sys
+    from pathlib import Path
+
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
+    from src.core.db import get_db
 
 
 def _payload():
