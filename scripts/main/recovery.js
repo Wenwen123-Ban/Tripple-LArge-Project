@@ -22,10 +22,12 @@ function applyIdFormat(inputEl) {
 
 function applyLbcFormat(inputEl) {
   if (!inputEl) return;
+  inputEl.setAttribute('maxlength', '10');
+  inputEl.setAttribute('placeholder', '0000-00000');
 
   inputEl.addEventListener('input', (e) => {
     let val = e.target.value.replace(/\D/g, '');
-    if (val.length > 13) val = val.slice(0, 13);
+    if (val.length > 9) val = val.slice(0, 9);
     e.target.value = val.length > 4
       ? `${val.slice(0, 4)}-${val.slice(4)}`
       : val;
@@ -38,7 +40,7 @@ function validateId(value) {
 }
 
 function validateLbc(value) {
-  return /^\d{4}-\d+$/.test(value);
+  return /^\d{4}-\d{5}$/.test(value);
 }
 
 function isAdminRecovery(recoveryKeyRow) {
@@ -57,7 +59,7 @@ function validateRecoveryIdentity({ idInput, lbcInput, gmailInput, recoveryKeyRo
   }
 
   if (!adminRecovery && lbcInput && !validateLbc(lbcInput.value)) {
-    lbcInput.setCustomValidity('Enter an LBC No. with 4 digits, a hyphen, and at least 1 digit after it.');
+    lbcInput.setCustomValidity('Enter a complete LBC No. in YYYY-NNNNN format.');
     valid = false;
   } else if (lbcInput) {
     lbcInput.setCustomValidity('');

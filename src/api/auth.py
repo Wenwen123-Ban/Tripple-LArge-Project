@@ -3,6 +3,7 @@
 import json
 import os
 import random
+import re
 import secrets
 import smtplib
 import string
@@ -298,8 +299,30 @@ def _clean(value, default=''):
     return str(value).strip()
 
 
+def validate_registration_fields(data, is_admin=False):
+    """Returns list of validation errors for registration payloads."""
+    errors = []
+
+    id_field = _clean(data.get('admin_id' if is_admin else 'student_id'))
+    if not re.match(r'^\d{4}-\d{5}$', id_field):
+        errors.append('ID must be in format YYYY-NNNNN (4 digits, hyphen, 5 digits)')
+    if not re.match(r'^\d{4}-\d{5}$', _clean(data.get('lbc_no'))):
+        errors.append('LBC No must be in format XXXX-XXXXX (4 digits, hyphen, 5 digits)')
+    if not re.match(r'^\d{11}$', _clean(data.get('contact_no'))):
+        errors.append('Contact No must be exactly 11 digits')
+    if not re.match(r'^[^\s@]+@gmail\.com$', _clean(data.get('gmail')), re.IGNORECASE):
+        errors.append('Gmail must be a valid @gmail.com address')
+    if len(data.get('password') or '') < 8:
+        errors.append('Password must be at least 8 characters')
+
+    return errors
+
+
 def register_student():
     data = _json_payload()
+    errors = validate_registration_fields(data, is_admin=False)
+    if errors:
+        return jsonify({'error': errors[0]}), 400
     student_id = _clean(data.get('student_id'))
     lbc_no = _clean(data.get('lbc_no'))
     full_name = _clean(data.get('full_name'))
@@ -311,16 +334,8 @@ def register_student():
     gmail = _clean(data.get('gmail'))
     token = _clean(data.get('token'))
 
-    required_fields = {
-        'student_id': student_id,
-        'full_name': full_name,
-        'password': password,
-        'gmail': gmail,
-        'token': token,
-    }
-    missing = [field for field, value in required_fields.items() if not value]
-    if missing:
-        return jsonify({'error': f"Missing required field(s): {', '.join(missing)}"}), 400
+    if not all([student_id, full_name, password, gmail, token]):
+        return jsonify({'error': 'Missing required registration fields'}), 400
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -941,6 +956,9 @@ def send_admin_invite_email(gmail, name):
 def register_admin():
     """Register admin account with one-time setup code and confirmed email token."""
     data = _json_payload()
+    errors = validate_registration_fields(data, is_admin=False)
+    if errors:
+        return jsonify({'error': errors[0]}), 400
     student_id = _clean(data.get('student_id'))
     lbc_no = _clean(data.get('lbc_no'))
     full_name = _clean(data.get('full_name'))
@@ -952,20 +970,30 @@ def register_admin():
     if not all([student_id, full_name, password, gmail, token]):
         return jsonify({'error': 'Missing required admin registration fields'}), 400
     db = get_db(); cursor = db.cursor(dictionary=True)
-    _ensure_account_type_column(cursor)
-    try:
-        cursor.execute("ALTER TABLE students ADD COLUMN setup_code_hash VARCHAR(255) DEFAULT NULL")
-    except mysql.connector.Error as exc:
-        if exc.errno != 1060:
-            raise
     cursor.execute("SELECT * FROM pending_confirmations WHERE token=%s AND gmail=%s AND confirmed=1 AND expires_at>NOW()",(token,gmail))
     if not cursor.fetchone():
         cursor.close(); return jsonify({'error':'Email not confirmed'}),403
     setup_code = generate_setup_code(); setup_code_hash = hash_password(setup_code)
     password_hash = hash_password(password)
     try:
-        cursor.execute("""INSERT INTO students (student_id,lbc_no,full_name,address,contact_no,password_hash,course,year_level,gmail,is_verified,account_type,setup_code_hash)
-        VALUES (%s,%s,%s,%s,%s,%s,'N/A','N/A',%s,1,'admin',%s)""",(student_id,lbc_no,full_name,address,contact_no,password_hash,gmail,setup_code_hash))
+        cursor.execute(
+            """
+            INSERT INTO admins (
+                admin_id, lbc_no, full_name, address,
+                contact_no, password_hash, gmail,
+                is_verified, setup_code_hash
+            ) VALUES (
+                %s, %s, %s, %s,
+                %s, %s, %s,
+                1, %s
+            )
+            """,
+            (
+                student_id, lbc_no, full_name, address,
+                contact_no, password_hash, gmail,
+                setup_code_hash,
+            ),
+        )
         cursor.execute("DELETE FROM pending_confirmations WHERE token=%s", (token,))
         db.commit()
         send_admin_invite_email(gmail, full_name)
@@ -983,19 +1011,19 @@ def verify_admin_setup_code():
     if not student_id or not setup_code:
         return jsonify({'error':'Student ID and setup code are required'}),400
     db=get_db(); cursor=db.cursor(dictionary=True)
-    cursor.execute("SELECT setup_code_hash FROM students WHERE student_id=%s AND account_type='admin'",(student_id,))
+    cursor.execute("SELECT setup_code_hash FROM admins WHERE admin_id=%s",(student_id,))
     admin = cursor.fetchone()
     if not admin:
         cursor.close(); return jsonify({'error':'Admin account not found'}),404
     if not verify_password(setup_code, admin.get('setup_code_hash')):
         log_security_event(student_id,'ADMIN_SETUP_WRONG_CODE',_client_ip(),'Wrong setup code entered during admin activation')
         cursor.close(); return jsonify({'error':'Invalid setup code'}),400
-    cursor.execute("UPDATE students SET setup_code_hash=NULL WHERE student_id=%s",(student_id,)); db.commit(); cursor.close()
+    cursor.execute("UPDATE admins SET setup_code_hash=NULL WHERE admin_id=%s",(student_id,)); db.commit(); cursor.close()
     return jsonify({'status':'activated','redirect':'/admin/dashboard'})
 
 
-def login_student():
-    """Login endpoint for both students and admins with proper redirection."""
+def login():
+    """Login endpoint for both admins and students."""
     data = _json_payload()
     student_id = _clean(data.get('student_id'))
     password = data.get('password') or ''
@@ -1005,52 +1033,50 @@ def login_student():
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    _ensure_account_type_column(cursor)
-    
     cursor.execute(
         """
-        SELECT id, student_id, full_name, account_type, password_hash, is_verified
-        FROM students
-        WHERE student_id = %s AND is_verified = 1
+        SELECT *, 'admin' AS account_type FROM admins
+        WHERE admin_id = %s AND is_verified = 1
         """,
         (student_id,),
     )
-    student = cursor.fetchone()
+    user = cursor.fetchone()
+
+    if not user:
+        cursor.execute(
+            """
+            SELECT *, 'student' AS account_type FROM students
+            WHERE student_id = %s AND is_verified = 1
+            """,
+            (student_id,),
+        )
+        user = cursor.fetchone()
+
+    if not user:
+        cursor.close()
+        return jsonify({'error': 'Account not found'}), 404
+
+    if not verify_password(password, user['password_hash']):
+        log_security_event(student_id, 'LOGIN_FAIL', _client_ip(), 'Wrong password on login attempt')
+        cursor.close()
+        return jsonify({'error': 'Incorrect password'}), 401
+
+    if user['account_type'] == 'admin':
+        cursor.execute(
+            """
+            UPDATE admins
+            SET last_login_ip   = %s,
+                last_login_time = NOW()
+            WHERE admin_id = %s
+            """,
+            (_client_ip(), student_id),
+        )
+        db.commit()
+        cursor.close()
+        return jsonify({'status': 'ok', 'redirect': '/admin/dashboard', 'type': 'admin', 'account_type': 'admin'})
+
     cursor.close()
-
-    if not student:
-        log_security_event(
-            student_id=student_id,
-            event_type='LOGIN_FAILED_NOT_FOUND',
-            ip_address=_client_ip(),
-            description='Login attempted with non-existent or unverified account',
-        )
-        return jsonify({'error': 'Invalid student ID or password.'}), 401
-
-    if not verify_password(password, student['password_hash']):
-        log_security_event(
-            student_id=student_id,
-            event_type='LOGIN_FAILED_WRONG_PASSWORD',
-            ip_address=_client_ip(),
-            description='Login attempted with wrong password',
-        )
-        return jsonify({'error': 'Invalid student ID or password.'}), 401
-
-    account_type = student.get('account_type') or 'student'
-
-    log_security_event(
-        student_id=student_id,
-        event_type='LOGIN_SUCCESS',
-        ip_address=_client_ip(),
-        description=f'Successful login as {account_type}',
-    )
-
-    return jsonify({
-        'status': 'success',
-        'account_type': account_type,
-        'student_id': student_id,
-        'full_name': student['full_name'],
-    })
+    return jsonify({'status': 'ok', 'redirect': '/user/books', 'type': 'student', 'account_type': 'student'})
 
 
 def logout():
