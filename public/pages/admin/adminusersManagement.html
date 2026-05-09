@@ -4,16 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manage Users — Click &amp; Collect</title>
-  <link rel="stylesheet" href="/styles/main/welcome.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
   <link rel="stylesheet" href="/styles/admin/admin_shared.css">
   <link rel="stylesheet" href="/styles/admin/admin_management.css">
 </head>
-<body class="admin-page" data-page="users">
-  <div id="header-placeholder"></div>
+<body data-page="users">
+  <div class="app-wrapper">
   <div id="navbar-placeholder"></div>
-  <div class="admin-body">
+  <div class="main-layout">
     <div id="sidebar-placeholder"></div>
-    <main class="users-main main-content">
+    <main class="page-content users-main">
       <div class="users-actions-row">
         <div class="card course-card">
           <h3>Add Course</h3>
@@ -38,10 +38,9 @@
         </div>
         <button class="add-admin-btn">Add Admin +</button>
       </div>
-      <div class="card users-table-card">
-        <h3>Users Table</h3>
-        <div class="table-header table-header-grid users-header"><span>ID No.</span><span>Full Name</span><span>LBC No.</span><span>Gmail Account</span><span>Address</span></div>
-        <div class="table-body users-table" id="users-table"></div>
+      <div class="users-table-wrapper users-table-card">
+        <h3>List of Registered Users</h3>
+        <table class="data-table" id="users-table"><thead><tr><th>ID No.</th><th>Full Name</th><th>LBC No.</th><th>Gmail account</th><th>Address</th></tr></thead><tbody></tbody></table>
       </div>
     </main>
   </div>
@@ -82,7 +81,6 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const page = document.body.dataset.page;
-      loadComponent('#header-placeholder', '/components/header.html', () => setPortalLabel('/ Librarian Portal /'));
       loadComponent('#navbar-placeholder', '/components/navbar.html', () => { setActiveNav(page); initHamburger(); initNavSearch(); });
       loadComponent('#sidebar-placeholder', '/components/sidebar.html', () => initSidebar(page));
       loadComponent('#footer-placeholder', '/components/footer.html', () => startClock());

@@ -18,6 +18,22 @@ async function deleteCourse(id) {
   loadCourses();
 }
 
+function renderUsersTable(users) {
+  const tbody = document.querySelector('#users-table tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const minRows = 8;
+  const rows = users.length > minRows ? users : [...users, ...Array(minRows - users.length).fill(null)];
+  rows.forEach((user) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = user
+      ? `<td>${user.student_id || user.id || '—'}</td><td>${user.full_name || '—'}</td><td>${user.lbc_no || '—'}</td><td>${user.gmail || '—'}</td><td>${user.address || '—'}</td>`
+      : '<td>&nbsp;</td><td></td><td></td><td></td><td></td>';
+    if (user) tr.onclick = () => openEditModalById(user.id);
+    tbody.appendChild(tr);
+  });
+}
+
 function renderUsers() {
   const type = document.getElementById('user-type-filter').value;
   const rows = allUsers.filter((user) => {
@@ -26,15 +42,7 @@ function renderUsers() {
     const term = `${user.student_id || ''} ${user.full_name || ''} ${user.lbc_no || ''} ${user.gmail || ''} ${user.address || ''}`.toLowerCase();
     return matchesType && term.includes(userSearch.toLowerCase());
   });
-  document.getElementById('users-table').innerHTML = rows.map((user) => `
-    <div class="table-row" onclick="openEditModalById(${user.id})">
-      <span>${user.student_id || user.id || '—'}</span>
-      <span>${user.full_name || '—'}</span>
-      <span>${user.lbc_no || '—'}</span>
-      <span>${user.gmail || '—'}</span>
-      <span class="col-address">${user.address || '—'}</span>
-    </div>
-  `).join('') || '<div class="table-row"><span>No users found.</span></div>';
+  renderUsersTable(rows);
 }
 
 async function loadUsers() {

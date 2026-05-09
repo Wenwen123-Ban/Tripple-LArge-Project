@@ -42,7 +42,7 @@ function startClock() {
     const ampm = h >= 12 ? 'PM' : 'AM';
     h = h % 12 || 12;
     const time = `${String(h).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')} ${ampm}`;
-    const el = document.getElementById('footer-datetime');
+    const el = document.getElementById('live-clock');
     if (el) el.textContent = `${date} ${day} ${time}`;
   }
   tick();
@@ -73,7 +73,7 @@ function initSidebar(page) {
   setActiveSidebar(page);
   btn.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
-    btn.textContent = btn.textContent === '‹' ? '›' : '‹';
+    btn.textContent = btn.textContent === '◁' ? '▷' : '◁';
   });
 }
 
