@@ -3,6 +3,17 @@ function showNotification(message, type = 'info') {
   else console.log(`[${type}] ${message}`);
 }
 
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[char]));
+}
+
 function applyIdFormat(inputEl) {
   if (!inputEl) return;
   inputEl.addEventListener('input', () => {
@@ -39,7 +50,27 @@ function renderUsersTable(users) {
   tbody.innerHTML = '';
   users.forEach((user) => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${user.student_id || user.admin_id || user.id || '—'}</td><td>${user.full_name || '—'}</td><td>${user.lbc_no || '—'}</td><td>${user.gmail || '—'}</td><td>${user.address || '—'}</td>`;
+    const idNo = user.student_id || user.admin_id || user.id || '';
+    const accountType = String(user.account_type || 'student').toLowerCase();
+    tr.innerHTML = `
+      <td>${escapeHtml(idNo || '—')}</td>
+      <td>${escapeHtml(user.full_name || '—')}</td>
+      <td>${escapeHtml(user.lbc_no || '—')}</td>
+      <td>${escapeHtml(user.gmail || '—')}</td>
+      <td>${escapeHtml(user.address || '—')}</td>
+      <td>
+        <button class="btn-delete" type="button"
+                data-id="${escapeHtml(idNo)}"
+                data-type="${escapeHtml(accountType)}"
+                data-name="${escapeHtml(user.full_name || '')}"
+                data-gmail="${escapeHtml(user.gmail || '')}">
+          Delete
+        </button>
+      </td>`;
+    tr.querySelector('.btn-delete')?.addEventListener('click', (event) => {
+      const btn = event.currentTarget;
+      initiateDelete(btn.dataset.id, btn.dataset.type, btn.dataset.name, btn.dataset.gmail);
+    });
     tbody.appendChild(tr);
   });
 }
@@ -200,10 +231,26 @@ async function sendAdminForm() {
     if (data.status === 'sent') {
       adminConfirmToken = data.token;
       adminFlowStep = 'sent';
-      setAdminActionButton('Waiting for Gmail Confirmation...', '#888888', false);
       showAdminDoneButton(false);
-      showNotification('Email sent. Waiting for new admin to confirm Gmail.', 'success');
-      startAdminTokenPoll();
+
+      let countdown = 5;
+      setAdminActionButton(`Email sent successfully — this form will close in ${countdown} seconds`, '#22C55E', false);
+      const countTimer = setInterval(() => {
+        countdown -= 1;
+        setAdminActionButton(`Email sent successfully — this form will close in ${countdown} seconds`, '#22C55E', false);
+        if (countdown <= 0) {
+          clearInterval(countTimer);
+          document.getElementById('admin-modal-overlay').style.display = 'none';
+          resetAdminForm();
+          showNotification(
+            'Admin registration email sent. New admin will receive their one-time code upon confirmation.',
+            'success',
+          );
+          adminConfirmToken = data.token;
+          adminFlowStep = 'sent';
+          startAdminTokenPoll();
+        }
+      }, 1000);
     } else {
       adminFlowStep = 'idle';
       showNotification(data.error || 'Failed to send email.', 'error');
@@ -215,6 +262,83 @@ async function sendAdminForm() {
     setAdminActionButton('Confirm Gmail', '#4B0082', true);
   }
 }
+
+async function initiateDelete(id, type, name, gmail) {
+  if (type === 'student') {
+    const confirmed = confirm(
+      `Delete student account?\n\nName: ${name}\nID: ${id}\n\nThis will notify the student by email.`,
+    );
+    if (!confirmed) return;
+    await deleteStudentAccount(id, name, gmail);
+    return;
+  }
+
+  const confirmed = confirm(
+    `Request deletion of ADMIN account?\n\nName: ${name}\nID: ${id}\n\n`
+      + 'A confirmation email will be sent to this admin.\n'
+      + 'You will receive a deletion code via notification after they confirm.',
+  );
+  if (!confirmed) return;
+  await requestAdminDeletion(id, name, gmail);
+}
+
+async function deleteStudentAccount(studentId, name) {
+  try {
+    const res = await fetch(`/api/users/${encodeURIComponent(studentId)}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const data = await res.json();
+    if (data.status === 'deleted') {
+      showNotification(`${name}'s account deleted.`, 'success');
+      loadUsers();
+    } else {
+      showNotification(data.error || 'Deletion failed.', 'error');
+    }
+  } catch (err) {
+    showNotification('Connection error.', 'error');
+  }
+}
+
+async function requestAdminDeletion(adminId, name) {
+  try {
+    const res = await fetch('/api/admin/request-deletion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target_id: adminId }),
+    });
+    const data = await res.json();
+    if (data.status === 'email_sent') {
+      showNotification(
+        `Deletion request sent to ${name}. Check your notifications for the confirmation code.`,
+        'info',
+      );
+      if (typeof window.loadNotifications === 'function') window.loadNotifications();
+    } else {
+      showNotification(data.error || 'Request failed.', 'error');
+    }
+  } catch (err) {
+    showNotification('Connection error.', 'error');
+  }
+}
+
+async function finalizeAdminDeletion(targetId, code) {
+  const res = await fetch('/api/admin/finalize-deletion', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ target_id: targetId, code }),
+  });
+  const data = await res.json();
+  if (data.status === 'deleted') {
+    showNotification('Admin account deleted.', 'success');
+    loadUsers();
+    if (typeof window.loadNotifications === 'function') window.loadNotifications();
+  } else {
+    showNotification(data.error || 'Code invalid.', 'error');
+  }
+}
+
+window.finalizeAdminDeletion = finalizeAdminDeletion;
 
 function handleAdminAction() {
   if (adminFlowStep === 'idle') {

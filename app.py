@@ -256,6 +256,7 @@ app.add_url_rule('/api/categories/<int:id>', 'api_delete_category', books.delete
 
 app.add_url_rule('/api/users', 'api_get_users', users.get_users, methods=['GET'])
 app.add_url_rule('/api/users/<int:id>', 'api_update_user', users.update_user, methods=['PATCH'])
+app.add_url_rule('/api/users/<student_id>', 'api_delete_user', users.delete_user, methods=['DELETE'])
 app.add_url_rule('/api/courses', 'api_get_courses', users.get_courses, methods=['GET'])
 app.add_url_rule('/api/courses', 'api_add_course', users.add_course, methods=['POST'])
 app.add_url_rule('/api/courses/<int:id>', 'api_delete_course', users.delete_course, methods=['DELETE'])
@@ -263,6 +264,10 @@ app.add_url_rule('/api/courses/<int:id>', 'api_delete_course', users.delete_cour
 app.add_url_rule('/api/admin/rules', 'api_admin_get_rules', admin.get_rules, methods=['GET'])
 app.add_url_rule('/api/admin/rules', 'api_admin_save_rules', admin.save_rules, methods=['POST'])
 app.add_url_rule('/api/admin/logs', 'api_admin_logs', admin.get_logs, methods=['GET'])
+app.add_url_rule('/api/admin/request-deletion', 'request_admin_deletion', admin.request_admin_deletion, methods=['POST'])
+app.add_url_rule('/api/admin/confirm-deletion', 'confirm_admin_deletion', admin.confirm_admin_deletion, methods=['GET'])
+app.add_url_rule('/api/admin/finalize-deletion', 'finalize_admin_deletion', admin.finalize_admin_deletion, methods=['POST'])
+app.add_url_rule('/api/admin/notifications', 'get_notifications', admin.get_notifications, methods=['GET'])
 app.add_url_rule('/api/admin/health', 'api_admin_health', admin.server_health, methods=['GET'])
 app.add_url_rule('/api/admin/server-health', 'api_admin_server_health', admin.server_health, methods=['GET'])
 
