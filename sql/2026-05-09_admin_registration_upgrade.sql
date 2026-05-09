@@ -103,6 +103,7 @@ END$$
 DELIMITER ;
 
 CALL cc_add_column_if_missing('students', 'account_type', "`account_type` VARCHAR(20) DEFAULT 'student'");
+CALL cc_add_column_if_missing('pending_confirmations', 'confirmed', '`confirmed` TINYINT(1) DEFAULT 0');
 CALL cc_add_column_if_missing('pending_confirmations', 'type', "`type` VARCHAR(20) DEFAULT 'student'");
 CALL cc_add_column_if_missing('admins', 'setup_code_hash', '`setup_code_hash` VARCHAR(255)');
 CALL cc_add_column_if_missing('admins', 'last_login_ip', '`last_login_ip` VARCHAR(80)');

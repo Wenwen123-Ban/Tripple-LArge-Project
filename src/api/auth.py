@@ -46,6 +46,7 @@ def create_confirmation_token(gmail):
 
     db = get_db()
     cursor = db.cursor()
+    _ensure_pending_confirmation_columns(cursor)
     cursor.execute(
         "DELETE FROM pending_confirmations WHERE gmail = %s OR expires_at <= NOW()",
         (gmail,),
@@ -66,6 +67,7 @@ def mark_token_confirmed(token):
     _cleanup_expired_tokens()
     db = get_db()
     cursor = db.cursor()
+    _ensure_pending_confirmation_confirmed_column(cursor)
     cursor.execute(
         """
         UPDATE pending_confirmations
@@ -83,20 +85,7 @@ def mark_token_confirmed(token):
 
 def is_token_confirmed(token):
     _cleanup_expired_tokens()
-    db = get_db()
-    cursor = db.cursor(dictionary=True)
-    cursor.execute(
-        """
-        SELECT confirmed
-        FROM pending_confirmations
-        WHERE token = %s
-          AND expires_at > NOW()
-        """,
-        (token,),
-    )
-    payload = cursor.fetchone()
-    cursor.close()
-    return bool(payload and payload.get('confirmed'))
+    return _token_confirmation_status(token).get('confirmed', False)
 
 
 def get_confirmation_type(token):
@@ -104,7 +93,7 @@ def get_confirmation_type(token):
     _cleanup_expired_tokens()
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    _ensure_pending_confirmation_type_column(cursor)
+    _ensure_pending_confirmation_columns(cursor)
     cursor.execute(
         """
         SELECT COALESCE(type, 'student') AS confirmation_type
@@ -924,7 +913,13 @@ def confirm_email(request):
     from django.http import HttpResponse
 
     token = request.GET.get('token', '')
+    if not token:
+        return HttpResponse('<p>Invalid link.</p>', status=400)
+
+    confirmation_type = get_confirmation_type(token)
     if mark_token_confirmed(token):
+        if confirmation_type == 'admin':
+            return HttpResponse(build_admin_confirm_success_html())
         return HttpResponse(build_confirm_success_html())
     return HttpResponse('<p>Invalid or expired confirmation link.</p>', status=400)
 
@@ -933,7 +928,7 @@ def check_token(request):
     from django.http import JsonResponse
 
     token = request.GET.get('token', '')
-    return JsonResponse({'confirmed': is_token_confirmed(token)})
+    return JsonResponse(_token_confirmation_status(token))
 
 
 def _ensure_account_type_column(cursor):
@@ -950,6 +945,44 @@ def _ensure_pending_confirmation_type_column(cursor):
     except mysql.connector.Error as exc:
         if exc.errno != 1060:
             raise
+
+
+def _ensure_pending_confirmation_confirmed_column(cursor):
+    try:
+        cursor.execute("ALTER TABLE pending_confirmations ADD COLUMN confirmed TINYINT(1) DEFAULT 0")
+    except mysql.connector.Error as exc:
+        if exc.errno != 1060:
+            raise
+
+
+def _ensure_pending_confirmation_columns(cursor):
+    _ensure_pending_confirmation_confirmed_column(cursor)
+    _ensure_pending_confirmation_type_column(cursor)
+
+
+def _token_confirmation_status(token):
+    if not token:
+        return {'confirmed': False}
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    _ensure_pending_confirmation_confirmed_column(cursor)
+    cursor.execute(
+        """
+        SELECT confirmed
+        FROM pending_confirmations
+        WHERE token = %s
+          AND expires_at > NOW()
+        """,
+        (token,),
+    )
+    record = cursor.fetchone()
+    cursor.close()
+
+    if not record:
+        return {'confirmed': False, 'expired': True}
+
+    return {'confirmed': bool(record.get('confirmed'))}
 
 
 def _ensure_admins_table(cursor):
@@ -1260,7 +1293,7 @@ def admin_send_confirmation():
     token = create_confirmation_token(gmail)
     db = get_db()
     cursor = db.cursor()
-    _ensure_pending_confirmation_type_column(cursor)
+    _ensure_pending_confirmation_columns(cursor)
     cursor.execute(
         """
         UPDATE pending_confirmations

@@ -30,7 +30,7 @@ let allUsers = [];
 let userSearch = '';
 let adminConfirmToken = null;
 let isAwaitingOneTimeCode = false;
-let adminConfirmPoll = null;
+let adminPollInterval = null;
 let adminConfirmTimeout = null;
 
 function renderUsersTable(users) {
@@ -76,10 +76,10 @@ function openAdminModal() {
   document.getElementById('admin-modal-overlay').style.display = 'flex';
 }
 
-function stopAdminConfirmationPolling() {
-  if (adminConfirmPoll) clearInterval(adminConfirmPoll);
+function stopAdminTokenPoll() {
+  if (adminPollInterval) clearInterval(adminPollInterval);
   if (adminConfirmTimeout) clearTimeout(adminConfirmTimeout);
-  adminConfirmPoll = null;
+  adminPollInterval = null;
   adminConfirmTimeout = null;
 }
 
@@ -89,7 +89,7 @@ function setAdminEmailConfirmed(confirmed) {
 }
 
 function resetAdminForm() {
-  stopAdminConfirmationPolling();
+  stopAdminTokenPoll();
   adminConfirmToken = null;
   isAwaitingOneTimeCode = false;
   setAdminEmailConfirmed(false);
@@ -100,17 +100,21 @@ function resetAdminForm() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  document.getElementById('admin-confirm-gmail-btn').disabled = false;
-  document.getElementById('admin-confirm-gmail-btn').textContent = 'Confirm Gmail';
+  const btn = document.getElementById('admin-confirm-gmail-btn');
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Confirm Gmail';
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+  }
 }
 
-function startAdminConfirmationPolling(buttonEl) {
-  stopAdminConfirmationPolling();
+function startAdminTokenPoll() {
+  stopAdminTokenPoll();
   setAdminEmailConfirmed(false);
-  buttonEl.disabled = true;
-  buttonEl.textContent = 'Waiting for Gmail confirmation...';
 
-  adminConfirmPoll = setInterval(async () => {
+  adminPollInterval = setInterval(async () => {
     if (!adminConfirmToken) return;
 
     try {
@@ -118,25 +122,34 @@ function startAdminConfirmationPolling(buttonEl) {
       const data = res.ok ? await res.json() : {};
 
       if (data.confirmed) {
-        stopAdminConfirmationPolling();
+        stopAdminTokenPoll();
         isAwaitingOneTimeCode = true;
         setAdminEmailConfirmed(true);
-        buttonEl.disabled = false;
-        buttonEl.textContent = 'Get One-Time Code';
-        showNotification('Admin Gmail confirmed. You can now get the one-time code.', 'success');
+
+        const btn = document.getElementById('admin-confirm-gmail-btn');
+        if (btn) {
+          btn.textContent = 'Get One-Time Code';
+          btn.style.background = '#22C55E';
+          btn.style.color = '#fff';
+          btn.style.borderColor = '#22C55E';
+        }
+
+        showNotification('Gmail confirmed! Click Get One-Time Code to finish.', 'success');
       }
     } catch (err) {
-      console.error('Admin confirmation polling failed:', err);
+      console.error('Admin poll error:', err);
     }
   }, 4000);
 
   adminConfirmTimeout = setTimeout(() => {
-    stopAdminConfirmationPolling();
+    stopAdminTokenPoll();
     adminConfirmToken = null;
     isAwaitingOneTimeCode = false;
     setAdminEmailConfirmed(false);
-    buttonEl.disabled = false;
-    buttonEl.textContent = 'Confirm Gmail';
+
+    const btn = document.getElementById('admin-confirm-gmail-btn');
+    if (btn) btn.textContent = 'Confirm Gmail';
+
     showNotification('Confirmation link expired. Please resend the admin Gmail confirmation.', 'error');
   }, 15 * 60 * 1000);
 }
@@ -144,10 +157,9 @@ function startAdminConfirmationPolling(buttonEl) {
 async function confirmGmail() {
   const gmail = document.getElementById('admin-gmail').value.trim();
   const name = document.getElementById('admin-fullname').value.trim();
-  const adminId = document.getElementById('admin-id-input').value.trim();
 
-  if (!gmail || !name || !adminId) {
-    showNotification('Fill in all fields first.', 'error');
+  if (!gmail || !name) {
+    showNotification('Fill in name and Gmail first.', 'error');
     return;
   }
 
@@ -164,7 +176,6 @@ async function confirmGmail() {
       body: JSON.stringify({
         gmail,
         name,
-        admin_id: adminId,
         registered_by: registeredBy,
         registered_at: timeStr,
       }),
@@ -174,8 +185,12 @@ async function confirmGmail() {
       adminConfirmToken = data.token;
       isAwaitingOneTimeCode = false;
       setAdminEmailConfirmed(false);
-      startAdminConfirmationPolling(document.getElementById('admin-confirm-gmail-btn'));
-      showNotification('Confirmation email sent. Ask the new admin to click the Gmail link.', 'success');
+
+      const btn = document.getElementById('admin-confirm-gmail-btn');
+      if (btn) btn.textContent = 'Get One-Time Code';
+
+      startAdminTokenPoll();
+      showNotification('Confirmation email sent. Waiting for new admin to confirm...', 'success');
     } else {
       showNotification(data.error || 'Failed to send email.', 'error');
     }
@@ -187,6 +202,11 @@ async function confirmGmail() {
 async function getOneTimeCode() {
   if (!adminConfirmToken) {
     showNotification('Confirm Gmail first.', 'error');
+    return;
+  }
+
+  if (!isAwaitingOneTimeCode) {
+    showNotification('Please wait until the new admin clicks the Gmail confirmation link.', 'info');
     return;
   }
 
@@ -253,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('admin-confirm-gmail-btn')?.addEventListener('click', () => {
-    if (isAwaitingOneTimeCode) getOneTimeCode();
+    if (adminConfirmToken) getOneTimeCode();
     else confirmGmail();
   });
 
