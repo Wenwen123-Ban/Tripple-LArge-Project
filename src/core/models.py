@@ -23,6 +23,9 @@ def initialize_schema():
             gmail VARCHAR(255) NOT NULL UNIQUE,
             is_verified TINYINT(1) DEFAULT 0,
             account_type VARCHAR(20) DEFAULT 'student',
+            deleted_at DATETIME DEFAULT NULL,
+            deleted_by VARCHAR(40) DEFAULT NULL,
+            last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """
@@ -59,6 +62,9 @@ def initialize_schema():
             setup_code_hash VARCHAR(255),
             last_login_ip VARCHAR(80),
             last_login_time DATETIME NULL,
+            deleted_at DATETIME DEFAULT NULL,
+            deleted_by VARCHAR(40) DEFAULT NULL,
+            last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """
@@ -85,6 +91,37 @@ def initialize_schema():
             event_type VARCHAR(80) NOT NULL,
             ip_address VARCHAR(80),
             description VARCHAR(255),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            recipient_id VARCHAR(40) NOT NULL,
+            type VARCHAR(50) NOT NULL,
+            title VARCHAR(120) NOT NULL,
+            message TEXT,
+            data TEXT,
+            is_read TINYINT(1) DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS deletion_codes (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            requested_by VARCHAR(40) NOT NULL,
+            target_id VARCHAR(40) NOT NULL,
+            target_type VARCHAR(10) NOT NULL,
+            code VARCHAR(10) NOT NULL,
+            confirmed_email TINYINT(1) DEFAULT 0,
+            expires_at DATETIME NOT NULL,
+            used TINYINT(1) DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """

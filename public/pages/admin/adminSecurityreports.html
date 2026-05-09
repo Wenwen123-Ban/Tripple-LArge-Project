@@ -145,6 +145,44 @@
               </div>
             </div>
 
+            <div class="rules-divider"></div>
+
+            <div class="rules-section account-auto-management">
+              <p class="rules-heading">Account Auto-Management Rules:</p>
+              <label class="rule-option-toggle">
+                <input type="checkbox" id="expiry-enabled">
+                <span>Enable account expiry</span>
+              </label>
+              <div class="rules-inputs-row auto-rule-inputs">
+                <div class="rules-input-group">
+                  <input type="number" class="rules-input" id="expiry-years" placeholder="Years" min="1">
+                  <label class="rules-input-label">Student accounts expire after years</label>
+                </div>
+              </div>
+
+              <label class="rule-option-toggle">
+                <input type="checkbox" id="inactive-enabled">
+                <span>Enable inactive account auto-deletion</span>
+              </label>
+              <div class="rules-inputs-row auto-rule-inputs">
+                <div class="rules-input-group">
+                  <input type="number" class="rules-input" id="inactive-days" placeholder="Days" min="1">
+                  <label class="rules-input-label">Delete accounts inactive for days</label>
+                </div>
+              </div>
+
+              <label class="rule-option-toggle">
+                <input type="checkbox" id="warn-enabled">
+                <span>Send expiry warning email</span>
+              </label>
+              <div class="rules-inputs-row auto-rule-inputs">
+                <div class="rules-input-group">
+                  <input type="number" class="rules-input" id="warn-days" placeholder="Days" min="1" value="30">
+                  <label class="rules-input-label">Warn before expiry days</label>
+                </div>
+              </div>
+            </div>
+
             <div class="rules-actions">
               <button class="save-rules-btn" id="save-rules-btn"><i class="ti ti-device-floppy"></i> Save Rules</button>
             </div>

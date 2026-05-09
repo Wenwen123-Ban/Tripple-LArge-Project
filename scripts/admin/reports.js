@@ -38,6 +38,12 @@ async function loadRules() {
   document.getElementById('expire-days').value = rules.expire_days || '';
   document.getElementById('expire-hours').value = rules.expire_hours || '';
   document.getElementById('expire-mins').value = rules.expire_mins || 30;
+  document.getElementById('expiry-enabled').checked = Boolean(rules.expiry_enabled);
+  document.getElementById('expiry-years').value = rules.expiry_years || '';
+  document.getElementById('inactive-enabled').checked = Boolean(rules.inactive_enabled);
+  document.getElementById('inactive-days').value = rules.inactive_days || '';
+  document.getElementById('warn-enabled').checked = Boolean(rules.warn_enabled);
+  document.getElementById('warn-days').value = rules.warn_before_days || 30;
 }
 
 async function saveRules() {
@@ -51,6 +57,12 @@ async function saveRules() {
       expire_days: document.getElementById('expire-days').value || null,
       expire_hours: document.getElementById('expire-hours').value || null,
       expire_mins: document.getElementById('expire-mins').value || 30,
+      expiry_enabled: document.getElementById('expiry-enabled').checked,
+      expiry_years: document.getElementById('expiry-years').value || null,
+      inactive_enabled: document.getElementById('inactive-enabled').checked,
+      inactive_days: document.getElementById('inactive-days').value || null,
+      warn_enabled: document.getElementById('warn-enabled').checked,
+      warn_before_days: document.getElementById('warn-days').value || 30,
     }),
   });
 }
@@ -74,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
         : data.status === 'Moderate' ? '#F59E0B' : '#EF4444';
     showInlineNotification(`Server status: ${data.status}`, 'info');
   });
-  document.querySelectorAll('#nearest-day-rule, #return-days, #return-hours, #expire-days, #expire-hours, #expire-mins')
+  document.querySelectorAll('#nearest-day-rule, #return-days, #return-hours, #expire-days, #expire-hours, #expire-mins, #expiry-enabled, #expiry-years, #inactive-enabled, #inactive-days, #warn-enabled, #warn-days')
     .forEach((el) => el.addEventListener('change', saveRules));
   loadLogs();
   loadRules();

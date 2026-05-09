@@ -109,6 +109,59 @@ CALL cc_add_column_if_missing('admins', 'setup_code_hash', '`setup_code_hash` VA
 CALL cc_add_column_if_missing('admins', 'last_login_ip', '`last_login_ip` VARCHAR(80)');
 CALL cc_add_column_if_missing('admins', 'last_login_time', '`last_login_time` DATETIME NULL');
 
+
+-- Account deletion, bell notifications, and auto-management rules.
+CALL cc_add_column_if_missing('students', 'deleted_at', '`deleted_at` DATETIME DEFAULT NULL');
+CALL cc_add_column_if_missing('students', 'deleted_by', '`deleted_by` VARCHAR(40) DEFAULT NULL');
+CALL cc_add_column_if_missing('students', 'last_active', '`last_active` DATETIME DEFAULT CURRENT_TIMESTAMP');
+CALL cc_add_column_if_missing('admins', 'deleted_at', '`deleted_at` DATETIME DEFAULT NULL');
+CALL cc_add_column_if_missing('admins', 'deleted_by', '`deleted_by` VARCHAR(40) DEFAULT NULL');
+CALL cc_add_column_if_missing('admins', 'last_active', '`last_active` DATETIME DEFAULT CURRENT_TIMESTAMP');
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    recipient_id VARCHAR(40) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    title VARCHAR(120) NOT NULL,
+    message TEXT,
+    data TEXT,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_notifications_recipient (recipient_id, is_read, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS deletion_codes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    requested_by VARCHAR(40) NOT NULL,
+    target_id VARCHAR(40) NOT NULL,
+    target_type VARCHAR(10) NOT NULL,
+    code VARCHAR(10) NOT NULL,
+    confirmed_email TINYINT(1) DEFAULT 0,
+    expires_at DATETIME NOT NULL,
+    used TINYINT(1) DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_deletion_codes_request (requested_by, target_id, used, expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS admin_rules (
+    id INT PRIMARY KEY,
+    nearest_day_rule TINYINT(1) DEFAULT 1,
+    return_days INT NULL,
+    return_hours INT NULL,
+    expire_days INT NULL,
+    expire_hours INT NULL,
+    expire_mins INT DEFAULT 30,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CALL cc_add_column_if_missing('admin_rules', 'expiry_enabled', '`expiry_enabled` TINYINT(1) DEFAULT 0');
+CALL cc_add_column_if_missing('admin_rules', 'expiry_years', '`expiry_years` INT NULL');
+CALL cc_add_column_if_missing('admin_rules', 'inactive_enabled', '`inactive_enabled` TINYINT(1) DEFAULT 0');
+CALL cc_add_column_if_missing('admin_rules', 'inactive_days', '`inactive_days` INT NULL');
+CALL cc_add_column_if_missing('admin_rules', 'warn_enabled', '`warn_enabled` TINYINT(1) DEFAULT 0');
+CALL cc_add_column_if_missing('admin_rules', 'warn_before_days', '`warn_before_days` INT DEFAULT 30');
+
+
 DROP PROCEDURE cc_add_column_if_missing;
 
 UPDATE students

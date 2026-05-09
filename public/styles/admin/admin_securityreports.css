@@ -33,3 +33,9 @@
 .save-rules-btn{background:#5B2D8E;color:white;border:none;border-radius:4px;padding:6px 16px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .save-rules-btn:hover{background:#3D1F63}
 .save-rules-btn i{font-size:15px}
+
+.account-auto-management{background:#FFF8C7;border:1px solid #C8A800;border-radius:8px;padding:12px;margin-top:12px}
+.account-auto-management .rule-option-toggle{margin-top:10px}
+.auto-rule-inputs{margin:6px 0 8px 24px}
+.auto-rule-inputs .rules-input-group{align-items:flex-start}
+.auto-rule-inputs .rules-input-label{text-align:left;max-width:220px}

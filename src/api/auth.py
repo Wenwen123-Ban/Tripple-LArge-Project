@@ -124,6 +124,129 @@ def get_default_from_email():
 def build_confirm_url(token):
     return f"{get_site_url()}/api/auth/confirm-email?token={quote(token)}"
 
+def send_html_email(to_email, subject, plain_body, html_body):
+    """Send a plain/html email using the configured SMTP server."""
+    host = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    port = int(os.getenv('EMAIL_PORT', '587'))
+    username = os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com')
+    password = os.getenv('EMAIL_HOST_PASSWORD', 'your-app-password')
+    use_tls = os.getenv('EMAIL_USE_TLS', 'true').lower() in {'1', 'true', 'yes'}
+
+    message = MIMEMultipart('alternative')
+    message['Subject'] = subject
+    message['From'] = get_default_from_email()
+    message['To'] = to_email
+    message.attach(MIMEText(plain_body, 'plain', 'utf-8'))
+    message.attach(MIMEText(html_body, 'html', 'utf-8'))
+
+    with smtplib.SMTP(host, port) as smtp:
+        if use_tls:
+            smtp.starttls()
+        smtp.login(username, password)
+        smtp.send_message(message)
+
+
+def build_student_deletion_email(name, deleted_by_id, deleted_by_gmail, deleted_at):
+    safe_name = escape(name or 'Student')
+    safe_deleted_by_id = escape(deleted_by_id or 'System')
+    safe_deleted_by_gmail = escape(deleted_by_gmail or 'library staff')
+    safe_deleted_at = escape(deleted_at or '')
+    help_url = f"{get_site_url()}/main/help"
+    safe_help_url = escape(help_url, quote=True)
+    return f"""
+    <!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f8;font-family:Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f8;padding:40px 0;">
+        <tr><td align="center"><table width="520" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;border:2px solid #1A1A6E;overflow:hidden;">
+          <tr><td style="background:#4B0082;padding:24px 32px;text-align:center;">
+            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:900;">Click &amp; Collect</h1>
+            <p style="margin:6px 0 0;color:#FFD700;font-size:12px;">Account Deletion Notice</p>
+          </td></tr>
+          <tr><td style="padding:32px 40px;">
+            <p style="font-size:16px;color:#1A1A6E;font-weight:700;margin:0 0 12px;">Dear {safe_name},</p>
+            <p style="font-size:14px;color:#333;line-height:1.7;margin:0 0 16px;">Your account on the <strong>Click &amp; Collect Library System</strong> has been deleted by a librarian.</p>
+            <div style="background:#f4f4f8;border-left:4px solid #4B0082;border-radius:6px;padding:14px 20px;margin:0 0 16px;">
+              <p style="margin:0;font-size:13px;color:#555;line-height:1.8;"><strong>Deleted by:</strong> Librarian {safe_deleted_by_id}<br><strong>Contact:</strong> {safe_deleted_by_gmail}<br><strong>Time of deletion:</strong> {safe_deleted_at}</p>
+            </div>
+            <p style="font-size:14px;color:#333;line-height:1.7;margin:0 0 16px;">If you agree with this action, <strong>disregard this email</strong>. If you did not expect this, contact the librarian at <a href="mailto:{safe_deleted_by_gmail}" style="color:#4B0082;">{safe_deleted_by_gmail}</a> to resolve it.</p>
+            <p style="font-size:14px;color:#333;line-height:1.7;margin:0 0 16px;">If this deletion happened at night or outside library operation hours and seems suspicious, report it here: <a href="{safe_help_url}" style="color:#4B0082;font-weight:700;">Report an Issue →</a></p>
+          </td></tr>
+          <tr><td style="background:#f4f4f8;padding:16px 40px;border-top:1px solid #e0e0e0;text-align:center;"><p style="margin:0;font-size:11px;color:#aaa;">Click &amp; Collect &mdash; NMSC Library System</p></td></tr>
+        </table></td></tr>
+      </table>
+    </body></html>
+    """
+
+
+def send_deletion_email_student(gmail, name, deleted_by_id, deleted_by_gmail, deleted_at):
+    send_html_email(
+        gmail,
+        'Click & Collect — Account Deletion Notice',
+        (
+            f'Dear {name},\n\nYour Click & Collect account was deleted by librarian {deleted_by_id} '
+            f'at {deleted_at}. Contact: {deleted_by_gmail}. If you agree, disregard this email. '
+            f'Report suspicious activity: {get_site_url()}/main/help'
+        ),
+        build_student_deletion_email(name, deleted_by_id, deleted_by_gmail, deleted_at),
+    )
+
+
+def build_admin_deletion_email(name, requester_name, requester_gmail, confirm_url):
+    safe_name = escape(name or 'Administrator')
+    safe_requester_name = escape(requester_name or 'A librarian')
+    safe_requester_gmail = escape(requester_gmail or '')
+    safe_confirm_url = escape(confirm_url, quote=True)
+    safe_help_url = escape(f"{get_site_url()}/main/help", quote=True)
+    return f"""
+    <!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f8;font-family:Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f8;padding:40px 0;"><tr><td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;border:2px solid #1A1A6E;overflow:hidden;">
+          <tr><td style="background:#4B0082;padding:24px 32px;text-align:center;"><h1 style="margin:0;color:#fff;font-size:22px;font-weight:900;">Click &amp; Collect</h1><p style="margin:6px 0 0;color:#FFD700;font-size:12px;">Admin Deletion Confirmation</p></td></tr>
+          <tr><td style="padding:32px 40px;color:#333;font-size:14px;line-height:1.7;">
+            <p style="font-size:16px;color:#1A1A6E;font-weight:700;margin-top:0;">Dear {safe_name},</p>
+            <p>Your account is being deleted by <strong>{safe_requester_name}</strong>. Click Confirm if you agree.</p>
+            <p>If you do not agree, contact <a href="mailto:{safe_requester_gmail}" style="color:#4B0082;">{safe_requester_gmail}</a> immediately.</p>
+            <p><a href="{safe_confirm_url}" style="display:inline-block;background:#4B0082;color:#fff;text-decoration:none;font-weight:700;border-radius:8px;padding:12px 20px;">Confirm Account Deletion</a></p>
+            <p>If this looks suspicious, <a href="{safe_help_url}" style="color:#4B0082;font-weight:700;">report an issue</a>.</p>
+          </td></tr>
+        </table>
+      </td></tr></table>
+    </body></html>
+    """
+
+
+def send_admin_deletion_email(gmail, name, requester_name, requester_gmail, confirm_url):
+    send_html_email(
+        gmail,
+        'Click & Collect — Confirm Admin Account Deletion',
+        (
+            f'Dear {name},\n\nYour admin account is being deleted by {requester_name}. '
+            f'Click Confirm if you agree: {confirm_url}\nContact {requester_gmail} if not. '
+            f'Report suspicious activity: {get_site_url()}/main/help'
+        ),
+        build_admin_deletion_email(name, requester_name, requester_gmail, confirm_url),
+    )
+
+
+def build_deletion_confirmed_html():
+    return """
+    <!DOCTYPE html><html><body style="margin:0;font-family:Arial,sans-serif;background:#f4f4f8;display:flex;align-items:center;justify-content:center;min-height:100vh;">
+      <div style="background:#fff;border:2px solid #1A1A6E;border-radius:14px;padding:40px 48px;text-align:center;max-width:480px;">
+        <div style="font-size:48px;color:#22C55E;margin-bottom:12px;">✓</div>
+        <h2 style="color:#1A1A6E;margin:0 0 10px;">Deletion Request Confirmed</h2>
+        <p style="color:#555;line-height:1.6;">The requesting librarian has received a bell notification with the final deletion code. You may now close this tab.</p>
+      </div>
+    </body></html>
+    """
+
+
+def send_admin_deleted_confirmation_email(gmail, name, deleted_at):
+    send_html_email(
+        gmail,
+        'Click & Collect — Admin Account Deleted',
+        f'Dear {name},\n\nYour Click & Collect admin account was deleted at {deleted_at}.',
+        f'<p>Dear {escape(name or "Administrator")},</p><p>Your Click &amp; Collect admin account was deleted at {escape(deleted_at)}.</p>',
+    )
+
 
 def send_confirmation_email(gmail, name, confirm_url):
     try:
@@ -424,9 +547,12 @@ def build_admin_confirm_page(setup_code):
         </div>
 
         <p class="close-note">
-          You may now <strong>close this tab</strong>.<br>
-          Go to the login page and sign in with your
-          Admin ID and password.
+          You may now close this tab.<br>
+          <a href="/main/sign_in"
+             style="color:#4B0082;font-weight:700;
+                    text-decoration:underline;">
+            Go to Login Page →
+          </a>
         </p>
 
         <div class="footer">

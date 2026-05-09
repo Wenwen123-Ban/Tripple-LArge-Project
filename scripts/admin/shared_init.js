@@ -62,6 +62,100 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', () => { hamburgerDropdown.classList.remove('open'); });
   }
 
+
+  function ensureNotificationDropdown() {
+    const bellIcon = document.querySelector('.ti-bell');
+    const bellBtn = bellIcon?.closest('button');
+    if (!bellBtn) return;
+    bellBtn.id = 'notif-btn';
+    bellBtn.type = 'button';
+    bellBtn.setAttribute('aria-label', 'Notifications');
+
+    if (document.getElementById('notif-dropdown')) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'notif-wrapper';
+    bellBtn.parentNode.insertBefore(wrapper, bellBtn);
+    wrapper.appendChild(bellBtn);
+    const dropdown = document.createElement('div');
+    dropdown.id = 'notif-dropdown';
+    dropdown.className = 'notif-dropdown';
+    dropdown.innerHTML = '<div class="notif-empty">No notifications</div>';
+    wrapper.appendChild(dropdown);
+
+    bellBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      dropdown.classList.toggle('open');
+      window.loadNotifications();
+    });
+    dropdown.addEventListener('click', (event) => event.stopPropagation());
+    document.addEventListener('click', () => dropdown.classList.remove('open'));
+  }
+
+  window.loadNotifications = async function loadNotifications() {
+    try {
+      const res = await fetch('/api/admin/notifications');
+      if (!res.ok) return;
+      const notifs = await res.json();
+      const bell = document.getElementById('notif-btn');
+      const unread = notifs.filter((n) => !n.is_read).length;
+      if (bell) {
+        if (unread > 0) {
+          bell.setAttribute('data-badge', unread);
+          bell.classList.add('has-badge');
+        } else {
+          bell.removeAttribute('data-badge');
+          bell.classList.remove('has-badge');
+        }
+      }
+
+      const dropdown = document.getElementById('notif-dropdown');
+      if (!dropdown) return;
+      dropdown.innerHTML = notifs.length
+        ? notifs.map((n) => `
+            <div class="notif-item ${n.is_read ? '' : 'unread'}" data-notif='${JSON.stringify(n).replace(/'/g, '&#39;')}'>
+              <div class="notif-title">${n.title || ''}</div>
+              <div class="notif-msg">${n.message || ''}</div>
+              <div class="notif-time">${n.created_at || ''}</div>
+            </div>`).join('')
+        : '<div class="notif-empty">No notifications</div>';
+      dropdown.querySelectorAll('.notif-item').forEach((item) => {
+        item.addEventListener('click', () => {
+          const notif = JSON.parse(item.dataset.notif || '{}');
+          window.handleNotification(notif);
+        });
+      });
+    } catch (err) {
+      console.error('Notification load error:', err);
+    }
+  };
+
+  window.handleNotification = function handleNotification(notif) {
+    if (notif.type === 'deletion_code') {
+      const parsed = JSON.parse(notif.data || '{}');
+      const code = prompt(
+        `Deletion confirmation code received:\n${parsed.code}\n\n`
+          + `Enter the code below to confirm deletion of admin ${parsed.target_id}:`,
+      );
+      if (code === parsed.code) {
+        if (typeof window.finalizeAdminDeletion === 'function') {
+          window.finalizeAdminDeletion(parsed.target_id, code);
+        } else {
+          fetch('/api/admin/finalize-deletion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target_id: parsed.target_id, code }),
+          }).then(() => window.loadNotifications());
+        }
+      } else if (code !== null) {
+        if (typeof showNotification === 'function') showNotification('Wrong code entered.', 'error');
+      }
+    }
+  };
+
+  ensureNotificationDropdown();
+  window.loadNotifications();
+  setInterval(window.loadNotifications, 30000);
+
   const sidebar = document.getElementById('sidebar');
   const sidebarToggle = document.getElementById('sidebarToggle');
   const chevron = document.getElementById('sidebarChevron');

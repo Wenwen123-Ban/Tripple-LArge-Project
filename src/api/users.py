@@ -1,16 +1,20 @@
 """Admin user and course API handlers."""
 
+from datetime import datetime
+
 import mysql.connector
-from flask import jsonify, request
+from flask import jsonify, request, session
 
 try:
     from src.core.db import get_db
+    from src.api.auth import log_security_event, send_deletion_email_student
 except ModuleNotFoundError:
     import sys
     from pathlib import Path
 
     sys.path.append(str(Path(__file__).resolve().parents[2]))
     from src.core.db import get_db
+    from src.api.auth import log_security_event, send_deletion_email_student
 
 
 def _payload():
@@ -64,6 +68,7 @@ def get_users():
     cursor = db.cursor(dictionary=True)
     _ensure_account_type(cursor)
     _ensure_admins_table(cursor)
+    _ensure_deletion_columns(cursor)
     cursor.execute(
         """
         SELECT id, student_id, NULL AS admin_id, lbc_no, full_name, address,
@@ -71,11 +76,13 @@ def get_users():
                COALESCE(account_type, 'student') AS account_type,
                created_at
         FROM students
+        WHERE deleted_at IS NULL
         UNION ALL
         SELECT id, NULL AS student_id, admin_id, lbc_no, full_name, address,
                contact_no, NULL AS course, NULL AS year_level, gmail,
                'admin' AS account_type, created_at
         FROM admins
+        WHERE deleted_at IS NULL
         ORDER BY created_at DESC, id DESC
         """
     )
@@ -140,4 +147,77 @@ def delete_course(id):
     cursor.execute("DELETE FROM courses WHERE id = %s", (id,))
     db.commit()
     cursor.close()
+    return jsonify({'status': 'deleted'})
+
+def _ensure_deletion_columns(cursor):
+    for table, id_col in (('students', 'deleted_by'), ('admins', 'deleted_by')):
+        for ddl in (
+            f"ALTER TABLE {table} ADD COLUMN deleted_at DATETIME DEFAULT NULL",
+            f"ALTER TABLE {table} ADD COLUMN {id_col} VARCHAR(40) DEFAULT NULL",
+            f"ALTER TABLE {table} ADD COLUMN last_active DATETIME DEFAULT CURRENT_TIMESTAMP",
+        ):
+            try:
+                cursor.execute(ddl)
+            except mysql.connector.Error as exc:
+                if exc.errno != 1060:
+                    raise
+
+
+def delete_user(student_id):
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    _ensure_account_type(cursor)
+    _ensure_deletion_columns(cursor)
+
+    cursor.execute(
+        """
+        SELECT student_id, full_name, gmail
+        FROM students
+        WHERE student_id = %s
+          AND deleted_at IS NULL
+        """,
+        (student_id,),
+    )
+    student = cursor.fetchone()
+    if not student:
+        cursor.close()
+        return jsonify({'error': 'Student not found'}), 404
+
+    admin_id = session.get('admin_id') or 'System'
+    admin_gmail = session.get('admin_gmail') or ''
+    if not admin_gmail and admin_id != 'System':
+        cursor.execute("SELECT gmail FROM admins WHERE admin_id = %s", (admin_id,))
+        admin_row = cursor.fetchone() or {}
+        admin_gmail = admin_row.get('gmail') or ''
+
+    deleted_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    cursor.execute(
+        """
+        UPDATE students
+        SET deleted_at = NOW(), deleted_by = %s
+        WHERE student_id = %s
+        """,
+        (admin_id, student_id),
+    )
+    db.commit()
+    cursor.close()
+
+    try:
+        send_deletion_email_student(
+            student['gmail'],
+            student['full_name'],
+            admin_id,
+            admin_gmail,
+            deleted_at,
+        )
+    except Exception as exc:
+        print(f"Student deletion email error: {exc}")
+
+    log_security_event(
+        admin_id,
+        'STUDENT_DELETED',
+        request.remote_addr,
+        f'Deleted student {student_id}',
+    )
+
     return jsonify({'status': 'deleted'})
