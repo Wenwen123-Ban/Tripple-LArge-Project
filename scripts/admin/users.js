@@ -128,6 +128,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.showNotification) {
           showNotification('Admin registered. Save the setup code now.', 'success');
         }
+    const payload = await res.json().catch(() => ({}));
+    if (res.ok) {
+      const setupDisplay = document.getElementById('setup-code-display');
+      const setupValue = document.getElementById('setup-code-value');
+      if (setupDisplay && setupValue && payload.setup_code) {
+        setupValue.textContent = payload.setup_code;
+        setupDisplay.style.display = 'block';
       }
       loadUsers();
     }
