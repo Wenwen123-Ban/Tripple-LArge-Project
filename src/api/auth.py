@@ -974,30 +974,6 @@ def _ensure_admins_table(cursor):
     )
 
 
-def build_admin_confirm_button_html(confirm_url):
-    """Build admin Gmail confirmation button HTML without nested triple strings."""
-    if not confirm_url:
-        return ''
-
-    return ''.join([
-        '<p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">',
-        'Click the button below to confirm this Gmail address before the registering ',
-        'administrator generates your one-time setup code.</p>',
-        '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" ',
-        'style="margin:0 0 18px;"><tr><td align="center">',
-        f'<a href="{confirm_url}" target="_blank" rel="noopener" ',
-        'style="display:inline-block;padding:13px 36px;background:#4B0082;',
-        'color:#ffffff;text-decoration:none;border-radius:999px;font-weight:700;',
-        'border:2px solid #4B0082;">Confirm Admin Gmail</a>',
-        '</td></tr></table>',
-        '<p style="margin:0 0 20px;font-size:12px;color:#555;line-height:1.6;',
-        'word-break:break-all;">If the button is not visible or does not open, ',
-        'copy and paste this confirmation link into your browser:<br>',
-        f'<a href="{confirm_url}" target="_blank" rel="noopener" ',
-        f'style="color:#4B0082;">{confirm_url}</a></p>',
-    ])
-
-
 def build_admin_invite_email(name, registered_by, registered_at, confirm_url=None, expires_minutes=15):
     safe_name = escape(name or 'Administrator')
     safe_registered_by = escape(registered_by or 'System')
@@ -1009,7 +985,36 @@ def build_admin_invite_email(name, registered_by, registered_at, confirm_url=Non
     if safe_confirm_url:
         next_step_text = 'To complete your account setup, return to the registration form and click the <strong>Get One-Time Code</strong> button after Gmail confirmation. You will receive a physical recovery key that must be <strong>written down immediately</strong>.'
         security_text = f'This confirmation link expires in <strong>{expires_minutes} minutes</strong>.<br><strong>Do not save or share your one-time code.</strong> It is your physical recovery key.'
-        confirm_button = build_admin_confirm_button_html(safe_confirm_url)
+        confirm_button = (
+            '<p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">'
+            'Click the button below to confirm this Gmail address before the registering '
+            'administrator generates your one-time setup code.</p>'
+            '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" '
+            'style="margin:0 0 18px;"><tr><td align="center">'
+            f'<a href="{safe_confirm_url}" target="_blank" rel="noopener" '
+            'style="display:inline-block;padding:13px 36px;background:#4B0082;'
+            'color:#ffffff;text-decoration:none;border-radius:999px;font-weight:700;'
+            'border:2px solid #4B0082;">Confirm Admin Gmail</a>'
+            '</td></tr></table>'
+            '<p style="margin:0 0 20px;font-size:12px;color:#555;line-height:1.6;'
+            'word-break:break-all;">If the button is not visible or does not open, '
+            'copy and paste this confirmation link into your browser:<br>'
+            f'<a href="{safe_confirm_url}" target="_blank" rel="noopener" '
+            f'style="color:#4B0082;">{safe_confirm_url}</a></p>'
+        )
+        confirm_button = f'''
+                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">Click the button below to confirm this Gmail address before the registering administrator generates your one-time setup code.</p>
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 18px;"><tr><td align="center">
+                  <a href="{safe_confirm_url}" target="_blank" rel="noopener" style="display:inline-block;padding:13px 36px;background:#4B0082;color:#ffffff;text-decoration:none;border-radius:999px;font-weight:700;border:2px solid #4B0082;">Confirm Admin Gmail</a>
+                </td></tr></table>
+                <p style="margin:0 0 20px;font-size:12px;color:#555;line-height:1.6;word-break:break-all;">If the button is not visible or does not open, copy and paste this confirmation link into your browser:<br><a href="{safe_confirm_url}" target="_blank" rel="noopener" style="color:#4B0082;">{safe_confirm_url}</a></p>
+    if safe_confirm_url:
+        confirm_button = f'''
+                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">Click the button below to confirm this Gmail address before the registering administrator generates your one-time setup code.</p>
+                <p style="margin:0 0 20px;text-align:center;">
+                  <a href="{safe_confirm_url}" style="display:inline-block;padding:12px 32px;background:#4B0082;color:#fff;text-decoration:none;border-radius:999px;font-weight:700;">Confirm Admin Gmail</a>
+                </p>
+        '''
     return f"""
     <!DOCTYPE html><html>
     <body style="margin:0;padding:0;background:#f4f4f8;
@@ -1040,6 +1045,7 @@ def build_admin_invite_email(name, registered_by, registered_at, confirm_url=Non
                 </div>
                 {confirm_button}
                 <p style="margin:0 0 12px;font-size:14px;color:#333;line-height:1.7;">{next_step_text}</p>
+                <p style="margin:0 0 12px;font-size:14px;color:#333;line-height:1.7;">To complete your account setup, return to the registration page and click the <strong>Get One-Time Code</strong> button after Gmail confirmation. You will receive a physical recovery key that must be <strong>written down immediately</strong>.</p>
                 <div style="background:#fff3cd;border:1.5px solid #FFD700;border-radius:8px;padding:14px 20px;margin:0 0 20px;">
                   <p style="margin:0;font-size:13px;color:#856404;line-height:1.7;">
                     <strong>⚠ Security Notice:</strong><br>
