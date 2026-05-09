@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, render_template, request, send_from_directory
 import os
 
-from src.api import auth
+from src.api import admin, auth, books, users
 from src.api.auth import (
     build_confirm_success_html,
     build_confirm_url,
@@ -11,6 +11,8 @@ from src.api.auth import (
     send_confirmation_email,
 )
 from src.core.db import close_db
+from src.core.models import initialize_schema
+from src.core.seed_demo import seed_demo_data
 
 
 app = Flask(
@@ -84,6 +86,29 @@ app.add_url_rule(
     methods=['POST'],
 )
 
+
+
+@app.after_request
+def apply_security_headers(response):
+    """Apply baseline security headers for local testing environments."""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
+@app.route('/api/testing/bootstrap', methods=['POST'])
+def bootstrap_testing_data():
+    """Create required schema and seed demo data for UI/API testing."""
+    admin_key = os.getenv('TEST_BOOTSTRAP_KEY', 'dev-bootstrap-key')
+    provided = request.headers.get('X-Test-Bootstrap-Key', '')
+    if provided != admin_key:
+        return jsonify({'error': 'Unauthorized bootstrap request'}), 401
+
+    initialize_schema()
+    seed_demo_data()
+    return jsonify({'status': 'ready'})
 # ─── Main pages ───────────────────────────────────────────
 @app.route('/')
 def welcome():
@@ -196,16 +221,24 @@ def serve_components(filename):
 
 
 # ─── API Endpoints ────────────────────────────────────────
-@app.route('/api/books', methods=['GET'])
-def get_books():
-    """Fetch all books from the database."""
-    return jsonify({'books': [], 'message': 'Books API endpoint'}), 200
+app.add_url_rule('/api/books', 'api_get_books', books.get_books, methods=['GET'])
+app.add_url_rule('/api/books', 'api_add_book', books.add_book, methods=['POST'])
+app.add_url_rule('/api/books/<int:id>', 'api_delete_book', books.delete_book, methods=['DELETE'])
 
+app.add_url_rule('/api/categories', 'api_get_categories', books.get_categories, methods=['GET'])
+app.add_url_rule('/api/categories', 'api_add_category', books.add_category, methods=['POST'])
+app.add_url_rule('/api/categories/<int:id>', 'api_delete_category', books.delete_category, methods=['DELETE'])
 
-@app.route('/api/users', methods=['GET'])
-def get_users():
-    """Fetch all users from the database."""
-    return jsonify({'users': [], 'message': 'Users API endpoint'}), 200
+app.add_url_rule('/api/users', 'api_get_users', users.get_users, methods=['GET'])
+app.add_url_rule('/api/users/<int:id>', 'api_update_user', users.update_user, methods=['PATCH'])
+app.add_url_rule('/api/courses', 'api_get_courses', users.get_courses, methods=['GET'])
+app.add_url_rule('/api/courses', 'api_add_course', users.add_course, methods=['POST'])
+app.add_url_rule('/api/courses/<int:id>', 'api_delete_course', users.delete_course, methods=['DELETE'])
+
+app.add_url_rule('/api/admin/rules', 'api_admin_get_rules', admin.get_rules, methods=['GET'])
+app.add_url_rule('/api/admin/rules', 'api_admin_save_rules', admin.save_rules, methods=['POST'])
+app.add_url_rule('/api/admin/logs', 'api_admin_logs', admin.get_logs, methods=['GET'])
+app.add_url_rule('/api/admin/health', 'api_admin_health', admin.server_health, methods=['GET'])
 
 
 if __name__ == '__main__':
