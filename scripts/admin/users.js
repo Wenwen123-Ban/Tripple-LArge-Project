@@ -29,9 +29,9 @@ function applyContactFormat(inputEl) {
 let allUsers = [];
 let userSearch = '';
 let adminConfirmToken = null;
-let isAwaitingOneTimeCode = false;
 let adminPollInterval = null;
 let adminConfirmTimeout = null;
+let adminFlowStep = 'idle';
 
 function renderUsersTable(users) {
   const tbody = document.getElementById('users-tbody');
@@ -70,7 +70,30 @@ async function loadCourses() {
   }
 }
 
+function setAdminEmailConfirmed(confirmed) {
+  const checkbox = document.getElementById('admin-email-confirmed');
+  if (checkbox) checkbox.checked = confirmed;
+}
+
+function setAdminActionButton(text, bg = '#4B0082', enabled = true) {
+  const btn = document.getElementById('admin-confirm-gmail-btn');
+  if (!btn) return;
+  btn.textContent = text;
+  btn.disabled = !enabled;
+  btn.style.background = bg;
+  btn.style.borderColor = bg;
+  btn.style.color = '#fff';
+  btn.style.opacity = enabled ? '1' : '0.7';
+  btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+}
+
+function showAdminDoneButton(show) {
+  const doneBtn = document.getElementById('admin-done-btn');
+  if (doneBtn) doneBtn.style.display = show ? 'block' : 'none';
+}
+
 function openAdminModal() {
+  resetAdminForm();
   const adminName = document.querySelector('.sidebar-profile-name')?.textContent?.trim() || 'Administrator';
   document.getElementById('registering-admin-name').textContent = adminName;
   document.getElementById('admin-modal-overlay').style.display = 'flex';
@@ -83,31 +106,25 @@ function stopAdminTokenPoll() {
   adminConfirmTimeout = null;
 }
 
-function setAdminEmailConfirmed(confirmed) {
-  const checkbox = document.getElementById('admin-email-confirmed');
-  if (checkbox) checkbox.checked = confirmed;
-}
-
 function resetAdminForm() {
   stopAdminTokenPoll();
   adminConfirmToken = null;
-  isAwaitingOneTimeCode = false;
+  adminFlowStep = 'idle';
   setAdminEmailConfirmed(false);
-  document.getElementById('admin-form-section').style.display = 'flex';
-  document.getElementById('admin-code-section').style.display = 'none';
-  document.getElementById('admin-one-time-code').textContent = '—';
+  const formSection = document.getElementById('admin-form-section');
+  if (formSection) formSection.style.display = 'flex';
+  showAdminDoneButton(false);
   ['admin-fullname', 'admin-id-input', 'admin-lbc-input', 'admin-address', 'admin-contact', 'admin-gmail', 'admin-password'].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  const btn = document.getElementById('admin-confirm-gmail-btn');
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = 'Confirm Gmail';
-    btn.style.background = '';
-    btn.style.color = '';
-    btn.style.borderColor = '';
-  }
+  setAdminActionButton('Confirm Gmail', '#4B0082', true);
+}
+
+function closeAdminModalAfterDone() {
+  document.getElementById('admin-modal-overlay').style.display = 'none';
+  resetAdminForm();
+  showNotification('Admin account created successfully.', 'success');
 }
 
 function startAdminTokenPoll() {
@@ -123,18 +140,12 @@ function startAdminTokenPoll() {
 
       if (data.confirmed) {
         stopAdminTokenPoll();
-        isAwaitingOneTimeCode = true;
+        adminFlowStep = 'done';
         setAdminEmailConfirmed(true);
-
-        const btn = document.getElementById('admin-confirm-gmail-btn');
-        if (btn) {
-          btn.textContent = 'Get One-Time Code';
-          btn.style.background = '#22C55E';
-          btn.style.color = '#fff';
-          btn.style.borderColor = '#22C55E';
-        }
-
-        showNotification('Gmail confirmed! Click Get One-Time Code to finish.', 'success');
+        setAdminActionButton('Registration Complete ✓', '#22C55E', false);
+        showAdminDoneButton(true);
+        showNotification('New admin confirmed Gmail and received their private code.', 'success');
+        if (typeof loadUsers === 'function') loadUsers();
       }
     } catch (err) {
       console.error('Admin poll error:', err);
@@ -143,73 +154,17 @@ function startAdminTokenPoll() {
 
   adminConfirmTimeout = setTimeout(() => {
     stopAdminTokenPoll();
-    adminConfirmToken = null;
-    isAwaitingOneTimeCode = false;
-    setAdminEmailConfirmed(false);
-
-    const btn = document.getElementById('admin-confirm-gmail-btn');
-    if (btn) btn.textContent = 'Confirm Gmail';
-
-    showNotification('Confirmation link expired. Please resend the admin Gmail confirmation.', 'error');
+    if (adminFlowStep === 'sent') {
+      adminConfirmToken = null;
+      adminFlowStep = 'idle';
+      setAdminEmailConfirmed(false);
+      setAdminActionButton('Confirm Gmail', '#4B0082', true);
+      showNotification('Confirmation expired. Please retry.', 'error');
+    }
   }, 15 * 60 * 1000);
 }
 
-async function confirmGmail() {
-  const gmail = document.getElementById('admin-gmail').value.trim();
-  const name = document.getElementById('admin-fullname').value.trim();
-
-  if (!gmail || !name) {
-    showNotification('Fill in name and Gmail first.', 'error');
-    return;
-  }
-
-  const registeredBy = document.getElementById('registering-admin-name').textContent;
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString('en-US', {
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
-  });
-
-  try {
-    const res = await fetch('/api/auth/admin-send-confirmation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        gmail,
-        name,
-        registered_by: registeredBy,
-        registered_at: timeStr,
-      }),
-    });
-    const data = await res.json();
-    if (data.status === 'sent') {
-      adminConfirmToken = data.token;
-      isAwaitingOneTimeCode = false;
-      setAdminEmailConfirmed(false);
-
-      const btn = document.getElementById('admin-confirm-gmail-btn');
-      if (btn) btn.textContent = 'Get One-Time Code';
-
-      startAdminTokenPoll();
-      showNotification('Confirmation email sent. Waiting for new admin to confirm...', 'success');
-    } else {
-      showNotification(data.error || 'Failed to send email.', 'error');
-    }
-  } catch (err) {
-    showNotification('Connection error.', 'error');
-  }
-}
-
-async function getOneTimeCode() {
-  if (!adminConfirmToken) {
-    showNotification('Confirm Gmail first.', 'error');
-    return;
-  }
-
-  if (!isAwaitingOneTimeCode) {
-    showNotification('Please wait until the new admin clicks the Gmail confirmation link.', 'info');
-    return;
-  }
-
+async function sendAdminForm() {
   const payload = {
     admin_id: document.getElementById('admin-id-input').value.trim(),
     lbc_no: document.getElementById('admin-lbc-input').value.trim(),
@@ -218,7 +173,6 @@ async function getOneTimeCode() {
     contact_no: document.getElementById('admin-contact').value.trim(),
     password: document.getElementById('admin-password').value,
     gmail: document.getElementById('admin-gmail').value.trim(),
-    token: adminConfirmToken,
     registered_by: document.getElementById('registering-admin-name')?.textContent || 'Administrator',
     registered_at: new Date().toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -228,25 +182,45 @@ async function getOneTimeCode() {
     }),
   };
 
+  if (!payload.full_name || !payload.gmail || !payload.admin_id || !payload.password) {
+    showNotification('Please fill in all required fields.', 'error');
+    return;
+  }
+
   try {
-    const res = await fetch('/api/auth/register-admin', {
+    setAdminActionButton('Sending...', '#888888', false);
+
+    const res = await fetch('/api/auth/admin-send-confirmation', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
     const data = await res.json();
 
-    if (data.status === 'registered' && data.setup_code) {
-      document.getElementById('admin-form-section').style.display = 'none';
-      document.getElementById('admin-code-section').style.display = 'flex';
-      document.getElementById('admin-one-time-code').textContent = data.setup_code;
-      showNotification('Admin registered. Write down the code now.', 'success');
-      loadUsers();
+    if (data.status === 'sent') {
+      adminConfirmToken = data.token;
+      adminFlowStep = 'sent';
+      setAdminActionButton('Waiting for Gmail Confirmation...', '#888888', false);
+      showAdminDoneButton(false);
+      showNotification('Email sent. Waiting for new admin to confirm Gmail.', 'success');
+      startAdminTokenPoll();
     } else {
-      showNotification(data.error || 'Registration failed.', 'error');
+      adminFlowStep = 'idle';
+      showNotification(data.error || 'Failed to send email.', 'error');
+      setAdminActionButton('Confirm Gmail', '#4B0082', true);
     }
   } catch (err) {
-    showNotification('Connection error. Try again.', 'error');
+    adminFlowStep = 'idle';
+    showNotification('Connection error.', 'error');
+    setAdminActionButton('Confirm Gmail', '#4B0082', true);
+  }
+}
+
+function handleAdminAction() {
+  if (adminFlowStep === 'idle') {
+    sendAdminForm();
+  } else if (adminFlowStep === 'sent') {
+    showNotification('Waiting for new admin to confirm their Gmail.', 'info');
   }
 }
 
@@ -267,21 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('admin-email-confirmed')?.addEventListener('click', (event) => {
     event.preventDefault();
-    if (!isAwaitingOneTimeCode) {
-      showNotification('Please wait until the new admin clicks the Gmail confirmation link.', 'info');
-    }
+    showNotification('This checkbox updates automatically after Gmail confirmation.', 'info');
   });
 
-  document.getElementById('admin-confirm-gmail-btn')?.addEventListener('click', () => {
-    if (adminConfirmToken) getOneTimeCode();
-    else confirmGmail();
-  });
+  document.getElementById('admin-confirm-gmail-btn')?.addEventListener('click', handleAdminAction);
 
-  document.getElementById('admin-done-btn')?.addEventListener('click', () => {
-    document.getElementById('admin-modal-overlay').style.display = 'none';
-    resetAdminForm();
-    showNotification('Admin account created successfully.', 'success');
-  });
+  document.getElementById('admin-done-btn')?.addEventListener('click', closeAdminModalAfterDone);
 
   document.getElementById('save-course-btn')?.addEventListener('click', async () => {
     const name = document.getElementById('new-course')?.value.trim();

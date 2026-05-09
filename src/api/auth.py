@@ -53,8 +53,8 @@ def create_confirmation_token(gmail):
     )
     cursor.execute(
         """
-        INSERT INTO pending_confirmations (token, gmail, expires_at)
-        VALUES (%s, %s, %s)
+        INSERT INTO pending_confirmations (token, gmail, type, expires_at)
+        VALUES (%s, %s, 'student', %s)
         """,
         (token, gmail, expires_at),
     )
@@ -300,6 +300,145 @@ def build_confirm_success_html():
     """
 
 
+def build_admin_confirm_page(setup_code):
+    safe_setup_code = escape(setup_code or '')
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Account Confirmed — Click & Collect</title>
+      <style>
+        * {{ box-sizing:border-box;margin:0;padding:0; }}
+        body {{
+          font-family:Arial,sans-serif;
+          background:#f4f4f8;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          min-height:100vh;
+          padding:20px;
+        }}
+        .card {{
+          background:#fff;
+          border:2px solid #1A1A6E;
+          border-radius:14px;
+          padding:40px 48px;
+          text-align:center;
+          max-width:480px;
+          width:100%;
+        }}
+        .brand {{
+          color:#4B0082;
+          font-weight:900;
+          font-size:22px;
+          display:block;
+          margin-bottom:6px;
+        }}
+        .school {{
+          font-size:11px;
+          color:#888;
+          margin-bottom:28px;
+          line-height:1.5;
+        }}
+        .check {{ font-size:48px;color:#22C55E;margin-bottom:12px; }}
+        h2 {{ color:#1A1A6E;font-size:20px;margin-bottom:8px; }}
+        .subtitle {{
+          font-size:13px;
+          color:#555;
+          margin-bottom:28px;
+          line-height:1.6;
+        }}
+        .code-box {{
+          background:#f4f4f8;
+          border:2px dashed #4B0082;
+          border-radius:10px;
+          padding:24px;
+          margin-bottom:20px;
+        }}
+        .code-label {{
+          font-size:12px;
+          font-weight:700;
+          color:#4B0082;
+          text-transform:uppercase;
+          letter-spacing:0.08em;
+          margin-bottom:12px;
+        }}
+        .code-value {{
+          font-size:26px;
+          font-weight:900;
+          letter-spacing:0.15em;
+          color:#1A1A6E;
+          margin-bottom:14px;
+          word-break:break-all;
+        }}
+        .code-warning {{ font-size:12px;color:#e53e3e;line-height:1.7; }}
+        .security-note {{
+          background:#fff3cd;
+          border:1.5px solid #FFD700;
+          border-radius:8px;
+          padding:14px 18px;
+          font-size:12px;
+          color:#856404;
+          line-height:1.7;
+          text-align:left;
+          margin-bottom:24px;
+        }}
+        .close-note {{ font-size:13px;color:#555;line-height:1.6; }}
+        .footer {{ margin-top:28px;font-size:11px;color:#aaa; }}
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <span class="brand">Click &amp; Collect</span>
+        <p class="school">
+          North Western Mindanao State College<br>
+          of Science and Technology
+        </p>
+        <div class="check">&#10003;</div>
+        <h2>Gmail Confirmed!</h2>
+        <p class="subtitle">
+          Your administrator account has been activated.<br>
+          Below is your <strong>one-time recovery code</strong>.
+        </p>
+
+        <div class="code-box">
+          <p class="code-label">Your One-Time Recovery Code</p>
+          <p class="code-value">{safe_setup_code}</p>
+          <p class="code-warning">
+            ⚠ Write this down physically right now.<br>
+            <strong>Do NOT save it digitally.</strong><br>
+            <strong>Do NOT share it with anyone</strong>
+            including the admin who registered you.<br>
+            This code will <strong>never be shown again</strong>.
+          </p>
+        </div>
+
+        <div class="security-note">
+          <strong>What is this code for?</strong><br>
+          This is your personal recovery key. If you ever forget
+          your password, you will need this code along with your
+          Gmail verification to reset it. Without this code,
+          account recovery will require manual administrator
+          intervention.
+        </div>
+
+        <p class="close-note">
+          You may now <strong>close this tab</strong>.<br>
+          Go to the login page and sign in with your
+          Admin ID and password.
+        </p>
+
+        <div class="footer">
+          Click &amp; Collect &mdash; NMSC Library System &bull;
+          This page is private to you only.
+        </div>
+      </div>
+    </body>
+    </html>
+    """
+
+
 def build_admin_confirm_success_html():
     return """
     <!DOCTYPE html>
@@ -329,7 +468,7 @@ def build_admin_confirm_success_html():
         <span class="brand">Click &amp; Collect</span>
         <div class="check">&#10003;</div>
         <h2>Admin Gmail Confirmed!</h2>
-        <p>The admin registration form can now show the checked confirmation box and enable <strong>Get One-Time Code</strong>.</p>
+        <p>The admin registration form can now show the checked confirmation box and enable <strong>view your private one-time recovery code</strong>.</p>
         <a class="button" href="/admin/users">Return to Admin Users</a>
       </div>
     </body>
@@ -909,19 +1048,73 @@ def send_confirmation(request):
     return JsonResponse({'status': 'sent', 'token': token})
 
 
+def confirm_email_token(token):
+    if not token:
+        return '<p>Invalid link.</p>', 400
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    _ensure_pending_confirmation_columns(cursor)
+    _ensure_admins_table(cursor)
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM pending_confirmations
+        WHERE token = %s
+          AND expires_at > NOW()
+        """,
+        (token,),
+    )
+    record = cursor.fetchone()
+
+    if not record:
+        cursor.close()
+        return '<p>Invalid or expired confirmation link.</p>', 400
+
+    is_admin = (record.get('type') or 'student') == 'admin'
+    setup_code = record.get('setup_code_temp')
+
+    cursor.execute(
+        """
+        UPDATE pending_confirmations
+        SET confirmed = 1
+        WHERE token = %s
+        """,
+        (token,),
+    )
+
+    if is_admin:
+        cursor.execute(
+            """
+            UPDATE admins
+            SET is_verified = 1
+            WHERE gmail = %s
+            """,
+            (record.get('gmail'),),
+        )
+
+    cursor.execute(
+        """
+        UPDATE pending_confirmations
+        SET setup_code_temp = NULL
+        WHERE token = %s
+        """,
+        (token,),
+    )
+    db.commit()
+    cursor.close()
+
+    if is_admin and setup_code:
+        return build_admin_confirm_page(setup_code), 200
+    return build_confirm_success_html(), 200
+
+
 def confirm_email(request):
     from django.http import HttpResponse
 
-    token = request.GET.get('token', '')
-    if not token:
-        return HttpResponse('<p>Invalid link.</p>', status=400)
-
-    confirmation_type = get_confirmation_type(token)
-    if mark_token_confirmed(token):
-        if confirmation_type == 'admin':
-            return HttpResponse(build_admin_confirm_success_html())
-        return HttpResponse(build_confirm_success_html())
-    return HttpResponse('<p>Invalid or expired confirmation link.</p>', status=400)
+    html, status = confirm_email_token(request.GET.get('token', ''))
+    return HttpResponse(html, status=status)
 
 
 def check_token(request):
@@ -955,9 +1148,18 @@ def _ensure_pending_confirmation_confirmed_column(cursor):
             raise
 
 
+
+def _ensure_pending_confirmation_setup_code_column(cursor):
+    try:
+        cursor.execute("ALTER TABLE pending_confirmations ADD COLUMN setup_code_temp VARCHAR(50) DEFAULT NULL")
+    except mysql.connector.Error as exc:
+        if exc.errno != 1060:
+            raise
+
 def _ensure_pending_confirmation_columns(cursor):
     _ensure_pending_confirmation_confirmed_column(cursor)
     _ensure_pending_confirmation_type_column(cursor)
+    _ensure_pending_confirmation_setup_code_column(cursor)
 
 
 def _token_confirmation_status(token):
@@ -1014,8 +1216,8 @@ def build_admin_confirm_button_html(confirm_url):
 
     return ''.join([
         '<p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">',
-        'Click the button below to confirm this Gmail address before the registering ',
-        'administrator generates your one-time setup code.</p>',
+        'Click the button below to confirm this Gmail address and receive your ',
+        'private one-time recovery code.</p>',
         '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" ',
         'style="margin:0 0 18px;"><tr><td align="center">',
         f'<a href="{confirm_url}" target="_blank" rel="noopener" ',
@@ -1037,10 +1239,10 @@ def build_admin_invite_email(name, registered_by, registered_at, confirm_url=Non
     safe_registered_at = escape(registered_at or 'N/A')
     safe_confirm_url = escape(confirm_url or '', quote=True)
     confirm_button = ''
-    next_step_text = 'Your administrator account has been created. Use the one-time recovery code provided by the registering administrator, then keep that code written down in a safe physical place.'
+    next_step_text = 'Your administrator account has been created. Confirm your Gmail to receive your private one-time recovery code, then keep that code written down in a safe physical place.'
     security_text = '<strong>Do not save or share your one-time code.</strong> It is your physical recovery key.'
     if safe_confirm_url:
-        next_step_text = 'To complete your account setup, return to the registration form and click the <strong>Get One-Time Code</strong> button after Gmail confirmation. You will receive a physical recovery key that must be <strong>written down immediately</strong>.'
+        next_step_text = 'To complete your account setup, click the confirmation button. Your private one-time recovery code will be shown on the confirmation page and must be <strong>written down immediately</strong>.'
         security_text = f'This confirmation link expires in <strong>{expires_minutes} minutes</strong>.<br><strong>Do not save or share your one-time code.</strong> It is your physical recovery key.'
         confirm_button = build_admin_confirm_button_html(safe_confirm_url)
     return ''.join([
@@ -1099,54 +1301,6 @@ def build_admin_invite_email(name, registered_by, registered_at, confirm_url=Non
         '</table>',
         '</body></html>',
     ])
-    return f"""
-    <!DOCTYPE html><html>
-    <body style="margin:0;padding:0;background:#f4f4f8;
-                 font-family:Arial,sans-serif;">
-      <table width="100%" cellpadding="0" cellspacing="0"
-             style="background:#f4f4f8;padding:40px 0;">
-        <tr><td align="center">
-          <table width="520" cellpadding="0" cellspacing="0"
-                 style="background:#fff;border-radius:12px;
-                        border:2px solid #1A1A6E;overflow:hidden;">
-            <tr><td style="background:#4B0082;padding:24px 32px;text-align:center;">
-                <p style="margin:0;color:#FFD700;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">
-                  North Western Mindanao State College of Science and Technology
-                </p>
-                <h1 style="margin:8px 0 0;color:#fff;font-size:26px;font-weight:900;">Click &amp; Collect</h1>
-                <p style="margin:6px 0 0;color:#FFD700;font-size:13px;font-weight:700;letter-spacing:0.05em;">
-                  ADMINISTRATOR ACCOUNT NOTICE
-                </p>
-            </td></tr>
-            <tr><td style="padding:32px 40px 16px;">
-                <p style="margin:0 0 12px;font-size:16px;color:#1A1A6E;font-weight:700;">Dear {safe_name},</p>
-                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">You have been granted <strong>Administrator access</strong> to the <strong>Click &amp; Collect Library Borrowing System</strong> at NMSC-ST.</p>
-                <div style="background:#f4f4f8;border-left:4px solid #4B0082;border-radius:6px;padding:14px 20px;margin:0 0 20px;">
-                  <p style="margin:0;font-size:13px;color:#555;line-height:1.8;">
-                    <strong>Registered by:</strong> {safe_registered_by}<br>
-                    <strong>Registered at:</strong> {safe_registered_at}
-                  </p>
-                </div>
-                {confirm_button}
-                <p style="margin:0 0 12px;font-size:14px;color:#333;line-height:1.7;">{next_step_text}</p>
-                <p style="margin:0 0 12px;font-size:14px;color:#333;line-height:1.7;">To complete your account setup, return to the registration page and click the <strong>Get One-Time Code</strong> button after Gmail confirmation. You will receive a physical recovery key that must be <strong>written down immediately</strong>.</p>
-                <div style="background:#fff3cd;border:1.5px solid #FFD700;border-radius:8px;padding:14px 20px;margin:0 0 20px;">
-                  <p style="margin:0;font-size:13px;color:#856404;line-height:1.7;">
-                    <strong>⚠ Security Notice:</strong><br>
-                    {security_text}<br><br>
-                    If this was not your email or you did not request this account — <strong>disregard this email</strong>.
-                  </p>
-                </div>
-                <p style="margin:0;font-size:14px;color:#1A1A6E;font-weight:700;">Good luck, Librarian {safe_name}! 📚</p>
-            </td></tr>
-            <tr><td style="background:#f4f4f8;padding:16px 40px;border-top:1px solid #e0e0e0;text-align:center;">
-              <p style="margin:0;font-size:11px;color:#aaa;">Click &amp; Collect &mdash; NMSC Library System &bull; Do not reply to this email.</p>
-            </td></tr>
-          </table>
-        </td></tr>
-      </table>
-    </body></html>
-    """
 
 
 def send_admin_invite_email(gmail, name, registered_by, registered_at, confirm_url=None):
@@ -1281,31 +1435,109 @@ def register_admin():
 def admin_send_confirmation():
     if request.method != 'POST':
         return jsonify({'error': 'Method not allowed'}), 405
+
     data = _json_payload()
+    errors = validate_registration_fields(data, is_admin=True)
+    if errors:
+        return jsonify({'error': errors[0]}), 400
+
+    admin_id = _clean(data.get('admin_id') or data.get('student_id'))
+    lbc_no = _clean(data.get('lbc_no', ''))
+    full_name = _clean(data.get('full_name') or data.get('name'))
+    address = _clean(data.get('address', ''))
+    contact_no = _clean(data.get('contact_no'))
+    password = data.get('password', '')
     gmail = _clean(data.get('gmail'))
-    name = _clean(data.get('name'), 'Administrator') or 'Administrator'
-    registered_by = _clean(data.get('registered_by'), 'Administrator') or 'Administrator'
-    registered_at = _clean(data.get('registered_at'), 'N/A') or 'N/A'
+    registered_by = _clean(data.get('registered_by', 'Administrator')) or 'Administrator'
+    registered_at = _clean(data.get('registered_at', 'N/A')) or 'N/A'
 
-    if not re.match(r'^[^\s@]+@gmail\.com$', gmail, re.IGNORECASE):
-        return jsonify({'error': 'Valid Gmail address required'}), 400
+    if not all([admin_id, full_name, password, gmail]):
+        return jsonify({'error': 'Missing required fields'}), 400
 
-    token = create_confirmation_token(gmail)
     db = get_db()
-    cursor = db.cursor()
+    cursor = db.cursor(dictionary=True)
+    _ensure_admins_table(cursor)
     _ensure_pending_confirmation_columns(cursor)
+
     cursor.execute(
         """
-        UPDATE pending_confirmations
-        SET type = 'admin'
-        WHERE token = %s
+        SELECT id
+        FROM admins
+        WHERE admin_id = %s OR gmail = %s
         """,
-        (token,),
+        (admin_id, gmail),
     )
-    db.commit()
-    cursor.close()
+    if cursor.fetchone():
+        cursor.close()
+        return jsonify({'error': 'Admin ID or Gmail already exists'}), 409
 
-    send_admin_invite_email(gmail, name, registered_by, registered_at, build_confirm_url(token))
+    setup_code = generate_setup_code()
+    setup_code_hash = hash_password(setup_code)
+    password_hash = hash_password(password)
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.now() + timedelta(seconds=TOKEN_TTL_SECONDS)
+
+    try:
+        cursor.execute(
+            """
+            INSERT INTO admins (
+                admin_id, lbc_no, full_name, address,
+                contact_no, password_hash, gmail,
+                is_verified, setup_code_hash
+            ) VALUES (
+                %s, %s, %s, %s,
+                %s, %s, %s,
+                0, %s
+            )
+            """,
+            (
+                admin_id, lbc_no, full_name, address,
+                contact_no, password_hash, gmail,
+                setup_code_hash,
+            ),
+        )
+        cursor.execute(
+            "DELETE FROM pending_confirmations WHERE gmail = %s OR expires_at <= NOW()",
+            (gmail,),
+        )
+        cursor.execute(
+            """
+            INSERT INTO pending_confirmations
+                (token, gmail, type, expires_at, confirmed, setup_code_temp)
+            VALUES (%s, %s, 'admin', %s, 0, %s)
+            """,
+            (token, gmail, expires_at, setup_code),
+        )
+        db.commit()
+    except mysql.connector.IntegrityError:
+        db.rollback()
+        cursor.close()
+        return jsonify({'error': 'Admin ID or Gmail already exists'}), 409
+    except Exception:
+        db.rollback()
+        cursor.close()
+        raise
+
+    try:
+        send_admin_invite_email(
+            gmail,
+            full_name,
+            registered_by,
+            registered_at,
+            build_confirm_url(token),
+        )
+    except Exception:
+        db.rollback()
+        # Keep the unverified account and token out of the database if the email cannot be sent.
+        cleanup_cursor = db.cursor()
+        cleanup_cursor.execute("DELETE FROM pending_confirmations WHERE token = %s", (token,))
+        cleanup_cursor.execute("DELETE FROM admins WHERE admin_id = %s AND is_verified = 0", (admin_id,))
+        db.commit()
+        cleanup_cursor.close()
+        cursor.close()
+        raise
+
+    cursor.close()
     return jsonify({'status': 'sent', 'token': token})
 
 

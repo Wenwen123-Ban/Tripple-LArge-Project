@@ -36,6 +36,7 @@ def initialize_schema():
             gmail VARCHAR(255) NOT NULL,
             confirmed TINYINT(1) DEFAULT 0,
             type VARCHAR(20) DEFAULT 'student',
+            setup_code_temp VARCHAR(50) DEFAULT NULL,
             expires_at DATETIME NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
