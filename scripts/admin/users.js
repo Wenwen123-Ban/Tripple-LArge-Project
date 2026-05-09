@@ -120,6 +120,14 @@ document.addEventListener('DOMContentLoaded', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+    const result = await res.json().catch(() => ({}));
+    if (res.ok) {
+      if (result.status === 'registered' && result.setup_code) {
+        document.getElementById('setup-code-value').textContent = result.setup_code;
+        document.getElementById('setup-code-display').style.display = 'block';
+        if (window.showNotification) {
+          showNotification('Admin registered. Save the setup code now.', 'success');
+        }
     const payload = await res.json().catch(() => ({}));
     if (res.ok) {
       const setupDisplay = document.getElementById('setup-code-display');
