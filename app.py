@@ -12,9 +12,9 @@ from src.api.auth import (
     build_confirm_url,
     create_confirmation_token,
     get_confirmation_type,
-    is_token_confirmed,
     mark_token_confirmed,
     send_confirmation_email,
+    _token_confirmation_status,
 )
 from src.core.db import close_db
 from src.core.models import initialize_schema
@@ -26,7 +26,11 @@ app = Flask(
     template_folder='public/pages',
     static_folder='public'
 )
-app.secret_key = os.getenv('FLASK_SECRET', 'dev-secret-change-in-prod')
+app.secret_key = os.getenv('FLASK_SECRET') or 'dev-fallback-change-this'
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+)
 
 app.teardown_appcontext(close_db)
 
@@ -67,7 +71,7 @@ def confirm_auth_email():
 def check_auth_token():
     """Report whether a pending confirmation token has been confirmed."""
     token = request.args.get('token', '')
-    return jsonify({'confirmed': is_token_confirmed(token)})
+    return jsonify(_token_confirmation_status(token))
 
 
 

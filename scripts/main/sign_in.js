@@ -83,14 +83,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loadingMessage.style.display = 'none';
 
-        // Handle redirection based on account type
-        if (data.account_type === 'admin') {
-          // Redirect admin to admin dashboard
-          window.location.href = '/admin/dashboard';
-        } else if (data.account_type === 'student') {
-          // Show unavailable message for students
-          signInForm.style.display = 'none';
-          unavailableMessage.style.display = 'block';
+        if (data.status === 'ok') {
+          const accountType = data.type || data.account_type;
+          if (accountType === 'admin') {
+            window.location.href = data.redirect || '/admin/dashboard';
+            return;
+          }
+
+          if (accountType === 'student') {
+            if (data.redirect) {
+              window.location.href = data.redirect;
+              return;
+            }
+            signInForm.style.display = 'none';
+            unavailableMessage.style.display = 'block';
+          }
         }
       } catch (err) {
         loadingMessage.style.display = 'none';
