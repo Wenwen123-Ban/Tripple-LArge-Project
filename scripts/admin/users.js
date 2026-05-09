@@ -83,10 +83,16 @@ function stopAdminConfirmationPolling() {
   adminConfirmTimeout = null;
 }
 
+function setAdminEmailConfirmed(confirmed) {
+  const checkbox = document.getElementById('admin-email-confirmed');
+  if (checkbox) checkbox.checked = confirmed;
+}
+
 function resetAdminForm() {
   stopAdminConfirmationPolling();
   adminConfirmToken = null;
   isAwaitingOneTimeCode = false;
+  setAdminEmailConfirmed(false);
   document.getElementById('admin-form-section').style.display = 'flex';
   document.getElementById('admin-code-section').style.display = 'none';
   document.getElementById('admin-one-time-code').textContent = '—';
@@ -100,6 +106,7 @@ function resetAdminForm() {
 
 function startAdminConfirmationPolling(buttonEl) {
   stopAdminConfirmationPolling();
+  setAdminEmailConfirmed(false);
   buttonEl.disabled = true;
   buttonEl.textContent = 'Waiting for Gmail confirmation...';
 
@@ -113,6 +120,7 @@ function startAdminConfirmationPolling(buttonEl) {
       if (data.confirmed) {
         stopAdminConfirmationPolling();
         isAwaitingOneTimeCode = true;
+        setAdminEmailConfirmed(true);
         buttonEl.disabled = false;
         buttonEl.textContent = 'Get One-Time Code';
         showNotification('Admin Gmail confirmed. You can now get the one-time code.', 'success');
@@ -126,6 +134,7 @@ function startAdminConfirmationPolling(buttonEl) {
     stopAdminConfirmationPolling();
     adminConfirmToken = null;
     isAwaitingOneTimeCode = false;
+    setAdminEmailConfirmed(false);
     buttonEl.disabled = false;
     buttonEl.textContent = 'Confirm Gmail';
     showNotification('Confirmation link expired. Please resend the admin Gmail confirmation.', 'error');
@@ -164,6 +173,7 @@ async function confirmGmail() {
     if (data.status === 'sent') {
       adminConfirmToken = data.token;
       isAwaitingOneTimeCode = false;
+      setAdminEmailConfirmed(false);
       startAdminConfirmationPolling(document.getElementById('admin-confirm-gmail-btn'));
       showNotification('Confirmation email sent. Ask the new admin to click the Gmail link.', 'success');
     } else {
@@ -175,8 +185,8 @@ async function confirmGmail() {
 }
 
 async function getOneTimeCode() {
-  if (!adminConfirmToken) {
-    showNotification('Confirm Gmail first.', 'error');
+  if (!adminConfirmToken || !isAwaitingOneTimeCode) {
+    showNotification('Confirm Gmail first. The checkbox will be checked after the email link is clicked.', 'error');
     return;
   }
 
@@ -226,6 +236,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('modal-close-btn')?.addEventListener('click', () => {
     document.getElementById('admin-modal-overlay').style.display = 'none';
     resetAdminForm();
+  });
+
+  document.getElementById('admin-email-confirmed')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (!isAwaitingOneTimeCode) {
+      showNotification('Please wait until the new admin clicks the Gmail confirmation link.', 'info');
+    }
   });
 
   document.getElementById('admin-confirm-gmail-btn')?.addEventListener('click', () => {

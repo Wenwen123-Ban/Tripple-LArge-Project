@@ -99,6 +99,28 @@ def is_token_confirmed(token):
     return bool(payload and payload.get('confirmed'))
 
 
+def get_confirmation_type(token):
+    """Return pending confirmation type for rendering the right success page."""
+    _cleanup_expired_tokens()
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    _ensure_pending_confirmation_type_column(cursor)
+    cursor.execute(
+        """
+        SELECT COALESCE(type, 'student') AS confirmation_type
+        FROM pending_confirmations
+        WHERE token = %s
+          AND expires_at > NOW()
+        """,
+        (token,),
+    )
+    payload = cursor.fetchone()
+    cursor.close()
+    if not payload:
+        return 'student'
+    return payload.get('confirmation_type') or 'student'
+
+
 def get_site_url():
     return os.getenv('SITE_URL', 'http://127.0.0.1:5000').rstrip('/')
 
@@ -284,6 +306,43 @@ def build_confirm_success_html():
            You are being redirected back to registration.</p>
       </div>
       <script>setTimeout(() => window.location.href = "/main/registration?confirmed=1", 1500);</script>
+    </body>
+    </html>
+    """
+
+
+def build_admin_confirm_success_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Admin Gmail Confirmed — Click & Collect</title>
+      <style>
+        body { margin:0; font-family: Arial, sans-serif;
+               background:#f4f4f8; display:flex;
+               align-items:center; justify-content:center;
+               min-height:100vh; }
+        .card { background:#fff; border:2px solid #1A1A6E;
+                border-radius:14px; padding:44px 52px;
+                text-align:center; max-width:460px; }
+        .check { font-size:56px; color:#4B0082; margin-bottom:16px; }
+        h2 { color:#1A1A6E; margin:0 0 12px; font-size:22px; }
+        p  { color:#555; font-size:14px; line-height:1.6; margin:0 0 16px; }
+        .brand { color:#4B0082; font-weight:900; font-size:20px;
+                 margin-bottom:24px; display:block; }
+        .button { display:inline-block; padding:12px 30px; border-radius:999px;
+                  background:#4B0082; color:#fff; text-decoration:none; font-weight:700; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <span class="brand">Click &amp; Collect</span>
+        <div class="check">&#10003;</div>
+        <h2>Admin Gmail Confirmed!</h2>
+        <p>The admin registration form can now show the checked confirmation box and enable <strong>Get One-Time Code</strong>.</p>
+        <a class="button" href="/admin/users">Return to Admin Users</a>
+      </div>
     </body>
     </html>
     """
@@ -921,6 +980,17 @@ def build_admin_invite_email(name, registered_by, registered_at, confirm_url=Non
     safe_registered_at = escape(registered_at or 'N/A')
     safe_confirm_url = escape(confirm_url or '', quote=True)
     confirm_button = ''
+    next_step_text = 'Your administrator account has been created. Use the one-time recovery code provided by the registering administrator, then keep that code written down in a safe physical place.'
+    security_text = '<strong>Do not save or share your one-time code.</strong> It is your physical recovery key.'
+    if safe_confirm_url:
+        next_step_text = 'To complete your account setup, return to the registration form and click the <strong>Get One-Time Code</strong> button after Gmail confirmation. You will receive a physical recovery key that must be <strong>written down immediately</strong>.'
+        security_text = f'This confirmation link expires in <strong>{expires_minutes} minutes</strong>.<br><strong>Do not save or share your one-time code.</strong> It is your physical recovery key.'
+        confirm_button = f'''
+                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">Click the button below to confirm this Gmail address before the registering administrator generates your one-time setup code.</p>
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 18px;"><tr><td align="center">
+                  <a href="{safe_confirm_url}" target="_blank" rel="noopener" style="display:inline-block;padding:13px 36px;background:#4B0082;color:#ffffff;text-decoration:none;border-radius:999px;font-weight:700;border:2px solid #4B0082;">Confirm Admin Gmail</a>
+                </td></tr></table>
+                <p style="margin:0 0 20px;font-size:12px;color:#555;line-height:1.6;word-break:break-all;">If the button is not visible or does not open, copy and paste this confirmation link into your browser:<br><a href="{safe_confirm_url}" target="_blank" rel="noopener" style="color:#4B0082;">{safe_confirm_url}</a></p>
     if safe_confirm_url:
         confirm_button = f'''
                 <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">Click the button below to confirm this Gmail address before the registering administrator generates your one-time setup code.</p>
@@ -957,12 +1027,12 @@ def build_admin_invite_email(name, registered_by, registered_at, confirm_url=Non
                   </p>
                 </div>
                 {confirm_button}
+                <p style="margin:0 0 12px;font-size:14px;color:#333;line-height:1.7;">{next_step_text}</p>
                 <p style="margin:0 0 12px;font-size:14px;color:#333;line-height:1.7;">To complete your account setup, return to the registration page and click the <strong>Get One-Time Code</strong> button after Gmail confirmation. You will receive a physical recovery key that must be <strong>written down immediately</strong>.</p>
                 <div style="background:#fff3cd;border:1.5px solid #FFD700;border-radius:8px;padding:14px 20px;margin:0 0 20px;">
                   <p style="margin:0;font-size:13px;color:#856404;line-height:1.7;">
                     <strong>⚠ Security Notice:</strong><br>
-                    This confirmation link expires in <strong>{expires_minutes} minutes</strong>.<br>
-                    <strong>Do not save or share your one-time code.</strong> It is your physical recovery key.<br><br>
+                    {security_text}<br><br>
                     If this was not your email or you did not request this account — <strong>disregard this email</strong>.
                   </p>
                 </div>
@@ -986,10 +1056,25 @@ def send_admin_invite_email(gmail, name, registered_by, registered_at, confirm_u
     username = os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com')
     password = os.getenv('EMAIL_HOST_PASSWORD', 'your-app-password')
     use_tls = os.getenv('EMAIL_USE_TLS', 'true').lower() in {'1', 'true', 'yes'}
+    if confirm_url:
+        subject = 'Click & Collect — Confirm Admin Gmail'
     message = MIMEMultipart('alternative')
     message['Subject'] = subject
     message['From'] = get_default_from_email()
     message['To'] = gmail
+    plain_message = (
+        f'Dear {name or "Administrator"},\n\n'
+        'You have been granted administrator access to Click & Collect.\n'
+        f'Registered by: {registered_by or "System"}\n'
+        f'Registered at: {registered_at or "N/A"}\n\n'
+    )
+    if confirm_url:
+        plain_message += (
+            'Confirm your admin Gmail using this link, then return to the admin registration form '
+            f'to get the one-time setup code:\n{confirm_url}\n\n'
+        )
+    plain_message += 'If you did not request this account, ignore this email.'
+    message.attach(MIMEText(plain_message, 'plain', 'utf-8'))
     message.attach(MIMEText(
         build_admin_invite_email(name, registered_by, registered_at, confirm_url),
         'html',
