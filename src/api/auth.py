@@ -1066,36 +1066,6 @@ def build_admin_invite_email(name, registered_by, registered_at, confirm_url=Non
         '</table>',
         '</body></html>',
     ])
-        confirm_button = (
-            '<p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">'
-            'Click the button below to confirm this Gmail address before the registering '
-            'administrator generates your one-time setup code.</p>'
-            '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" '
-            'style="margin:0 0 18px;"><tr><td align="center">'
-            f'<a href="{safe_confirm_url}" target="_blank" rel="noopener" '
-            'style="display:inline-block;padding:13px 36px;background:#4B0082;'
-            'color:#ffffff;text-decoration:none;border-radius:999px;font-weight:700;'
-            'border:2px solid #4B0082;">Confirm Admin Gmail</a>'
-            '</td></tr></table>'
-            '<p style="margin:0 0 20px;font-size:12px;color:#555;line-height:1.6;'
-            'word-break:break-all;">If the button is not visible or does not open, '
-            'copy and paste this confirmation link into your browser:<br>'
-            f'<a href="{safe_confirm_url}" target="_blank" rel="noopener" '
-            f'style="color:#4B0082;">{safe_confirm_url}</a></p>'
-        )
-        confirm_button = f'''
-                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">Click the button below to confirm this Gmail address before the registering administrator generates your one-time setup code.</p>
-                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 18px;"><tr><td align="center">
-                  <a href="{safe_confirm_url}" target="_blank" rel="noopener" style="display:inline-block;padding:13px 36px;background:#4B0082;color:#ffffff;text-decoration:none;border-radius:999px;font-weight:700;border:2px solid #4B0082;">Confirm Admin Gmail</a>
-                </td></tr></table>
-                <p style="margin:0 0 20px;font-size:12px;color:#555;line-height:1.6;word-break:break-all;">If the button is not visible or does not open, copy and paste this confirmation link into your browser:<br><a href="{safe_confirm_url}" target="_blank" rel="noopener" style="color:#4B0082;">{safe_confirm_url}</a></p>
-    if safe_confirm_url:
-        confirm_button = f'''
-                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">Click the button below to confirm this Gmail address before the registering administrator generates your one-time setup code.</p>
-                <p style="margin:0 0 20px;text-align:center;">
-                  <a href="{safe_confirm_url}" style="display:inline-block;padding:12px 32px;background:#4B0082;color:#fff;text-decoration:none;border-radius:999px;font-weight:700;">Confirm Admin Gmail</a>
-                </p>
-        '''
     return f"""
     <!DOCTYPE html><html>
     <body style="margin:0;padding:0;background:#f4f4f8;
