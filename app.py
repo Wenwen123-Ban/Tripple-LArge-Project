@@ -89,6 +89,9 @@ app.add_url_rule(
     auth.login_student,
     methods=['POST'],
 )
+app.add_url_rule('/api/auth/logout', 'logout', auth.logout, methods=['POST'])
+app.add_url_rule('/api/auth/admin/setup-verify', 'verify_admin_setup_code', auth.verify_admin_setup_code, methods=['POST'])
+app.add_url_rule('/api/auth/register-admin', 'register_admin', auth.register_admin, methods=['POST'])
 
 
 
