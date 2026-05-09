@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 import psutil
 
-from flask import jsonify, request
+from flask import jsonify, request, session
 
 from src.core.db import get_db
 
@@ -46,6 +46,34 @@ def _ensure_tables(cursor):
         """
     )
 
+
+
+def get_me():
+    """Return current logged-in admin details."""
+    admin_id = session.get('admin_id')
+    if not admin_id:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        """
+        SELECT admin_id, full_name, lbc_no, gmail, created_at
+        FROM admins
+        WHERE admin_id = %s
+        """,
+        (admin_id,),
+    )
+    admin = cursor.fetchone()
+    cursor.close()
+
+    if not admin:
+        return jsonify({'error': 'Admin not found'}), 404
+
+    if admin.get('created_at'):
+        admin['created_at'] = admin['created_at'].strftime('%m/%d/%Y')
+
+    return jsonify(admin)
 
 def get_rules():
     db = get_db()

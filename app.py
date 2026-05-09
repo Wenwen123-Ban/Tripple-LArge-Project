@@ -96,6 +96,7 @@ app.add_url_rule(
     methods=['POST'],
 )
 app.add_url_rule('/api/auth/logout', 'logout', auth.logout, methods=['POST'])
+app.add_url_rule('/api/admin/me', 'admin_get_me', admin.get_me, methods=['GET'])
 app.add_url_rule('/api/auth/verify-admin-setup', 'verify_admin_setup_code', auth.verify_admin_setup_code, methods=['POST'])
 app.add_url_rule('/api/auth/register-admin', 'register_admin', auth.register_admin, methods=['POST'])
 app.add_url_rule('/api/auth/admin-send-confirmation', 'admin_send_confirmation', auth.admin_send_confirmation, methods=['POST'])

@@ -1161,24 +1161,44 @@ def register_admin():
     errors = validate_registration_fields(data, is_admin=True)
     if errors:
         return jsonify({'error': errors[0]}), 400
+
     student_id = _clean(data.get('admin_id') or data.get('student_id'))
     lbc_no = _clean(data.get('lbc_no'))
     full_name = _clean(data.get('full_name'))
-    address = _clean(data.get('address'))
+    address = _clean(data.get('address', ''))
     contact_no = _clean(data.get('contact_no'))
-    password = data.get('password') or ''
+    password = data.get('password', '')
     gmail = _clean(data.get('gmail'))
     token = _clean(data.get('token'))
+
     if not all([student_id, full_name, password, gmail, token]):
-        return jsonify({'error': 'Missing required admin registration fields'}), 400
-    db = get_db(); cursor = db.cursor(dictionary=True)
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
     _ensure_admins_table(cursor)
     _ensure_pending_confirmation_type_column(cursor)
-    cursor.execute("SELECT * FROM pending_confirmations WHERE token=%s AND gmail=%s AND confirmed=1 AND expires_at>NOW()",(token,gmail))
-    if not cursor.fetchone():
-        cursor.close(); return jsonify({'error':'Email not confirmed'}),403
-    setup_code = generate_setup_code(); setup_code_hash = hash_password(setup_code)
+
+    cursor.execute(
+        """
+        SELECT * FROM pending_confirmations
+        WHERE token = %s
+          AND gmail = %s
+          AND expires_at > NOW()
+        """,
+        (token, gmail),
+    )
+
+    confirmation = cursor.fetchone()
+    if not confirmation:
+        cursor.close()
+        return jsonify({'error': 'Email not confirmed or token expired'}), 403
+
+    setup_code = generate_setup_code()
+    setup_code_hash = hash_password(setup_code)
     password_hash = hash_password(password)
+
     try:
         cursor.execute(
             """
@@ -1198,17 +1218,29 @@ def register_admin():
                 setup_code_hash,
             ),
         )
-        cursor.execute("DELETE FROM pending_confirmations WHERE token=%s", (token,))
+
+        cursor.execute(
+            "DELETE FROM pending_confirmations WHERE token = %s",
+            (token,),
+        )
         db.commit()
+
         send_admin_invite_email(
             gmail,
             full_name,
             data.get('registered_by', 'System'),
             data.get('registered_at', 'N/A'),
         )
-        return jsonify({'status':'registered','setup_code':setup_code,'message':'Save this code. It will not be shown again.'}),201
+
+        return jsonify({
+            'status': 'registered',
+            'setup_code': setup_code,
+            'message': 'Save this code. It will not be shown again.',
+        }), 201
+
     except mysql.connector.IntegrityError:
-        db.rollback(); return jsonify({'error':'ID or Gmail already exists'}),409
+        db.rollback()
+        return jsonify({'error': 'Admin ID or Gmail already exists'}), 409
     finally:
         cursor.close()
 
@@ -1304,6 +1336,10 @@ def login():
         return jsonify({'error': 'Incorrect password'}), 401
 
     if user['account_type'] == 'admin':
+        session['admin_id'] = student_id
+        session['admin_name'] = user['full_name']
+        session['account_type'] = 'admin'
+
         cursor.execute(
             """
             UPDATE admins
@@ -1323,5 +1359,4 @@ def login():
 
 def logout():
     session.clear()
-    return jsonify({'status': 'logged_out'})
-    return jsonify({'status':'logged_out','redirect':'/main/sign_in'})
+    return jsonify({'status': 'logged_out', 'redirect': '/main/sign_in'})
