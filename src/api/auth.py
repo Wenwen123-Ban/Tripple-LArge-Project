@@ -485,7 +485,7 @@ def send_recovery_email(gmail, name, code, expires_minutes=15):
 
 def recovery_request():
     data = _json_payload()
-    student_id = _clean(data.get('student_id'))
+    student_id = _clean(data.get('admin_id') or data.get('student_id'))
     lbc_no = _clean(data.get('lbc_no'))
     gmail = _clean(data.get('gmail'))
 
@@ -952,10 +952,10 @@ def send_admin_invite_email(gmail, name, registered_by, registered_at):
 def register_admin():
     """Register admin account with one-time setup code and confirmed email token."""
     data = _json_payload()
-    errors = validate_registration_fields(data, is_admin=False)
+    errors = validate_registration_fields(data, is_admin=True)
     if errors:
         return jsonify({'error': errors[0]}), 400
-    student_id = _clean(data.get('student_id'))
+    student_id = _clean(data.get('admin_id') or data.get('student_id'))
     lbc_no = _clean(data.get('lbc_no'))
     full_name = _clean(data.get('full_name'))
     address = _clean(data.get('address'))
