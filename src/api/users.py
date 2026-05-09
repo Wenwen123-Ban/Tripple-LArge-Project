@@ -37,16 +37,45 @@ def _ensure_account_type(cursor):
             raise
 
 
+def _ensure_admins_table(cursor):
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS admins (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            admin_id VARCHAR(40) NOT NULL UNIQUE,
+            lbc_no VARCHAR(40),
+            full_name VARCHAR(160) NOT NULL,
+            address VARCHAR(255),
+            contact_no VARCHAR(40),
+            password_hash VARCHAR(255) NOT NULL,
+            gmail VARCHAR(255) NOT NULL UNIQUE,
+            is_verified TINYINT(1) DEFAULT 0,
+            setup_code_hash VARCHAR(255),
+            last_login_ip VARCHAR(80),
+            last_login_time DATETIME NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+
 def get_users():
     db = get_db()
     cursor = db.cursor(dictionary=True)
     _ensure_account_type(cursor)
+    _ensure_admins_table(cursor)
     cursor.execute(
         """
-        SELECT id, student_id, lbc_no, full_name, address, contact_no,
-               course, year_level, gmail, COALESCE(account_type, 'student') AS account_type,
+        SELECT id, student_id, NULL AS admin_id, lbc_no, full_name, address,
+               contact_no, course, year_level, gmail,
+               COALESCE(account_type, 'student') AS account_type,
                created_at
         FROM students
+        UNION ALL
+        SELECT id, NULL AS student_id, admin_id, lbc_no, full_name, address,
+               contact_no, NULL AS course, NULL AS year_level, gmail,
+               'admin' AS account_type, created_at
+        FROM admins
         ORDER BY created_at DESC, id DESC
         """
     )
