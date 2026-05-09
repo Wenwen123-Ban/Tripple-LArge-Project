@@ -1066,6 +1066,84 @@ def build_admin_invite_email(name, registered_by, registered_at, confirm_url=Non
         '</table>',
         '</body></html>',
     ])
+        confirm_button = (
+            '<p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">'
+            'Click the button below to confirm this Gmail address before the registering '
+            'administrator generates your one-time setup code.</p>'
+            '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" '
+            'style="margin:0 0 18px;"><tr><td align="center">'
+            f'<a href="{safe_confirm_url}" target="_blank" rel="noopener" '
+            'style="display:inline-block;padding:13px 36px;background:#4B0082;'
+            'color:#ffffff;text-decoration:none;border-radius:999px;font-weight:700;'
+            'border:2px solid #4B0082;">Confirm Admin Gmail</a>'
+            '</td></tr></table>'
+            '<p style="margin:0 0 20px;font-size:12px;color:#555;line-height:1.6;'
+            'word-break:break-all;">If the button is not visible or does not open, '
+            'copy and paste this confirmation link into your browser:<br>'
+            f'<a href="{safe_confirm_url}" target="_blank" rel="noopener" '
+            f'style="color:#4B0082;">{safe_confirm_url}</a></p>'
+        )
+        confirm_button = f'''
+                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">Click the button below to confirm this Gmail address before the registering administrator generates your one-time setup code.</p>
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 18px;"><tr><td align="center">
+                  <a href="{safe_confirm_url}" target="_blank" rel="noopener" style="display:inline-block;padding:13px 36px;background:#4B0082;color:#ffffff;text-decoration:none;border-radius:999px;font-weight:700;border:2px solid #4B0082;">Confirm Admin Gmail</a>
+                </td></tr></table>
+                <p style="margin:0 0 20px;font-size:12px;color:#555;line-height:1.6;word-break:break-all;">If the button is not visible or does not open, copy and paste this confirmation link into your browser:<br><a href="{safe_confirm_url}" target="_blank" rel="noopener" style="color:#4B0082;">{safe_confirm_url}</a></p>
+    if safe_confirm_url:
+        confirm_button = f'''
+                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">Click the button below to confirm this Gmail address before the registering administrator generates your one-time setup code.</p>
+                <p style="margin:0 0 20px;text-align:center;">
+                  <a href="{safe_confirm_url}" style="display:inline-block;padding:12px 32px;background:#4B0082;color:#fff;text-decoration:none;border-radius:999px;font-weight:700;">Confirm Admin Gmail</a>
+                </p>
+        '''
+    return f"""
+    <!DOCTYPE html><html>
+    <body style="margin:0;padding:0;background:#f4f4f8;
+                 font-family:Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0"
+             style="background:#f4f4f8;padding:40px 0;">
+        <tr><td align="center">
+          <table width="520" cellpadding="0" cellspacing="0"
+                 style="background:#fff;border-radius:12px;
+                        border:2px solid #1A1A6E;overflow:hidden;">
+            <tr><td style="background:#4B0082;padding:24px 32px;text-align:center;">
+                <p style="margin:0;color:#FFD700;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">
+                  North Western Mindanao State College of Science and Technology
+                </p>
+                <h1 style="margin:8px 0 0;color:#fff;font-size:26px;font-weight:900;">Click &amp; Collect</h1>
+                <p style="margin:6px 0 0;color:#FFD700;font-size:13px;font-weight:700;letter-spacing:0.05em;">
+                  ADMINISTRATOR ACCOUNT NOTICE
+                </p>
+            </td></tr>
+            <tr><td style="padding:32px 40px 16px;">
+                <p style="margin:0 0 12px;font-size:16px;color:#1A1A6E;font-weight:700;">Dear {safe_name},</p>
+                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.7;">You have been granted <strong>Administrator access</strong> to the <strong>Click &amp; Collect Library Borrowing System</strong> at NMSC-ST.</p>
+                <div style="background:#f4f4f8;border-left:4px solid #4B0082;border-radius:6px;padding:14px 20px;margin:0 0 20px;">
+                  <p style="margin:0;font-size:13px;color:#555;line-height:1.8;">
+                    <strong>Registered by:</strong> {safe_registered_by}<br>
+                    <strong>Registered at:</strong> {safe_registered_at}
+                  </p>
+                </div>
+                {confirm_button}
+                <p style="margin:0 0 12px;font-size:14px;color:#333;line-height:1.7;">{next_step_text}</p>
+                <p style="margin:0 0 12px;font-size:14px;color:#333;line-height:1.7;">To complete your account setup, return to the registration page and click the <strong>Get One-Time Code</strong> button after Gmail confirmation. You will receive a physical recovery key that must be <strong>written down immediately</strong>.</p>
+                <div style="background:#fff3cd;border:1.5px solid #FFD700;border-radius:8px;padding:14px 20px;margin:0 0 20px;">
+                  <p style="margin:0;font-size:13px;color:#856404;line-height:1.7;">
+                    <strong>⚠ Security Notice:</strong><br>
+                    {security_text}<br><br>
+                    If this was not your email or you did not request this account — <strong>disregard this email</strong>.
+                  </p>
+                </div>
+                <p style="margin:0;font-size:14px;color:#1A1A6E;font-weight:700;">Good luck, Librarian {safe_name}! 📚</p>
+            </td></tr>
+            <tr><td style="background:#f4f4f8;padding:16px 40px;border-top:1px solid #e0e0e0;text-align:center;">
+              <p style="margin:0;font-size:11px;color:#aaa;">Click &amp; Collect &mdash; NMSC Library System &bull; Do not reply to this email.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </body></html>
+    """
 
 
 def send_admin_invite_email(gmail, name, registered_by, registered_at, confirm_url=None):
