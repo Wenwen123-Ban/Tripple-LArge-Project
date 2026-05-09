@@ -1,36 +1,25 @@
-<nav class="admin-nav">
-  <div class="nav-left">
+<nav class="navbar">
+  <div class="traffic-lights">
     <span class="dot dot-blue"></span>
     <span class="dot dot-yellow"></span>
     <span class="dot dot-red"></span>
   </div>
   <div class="nav-icons">
-    <a href="/admin/dashboard" class="nav-icon" data-page="dashboard">
-      <img src="/assets/icons/app.svg" alt="Home">
-    </a>
-    <a href="/admin/books" class="nav-icon" data-page="books">
-      <img src="/assets/icons/book.svg" alt="Manage Books">
-    </a>
-    <a href="/admin/users" class="nav-icon" data-page="users">
-      <img src="/assets/icons/user.svg" alt="Manage Users">
-    </a>
-    <a href="/admin/security" class="nav-icon" data-page="security">
-      <img src="/assets/icons/app.svg" alt="Web Security">
-    </a>
-    <a href="/main/about" class="nav-icon" data-page="about">ⓘ</a>
-    <a href="/main/help" class="nav-icon" data-page="help">❓</a>
-    <a href="#" class="nav-icon" data-page="guide">📋</a>
-  </div>
-  <div class="nav-search">
-    <input type="text" id="nav-search-input" placeholder="Search...">
-    <button id="nav-search-clear">✕</button>
-  </div>
-  <div class="nav-right">
-    <button class="nav-icon" id="notif-btn">🔔</button>
-    <div class="hamburger-wrap">
-      <button class="nav-icon" id="hamburger-btn">☰</button>
+    <a href="/admin/dashboard" class="nav-icon" data-page="dashboard"><i class="ti ti-home"></i></a>
+    <a href="/main/about" class="nav-icon" data-page="about"><i class="ti ti-info-circle"></i></a>
+    <a href="#" class="nav-icon" data-page="switch"><i class="ti ti-switch-horizontal"></i></a>
+    <a href="/admin/users" class="nav-icon" data-page="users"><i class="ti ti-id-badge"></i></a>
+    <div class="nav-search">
+      <input type="text" id="nav-search-input" class="search-bar" placeholder="Search...">
+      <button id="nav-search-clear" aria-label="clear"><i class="ti ti-x"></i></button>
+    </div>
+    <button class="nav-icon" id="notif-btn" aria-label="notifications"><i class="ti ti-bell"></i></button>
+    <div class="hamburger-wrapper">
+      <button class="nav-icon" id="hamburger-btn" aria-label="menu"><i class="ti ti-menu-2"></i></button>
       <div class="hamburger-dropdown" id="hamburger-menu">
-        <a href="/main/sign_in" class="logout-btn">Log Out →</a>
+        <a href="#"><i class="ti ti-settings"></i>Settings</a>
+        <a href="#"><i class="ti ti-user-circle"></i>Profile</a>
+        <a href="/main/sign_in"><i class="ti ti-logout"></i>Log Out</a>
       </div>
     </div>
   </div>

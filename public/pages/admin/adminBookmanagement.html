@@ -4,16 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manage Books — Click &amp; Collect</title>
-  <link rel="stylesheet" href="/styles/main/welcome.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
   <link rel="stylesheet" href="/styles/admin/admin_shared.css">
   <link rel="stylesheet" href="/styles/admin/admin_Bookmanagement.css">
 </head>
-<body class="admin-page" data-page="books">
-  <div id="header-placeholder"></div>
+<body data-page="books">
+  <div class="app-wrapper">
   <div id="navbar-placeholder"></div>
-  <div class="admin-body">
+  <div class="main-layout">
     <div id="sidebar-placeholder"></div>
-    <main class="books-main main-content">
+    <main class="page-content books-main">
       <div class="top-actions-row">
         <div class="card add-books-card">
           <h3>Add Books</h3>
@@ -54,11 +54,11 @@
     </main>
   </div>
   <div id="footer-placeholder"></div>
+</div>
   <script src="/scripts/shared/components.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const page = document.body.dataset.page;
-      loadComponent('#header-placeholder', '/components/header.html', () => setPortalLabel('/ Librarian Portal /'));
       loadComponent('#navbar-placeholder', '/components/navbar.html', () => { setActiveNav(page); initHamburger(); initNavSearch(); });
       loadComponent('#sidebar-placeholder', '/components/sidebar.html', () => initSidebar(page));
       loadComponent('#footer-placeholder', '/components/footer.html', () => startClock());
