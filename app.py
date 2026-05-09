@@ -1,5 +1,9 @@
 from flask import Flask, jsonify, render_template, request, send_from_directory
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from external .env file for security
+load_dotenv('C:\\CC-Config\\.env')
 
 from src.api import admin, auth, books, users
 from src.api.auth import (
@@ -88,6 +92,19 @@ app.add_url_rule(
 app.add_url_rule('/api/auth/logout', 'logout', auth.logout, methods=['POST'])
 app.add_url_rule('/api/auth/admin/setup-verify', 'verify_admin_setup_code', auth.verify_admin_setup_code, methods=['POST'])
 app.add_url_rule('/api/auth/register-admin', 'register_admin', auth.register_admin, methods=['POST'])
+
+
+
+@app.after_request
+def apply_security_headers(response):
+    """Apply baseline security headers for local testing environments."""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
 
 
 

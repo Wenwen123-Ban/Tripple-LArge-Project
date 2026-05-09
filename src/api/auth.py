@@ -913,6 +913,29 @@ def send_admin_invite_email(gmail, name):
             gmail,
             msg.as_string(),
         )
+def send_admin_invite_email(gmail, name):
+    """Send admin registration notice without setup code in email."""
+    subject = 'Click & Collect — Admin Registration Notice'
+    body = (
+        f'Dear {name},\n\n'
+        'An administrator account was created for you in Click & Collect.\n'
+        'Please contact the registering admin for your one-time setup code.\n'
+    )
+    host = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    port = int(os.getenv('EMAIL_PORT', '587'))
+    username = os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com')
+    password = os.getenv('EMAIL_HOST_PASSWORD', 'your-app-password')
+    use_tls = os.getenv('EMAIL_USE_TLS', 'true').lower() in {'1', 'true', 'yes'}
+    message = MIMEMultipart('alternative')
+    message['Subject'] = subject
+    message['From'] = get_default_from_email()
+    message['To'] = gmail
+    message.attach(MIMEText(body, 'plain', 'utf-8'))
+    with smtplib.SMTP(host, port) as smtp:
+        if use_tls:
+            smtp.starttls()
+        smtp.login(username, password)
+        smtp.send_message(message)
 
 
 def register_admin():
