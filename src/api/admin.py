@@ -2,6 +2,7 @@
 
 import os
 from datetime import datetime
+import psutil
 
 from flask import jsonify, request
 
@@ -93,23 +94,27 @@ def save_rules():
 
 
 def server_health():
-    load = round(os.getloadavg()[0], 2) if hasattr(os, 'getloadavg') else 0
-    status = 'Normal' if load < 2 else 'Warning' if load < 5 else 'Error'
-    return jsonify({'load': load, 'status': status, 'checked_at': datetime.utcnow().isoformat()})
+    cpu = psutil.cpu_percent(interval=1)
+    ram = psutil.virtual_memory().percent
+    load = round((cpu + ram) / 2, 1)
+    status = 'Normal' if load < 60 else 'Moderate' if load < 80 else 'High Load'
+    return jsonify({'cpu': cpu, 'ram': ram, 'load': load, 'status': status})
 
 
 def get_logs():
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    _ensure_tables(cursor)
     cursor.execute(
         """
-        SELECT id, student_id, direction, action, created_at AS timestamp
-        FROM admin_logs
-        ORDER BY created_at DESC, id DESC
+        SELECT account_id, event_type, ip_address, description, created_at
+        FROM security_logs
+        ORDER BY created_at DESC
         LIMIT 100
         """
     )
     rows = cursor.fetchall()
+    for row in rows:
+        if row.get('created_at'):
+            row['created_at'] = row['created_at'].strftime('%m/%d/%Y %I:%M:%S %p')
     cursor.close()
     return jsonify(rows)

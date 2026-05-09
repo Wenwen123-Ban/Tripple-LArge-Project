@@ -93,6 +93,7 @@ app.add_url_rule(
 app.add_url_rule('/api/auth/logout', 'logout', auth.logout, methods=['POST'])
 app.add_url_rule('/api/auth/verify-admin-setup', 'verify_admin_setup_code', auth.verify_admin_setup_code, methods=['POST'])
 app.add_url_rule('/api/auth/register-admin', 'register_admin', auth.register_admin, methods=['POST'])
+app.add_url_rule('/api/auth/admin-send-confirmation', 'admin_send_confirmation', auth.admin_send_confirmation, methods=['POST'])
 app.add_url_rule('/api/auth/check-type', 'check_account_type', auth.check_account_type, methods=['POST'])
 app.add_url_rule('/api/auth/admin/setup-verify', 'verify_admin_setup_code', auth.verify_admin_setup_code, methods=['POST'])
 app.add_url_rule('/api/auth/register-admin', 'register_admin', auth.register_admin, methods=['POST'])
@@ -263,6 +264,7 @@ app.add_url_rule('/api/admin/rules', 'api_admin_get_rules', admin.get_rules, met
 app.add_url_rule('/api/admin/rules', 'api_admin_save_rules', admin.save_rules, methods=['POST'])
 app.add_url_rule('/api/admin/logs', 'api_admin_logs', admin.get_logs, methods=['GET'])
 app.add_url_rule('/api/admin/health', 'api_admin_health', admin.server_health, methods=['GET'])
+app.add_url_rule('/api/admin/server-health', 'api_admin_server_health', admin.server_health, methods=['GET'])
 
 
 if __name__ == '__main__':
