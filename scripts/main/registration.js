@@ -139,38 +139,40 @@ function startPolling(checkboxEl) {
 
 
 async function saveRegistration() {
-  const registrationForm = document.getElementById('registrationForm');
-
-  if (registrationForm && !registrationForm.checkValidity()) {
-    registrationForm.reportValidity();
-    showNotification('Complete all registration fields before saving.', 'error');
-    return;
-  }
+  const getVal = (id, fallback = '') => document.getElementById(id)?.value?.trim?.() ?? fallback;
+  const getRaw = (id, fallback = '') => document.getElementById(id)?.value ?? fallback;
 
   const payload = {
-    student_id: document.getElementById('id-input')?.value.trim() || '',
-    lbc_no: document.getElementById('lbc-input')?.value.trim() || '',
-    full_name: document.getElementById('registrationName')?.value.trim() || '',
-    address: document.getElementById('registrationAddress')?.value.trim() || '',
-    contact_no: document.getElementById('registrationContactNo')?.value.trim() || '',
-    password: document.getElementById('registrationPassword')?.value || '',
-    course: document.getElementById('course-select')?.value || 'N/A',
-    year_level: document.getElementById('year-select')?.value || '',
-    gmail: document.getElementById('registrationGmail')?.value.trim() || '',
+    student_id: getVal('id-input'),
+    lbc_no: getVal('lbc-input'),
+    full_name: getVal('name-input') || getVal('registrationName'),
+    address: getVal('address-input') || getVal('registrationAddress'),
+    contact_no: getVal('contact-input') || getVal('registrationContactNo'),
+    password: getRaw('password-input') || getRaw('registrationPassword'),
+    course: getRaw('course-select', 'N/A') || 'N/A',
+    year_level: getRaw('year-select') || '',
+    gmail: getVal('gmail-input') || getVal('registrationGmail'),
     token: confirmationToken,
   };
 
   try {
-    const result = await saveStudentRegistration(payload);
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const result = await res.json();
 
     if (result.status === 'registered') {
-      showNotification('Registration complete! You may now sign in.', 'success');
+      showNotification('Registration complete! Redirecting...', 'success');
+      setTimeout(() => {
+        window.location.href = '/main/sign_in';
+      }, 2000);
     } else {
       showNotification(result.error || 'Registration failed.', 'error');
     }
   } catch (err) {
-    console.error('Could not save registration:', err);
-    showNotification(err.message || 'Could not save registration. Try again.', 'error');
+    showNotification('Could not save registration. Try again.', 'error');
   }
 }
 

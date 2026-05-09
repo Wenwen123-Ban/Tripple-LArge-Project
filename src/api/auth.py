@@ -855,6 +855,64 @@ def _ensure_account_type_column(cursor):
             raise
 
 
+def build_admin_invite_email(name):
+    safe_name = escape(name or 'Administrator')
+    return f"""
+    <!DOCTYPE html><html>
+    <body style="margin:0;padding:0;background:#f4f4f8;
+                 font-family:Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0"
+             style="background:#f4f4f8;padding:40px 0;">
+        <tr><td align="center">
+          <table width="520" cellpadding="0" cellspacing="0"
+                 style="background:#fff;border-radius:12px;
+                        border:2px solid #1A1A6E;overflow:hidden;">
+            <tr><td style="background:#4B0082;padding:24px 32px;text-align:center;">
+                <p style="margin:0;color:#FFD700;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">
+                  North Western Mindanao State College of Science and Technology
+                </p>
+                <h1 style="margin:8px 0 0;color:#fff;font-size:26px;font-weight:900;">Click &amp; Collect</h1>
+                <p style="margin:6px 0 0;color:#FFD700;font-size:13px;font-weight:700;">Administrator Account Setup</p>
+            </td></tr>
+            <tr><td style="padding:32px 40px 16px;">
+                <p style="margin:0 0 8px;font-size:16px;color:#1A1A6E;font-weight:700;">Dear {safe_name},</p>
+                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.6;">An administrator account has been created for you on the <strong>Click &amp; Collect Library System</strong> at NMSC-ST.</p>
+                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.6;">To activate your account, return to the registration page and enter the <strong>one-time setup code</strong> provided to you by the administrator who created your account.</p>
+                <div style="background:#f4f4f8;border-radius:8px;border-left:4px solid #4B0082;padding:14px 20px;margin:0 0 16px;">
+                  <p style="margin:0;font-size:13px;color:#4B0082;font-weight:700;">Important Security Notice</p>
+                  <p style="margin:6px 0 0;font-size:13px;color:#555;line-height:1.5;">The setup code was shown only once to the registering administrator. This email does not contain the code for security reasons. Contact your administrator if you did not receive the code.</p>
+                </div>
+            </td></tr>
+            <tr><td style="background:#f4f4f8;padding:16px 40px;border-top:1px solid #e0e0e0;text-align:center;">
+              <p style="margin:0;font-size:11px;color:#aaa;">Click &amp; Collect &mdash; NMSC Library System &bull; Do not reply to this email.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </body></html>
+    """
+
+
+def send_admin_invite_email(gmail, name):
+    """Send admin registration notice without setup code in email."""
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = 'Click & Collect — Administrator Account Created'
+    msg['From'] = os.getenv('EMAIL_HOST_USER', get_default_from_email())
+    msg['To'] = gmail
+    msg.attach(MIMEText(build_admin_invite_email(name), 'html', 'utf-8'))
+
+    with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
+        smtp.ehlo()
+        smtp.starttls()
+        smtp.login(
+            os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com'),
+            os.getenv('EMAIL_HOST_PASSWORD', 'your-app-password'),
+        )
+        smtp.sendmail(
+            os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com'),
+            gmail,
+            msg.as_string(),
+        )
 def send_admin_invite_email(gmail, name):
     """Send admin registration notice without setup code in email."""
     subject = 'Click & Collect — Admin Registration Notice'

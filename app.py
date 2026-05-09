@@ -105,6 +105,19 @@ def apply_security_headers(response):
     return response
 
 
+
+
+
+@app.after_request
+def apply_security_headers(response):
+    """Apply baseline security headers for local testing environments."""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
 @app.route('/api/testing/bootstrap', methods=['POST'])
 def bootstrap_testing_data():
     """Create required schema and seed demo data for UI/API testing."""
