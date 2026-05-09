@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         sendCodeButton.textContent = 'Sending...';
         const result = adminRecovery
-          ? await requestAdminRecoveryCode({ student_id: payload.student_id, gmail: payload.gmail })
+          ? await requestAdminRecoveryCode({ student_id: payload.student_id, lbc_no: payload.lbc_no, gmail: payload.gmail })
           : await requestRecoveryCode(payload);
 
         if (result.status === 'sent' || result.status === 'code_sent') {

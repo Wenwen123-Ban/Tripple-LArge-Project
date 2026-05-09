@@ -69,11 +69,11 @@ export async function checkAccountType(student_id) {
   return parseJsonResponse(response);
 }
 
-export async function requestAdminRecoveryCode({ student_id, gmail }) {
+export async function requestAdminRecoveryCode({ student_id, lbc_no, gmail }) {
   const response = await fetch(`${AUTH_BASE_URL}/admin-recovery/request`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ student_id, gmail }),
+    body: JSON.stringify({ student_id, lbc_no, gmail }),
   });
 
   return parseJsonResponse(response);
