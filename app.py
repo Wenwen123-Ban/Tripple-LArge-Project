@@ -86,8 +86,8 @@ app.add_url_rule(
 )
 app.add_url_rule(
     '/api/auth/login',
-    'login_student',
-    auth.login_student,
+    'login',
+    auth.login,
     methods=['POST'],
 )
 app.add_url_rule('/api/auth/logout', 'logout', auth.logout, methods=['POST'])

@@ -12,7 +12,11 @@ def verify_password(secret, secret_hash):
     """Verify a plaintext password or recovery secret against a bcrypt hash."""
     if not secret or not secret_hash:
         return False
-    return bcrypt.checkpw(secret.encode('utf-8'), secret_hash.encode('utf-8'))
+    try:
+        return bcrypt.checkpw(secret.encode('utf-8'), secret_hash.encode('utf-8'))
+    except ValueError:
+        # Handles legacy/plaintext/placeholder values that are not valid bcrypt hashes.
+        return False
 
 
 import secrets
