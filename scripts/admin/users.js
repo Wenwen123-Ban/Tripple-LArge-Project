@@ -1,3 +1,24 @@
+async function verifyAdminSetupCode() {
+  const student_id = document.getElementById('id-input')?.value.trim() || '';
+  const setup_code = document.getElementById('setup-code-input')?.value.trim() || '';
+  try {
+    const res = await fetch('/api/auth/verify-admin-setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_id, setup_code }),
+    });
+    const data = await res.json();
+    if (data.status === 'activated') {
+      if (window.showNotification) showNotification('Account activated! Redirecting...', 'success');
+      setTimeout(() => { window.location.href = data.redirect; }, 2000);
+    } else if (window.showNotification) {
+      showNotification(data.error || 'Invalid setup code.', 'error');
+    }
+  } catch (err) {
+    if (window.showNotification) showNotification('Connection error. Try again.', 'error');
+  }
+}
+
 let allUsers = [];
 let userSearch = '';
 
@@ -99,9 +120,15 @@ document.addEventListener('DOMContentLoaded', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+    const result = await res.json().catch(() => ({}));
     if (res.ok) {
-      event.currentTarget.reset();
-      closeModals();
+      if (result.status === 'registered' && result.setup_code) {
+        document.getElementById('setup-code-value').textContent = result.setup_code;
+        document.getElementById('setup-code-display').style.display = 'block';
+        if (window.showNotification) {
+          showNotification('Admin registered. Save the setup code now.', 'success');
+        }
+      }
       loadUsers();
     }
   });

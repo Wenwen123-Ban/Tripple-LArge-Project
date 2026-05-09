@@ -14,10 +14,10 @@ from html import escape
 from urllib.parse import quote
 
 import mysql.connector
-from flask import jsonify, request
+from flask import jsonify, request, session
 
 from src.core.db import get_db
-from src.core.security import hash_password, verify_password
+from src.core.security import generate_setup_code, hash_password, verify_password
 
 TOKEN_TTL_SECONDS = 15 * 60
 pending_tokens = {}
@@ -246,6 +246,7 @@ def build_email_html(name, confirm_url):
           </table>
         </td></tr>
       </table>
+      <script>setTimeout(() => window.location.href = "/main/registration?confirmed=1", 1500);</script>
     </body>
     </html>
     """
@@ -279,9 +280,9 @@ def build_confirm_success_html():
         <div class="check">&#10003;</div>
         <h2>Email Confirmed!</h2>
         <p>Your email address has been successfully verified.
-           You may now close this tab and return to the
-           registration page to continue.</p>
+           You are being redirected back to registration.</p>
       </div>
+      <script>setTimeout(() => window.location.href = "/main/registration?confirmed=1", 1500);</script>
     </body>
     </html>
     """
@@ -436,6 +437,7 @@ def build_recovery_email(name, code, expires_minutes=15):
           </table>
         </td></tr>
       </table>
+      <script>setTimeout(() => window.location.href = "/main/registration?confirmed=1", 1500);</script>
     </body></html>
     """
 
@@ -853,8 +855,68 @@ def _ensure_account_type_column(cursor):
             raise
 
 
+def build_admin_invite_email(name):
+    safe_name = escape(name or 'Administrator')
+    return f"""
+    <!DOCTYPE html><html>
+    <body style="margin:0;padding:0;background:#f4f4f8;
+                 font-family:Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0"
+             style="background:#f4f4f8;padding:40px 0;">
+        <tr><td align="center">
+          <table width="520" cellpadding="0" cellspacing="0"
+                 style="background:#fff;border-radius:12px;
+                        border:2px solid #1A1A6E;overflow:hidden;">
+            <tr><td style="background:#4B0082;padding:24px 32px;text-align:center;">
+                <p style="margin:0;color:#FFD700;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">
+                  North Western Mindanao State College of Science and Technology
+                </p>
+                <h1 style="margin:8px 0 0;color:#fff;font-size:26px;font-weight:900;">Click &amp; Collect</h1>
+                <p style="margin:6px 0 0;color:#FFD700;font-size:13px;font-weight:700;">Administrator Account Setup</p>
+            </td></tr>
+            <tr><td style="padding:32px 40px 16px;">
+                <p style="margin:0 0 8px;font-size:16px;color:#1A1A6E;font-weight:700;">Dear {safe_name},</p>
+                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.6;">An administrator account has been created for you on the <strong>Click &amp; Collect Library System</strong> at NMSC-ST.</p>
+                <p style="margin:0 0 16px;font-size:14px;color:#333;line-height:1.6;">To activate your account, return to the registration page and enter the <strong>one-time setup code</strong> provided to you by the administrator who created your account.</p>
+                <div style="background:#f4f4f8;border-radius:8px;border-left:4px solid #4B0082;padding:14px 20px;margin:0 0 16px;">
+                  <p style="margin:0;font-size:13px;color:#4B0082;font-weight:700;">Important Security Notice</p>
+                  <p style="margin:6px 0 0;font-size:13px;color:#555;line-height:1.5;">The setup code was shown only once to the registering administrator. This email does not contain the code for security reasons. Contact your administrator if you did not receive the code.</p>
+                </div>
+            </td></tr>
+            <tr><td style="background:#f4f4f8;padding:16px 40px;border-top:1px solid #e0e0e0;text-align:center;">
+              <p style="margin:0;font-size:11px;color:#aaa;">Click &amp; Collect &mdash; NMSC Library System &bull; Do not reply to this email.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </body></html>
+    """
+
+
+def send_admin_invite_email(gmail, name):
+    """Send admin registration notice without setup code in email."""
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = 'Click & Collect — Administrator Account Created'
+    msg['From'] = os.getenv('EMAIL_HOST_USER', get_default_from_email())
+    msg['To'] = gmail
+    msg.attach(MIMEText(build_admin_invite_email(name), 'html', 'utf-8'))
+
+    with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
+        smtp.ehlo()
+        smtp.starttls()
+        smtp.login(
+            os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com'),
+            os.getenv('EMAIL_HOST_PASSWORD', 'your-app-password'),
+        )
+        smtp.sendmail(
+            os.getenv('EMAIL_HOST_USER', 'your-system-email@gmail.com'),
+            gmail,
+            msg.as_string(),
+        )
+
+
 def register_admin():
-    """Register an admin account directly without email confirmation."""
+    """Register admin account with one-time setup code and confirmed email token."""
     data = _json_payload()
     student_id = _clean(data.get('student_id'))
     lbc_no = _clean(data.get('lbc_no'))
@@ -862,45 +924,51 @@ def register_admin():
     address = _clean(data.get('address'))
     contact_no = _clean(data.get('contact_no'))
     password = data.get('password') or ''
-    course = _clean(data.get('course'), 'N/A') or 'N/A'
-    year_level = _clean(data.get('year_level'))
     gmail = _clean(data.get('gmail'))
-
-    required_fields = {
-        'student_id': student_id,
-        'full_name': full_name,
-        'password': password,
-        'gmail': gmail,
-    }
-    missing = [field for field, value in required_fields.items() if not value]
-    if missing:
-        return jsonify({'error': f"Missing required field(s): {', '.join(missing)}"}), 400
-
-    db = get_db()
-    cursor = db.cursor(dictionary=True)
+    token = _clean(data.get('token'))
+    if not all([student_id, full_name, password, gmail, token]):
+        return jsonify({'error': 'Missing required admin registration fields'}), 400
+    db = get_db(); cursor = db.cursor(dictionary=True)
     _ensure_account_type_column(cursor)
-    password_hash = hash_password(password)
-
     try:
-        cursor.execute(
-            """
-            INSERT INTO students
-                (student_id, lbc_no, full_name, address, contact_no,
-                 password_hash, course, year_level, gmail, is_verified, account_type)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1, 'admin')
-            """,
-            (
-                student_id, lbc_no, full_name, address, contact_no,
-                password_hash, course, year_level, gmail,
-            ),
-        )
+        cursor.execute("ALTER TABLE students ADD COLUMN setup_code_hash VARCHAR(255) DEFAULT NULL")
+    except mysql.connector.Error as exc:
+        if exc.errno != 1060:
+            raise
+    cursor.execute("SELECT * FROM pending_confirmations WHERE token=%s AND gmail=%s AND confirmed=1 AND expires_at>NOW()",(token,gmail))
+    if not cursor.fetchone():
+        cursor.close(); return jsonify({'error':'Email not confirmed'}),403
+    setup_code = generate_setup_code(); setup_code_hash = hash_password(setup_code)
+    password_hash = hash_password(password)
+    try:
+        cursor.execute("""INSERT INTO students (student_id,lbc_no,full_name,address,contact_no,password_hash,course,year_level,gmail,is_verified,account_type,setup_code_hash)
+        VALUES (%s,%s,%s,%s,%s,%s,'N/A','N/A',%s,1,'admin',%s)""",(student_id,lbc_no,full_name,address,contact_no,password_hash,gmail,setup_code_hash))
+        cursor.execute("DELETE FROM pending_confirmations WHERE token=%s", (token,))
         db.commit()
-        return jsonify({'status': 'registered', 'account_type': 'admin'}), 201
+        send_admin_invite_email(gmail, full_name)
+        return jsonify({'status':'registered','setup_code':setup_code,'message':'Save this code. It will not be shown again.'}),201
     except mysql.connector.IntegrityError:
-        db.rollback()
-        return jsonify({'error': 'ID or Gmail already exists'}), 409
+        db.rollback(); return jsonify({'error':'ID or Gmail already exists'}),409
     finally:
         cursor.close()
+
+
+def verify_admin_setup_code():
+    data = _json_payload()
+    student_id = _clean(data.get('student_id'))
+    setup_code = _clean(data.get('setup_code'))
+    if not student_id or not setup_code:
+        return jsonify({'error':'Student ID and setup code are required'}),400
+    db=get_db(); cursor=db.cursor(dictionary=True)
+    cursor.execute("SELECT setup_code_hash FROM students WHERE student_id=%s AND account_type='admin'",(student_id,))
+    admin = cursor.fetchone()
+    if not admin:
+        cursor.close(); return jsonify({'error':'Admin account not found'}),404
+    if not verify_password(setup_code, admin.get('setup_code_hash')):
+        log_security_event(student_id,'ADMIN_SETUP_WRONG_CODE',_client_ip(),'Wrong setup code entered during admin activation')
+        cursor.close(); return jsonify({'error':'Invalid setup code'}),400
+    cursor.execute("UPDATE students SET setup_code_hash=NULL WHERE student_id=%s",(student_id,)); db.commit(); cursor.close()
+    return jsonify({'status':'activated','redirect':'/admin/dashboard'})
 
 
 def login_student():
@@ -960,3 +1028,8 @@ def login_student():
         'student_id': student_id,
         'full_name': student['full_name'],
     })
+
+
+def logout():
+    session.clear()
+    return jsonify({'status': 'logged_out'})
