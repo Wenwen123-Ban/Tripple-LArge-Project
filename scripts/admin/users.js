@@ -4,9 +4,8 @@ let userSearch = '';
 async function loadCourses() {
   const res = await fetch('/api/courses');
   const data = res.ok ? await res.json() : [];
-  document.getElementById('course-list').innerHTML = data.map((c) => `
-    <div class="list-item"><span>${c.name}</span><button onclick="deleteCourse(${c.id})">✕</button></div>
-  `).join('');
+  const courseListSelect = document.getElementById('course-list-select');
+  if (courseListSelect) courseListSelect.innerHTML = '<option value="">— Select —</option>' + data.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
   const adminCourse = document.getElementById('admin-course');
   if (adminCourse) {
     adminCourse.innerHTML = '<option value="N/A">Course</option>' + data.map((c) => `<option value="${c.name}">${c.name}</option>`).join('');
@@ -19,12 +18,10 @@ async function deleteCourse(id) {
 }
 
 function renderUsersTable(users) {
-  const tbody = document.querySelector('#users-table tbody');
+  const tbody = document.getElementById('users-tbody');
   if (!tbody) return;
   tbody.innerHTML = '';
-  const minRows = 8;
-  const rows = users.length > minRows ? users : [...users, ...Array(minRows - users.length).fill(null)];
-  rows.forEach((user) => {
+  users.forEach((user) => {
     const tr = document.createElement('tr');
     tr.innerHTML = user
       ? `<td>${user.student_id || user.id || '—'}</td><td>${user.full_name || '—'}</td><td>${user.lbc_no || '—'}</td><td>${user.gmail || '—'}</td><td>${user.address || '—'}</td>`
@@ -32,7 +29,9 @@ function renderUsersTable(users) {
     if (user) tr.onclick = () => openEditModalById(user.id);
     tbody.appendChild(tr);
   });
+  if (window.padTableRows) window.padTableRows('users-tbody', 5, 8);
 }
+
 
 function renderUsers() {
   const type = document.getElementById('user-type-filter').value;
@@ -69,8 +68,10 @@ function closeModals() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelector('.add-admin-btn').addEventListener('click', () => {
-    document.getElementById('admin-form-modal').style.display = 'flex';
+  const addAdminBtn = document.getElementById('add-admin-btn');
+  if (addAdminBtn) addAdminBtn.addEventListener('click', () => {
+    const modal = document.getElementById('admin-form-modal');
+    if (modal) modal.style.display = 'flex';
   });
   document.querySelectorAll('[data-close-modal]').forEach((btn) => btn.addEventListener('click', closeModals));
   document.getElementById('save-course-btn').addEventListener('click', async () => {
@@ -85,8 +86,12 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCourses();
   });
   document.getElementById('user-type-filter').addEventListener('change', renderUsers);
-  document.addEventListener('admin:search', (event) => { userSearch = event.detail || ''; renderUsers(); });
-  document.getElementById('admin-register-form').addEventListener('submit', async (event) => {
+  const usersSearch = document.getElementById('users-search');
+  const usersSearchClear = document.getElementById('users-search-clear');
+  if (usersSearch) usersSearch.addEventListener('input', (event) => { userSearch = event.target.value || ''; renderUsers(); });
+  if (usersSearchClear) usersSearchClear.addEventListener('click', () => { if (usersSearch) { usersSearch.value=''; userSearch=''; renderUsers(); usersSearch.focus(); } });
+  const adminRegisterForm = document.getElementById('admin-register-form');
+  if (adminRegisterForm) adminRegisterForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(event.currentTarget).entries());
     const res = await fetch('/api/auth/register-admin', {
@@ -100,7 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
       loadUsers();
     }
   });
-  document.getElementById('edit-user-form').addEventListener('submit', async (event) => {
+  const editUserForm = document.getElementById('edit-user-form');
+  if (editUserForm) editUserForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const id = document.getElementById('edit-user-id').value;
     const lbc_no = document.getElementById('edit-lbc-no').value.trim();

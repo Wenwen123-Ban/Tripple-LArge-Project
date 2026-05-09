@@ -1,9 +1,6 @@
-.books-main { display: grid; grid-template-rows: auto 1fr; gap: 14px; }
-.top-actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.add-books-card, .add-category-card { min-height: 158px; }
-.table-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
-.books-table-card { display: flex; flex-direction: column; min-height: 0; }
-.books-table .table-row { display: grid; grid-template-columns: 1fr 2fr 1.3fr 1fr auto; }
-.books-table .table-row > span { flex: none; }
-.delete-book-btn { border: 0; background: #EF4444; color: #ffffff; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
-@media (max-width: 900px) { .top-actions-row { grid-template-columns: 1fr; } }
+.books-top-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;flex-shrink:0}
+.status-pending{color:#5B2D8E;font-weight:700}.status-available{color:#28A745;font-weight:700}.status-borrowed{color:#DC3545;font-weight:700}
+.panel-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}.panel-header-controls{display:flex;align-items:center;gap:8px}
+.search-wrapper-sm{display:flex;align-items:center;background:white;border:1px solid #C8A800;border-radius:4px;padding:2px 6px;gap:4px}
+.search-bar-sm{border:none;outline:none;font-size:12px;width:160px;background:transparent}.search-clear-sm{background:none;border:none;cursor:pointer;color:#888;font-size:12px;display:flex;align-items:center}
+.form-select-sm{background:white;border:1px solid #C8A800;border-radius:4px;padding:3px 6px;font-size:12px;color:#3D1F63;cursor:pointer}
