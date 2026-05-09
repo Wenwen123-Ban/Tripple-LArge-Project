@@ -1,5 +1,9 @@
 from flask import Flask, jsonify, render_template, request, send_from_directory
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from external .env file for security
+load_dotenv('C:\\CC-Config\\.env')
 
 from src.api import admin, auth, books, users
 from src.api.auth import (
