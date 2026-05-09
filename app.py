@@ -154,6 +154,8 @@ def admin_users():
 
 
 @app.route('/admin/reports')
+@app.route('/admin/security')
+@app.route('/admin/security.html')
 def admin_reports():
     """Serve the admin security reports page."""
     return send_from_directory(os.path.join(PAGES_DIR, 'admin'), 'adminSecurityreports.html')
