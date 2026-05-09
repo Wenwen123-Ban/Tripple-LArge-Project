@@ -1,11 +1,11 @@
-.dashboard-main{display:flex;flex-direction:column;min-height:100%}
-.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
-.card{background:#FFD700;border:2px solid #C8A800;border-radius:8px;padding:10px 14px}
-.card h3{text-align:center;font-size:13px;font-weight:700;color:#3D1F63;border-bottom:1px solid #C8A800;padding-bottom:8px;margin-bottom:8px}
-.overview-card p{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;color:#3D1F63}
-.overview-card span{display:inline-block;background:#fff;border:1px solid #C8A800;border-radius:3px;min-width:80px;height:22px;line-height:22px;text-align:center;font-size:13px;font-weight:600;color:#3D1F63}
-.reservation-card{flex:1;min-height:400px}
-.res-borrow-split{display:grid;grid-template-columns:1fr 1fr;gap:0}
-.res-col{padding-right:12px;border-right:2px solid #C8A800}.borrow-col{padding-left:12px}
-.data-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}.data-table th{background:#fff;color:#3D1F63;font-weight:700;font-size:12px;padding:6px;border:1px solid #C8A800;text-align:center}.data-table td{background:#fff;padding:5px 6px;border:1px solid #E8D800;font-size:12px;color:#222;text-align:center;height:28px}.data-table tr:nth-child(even) td{background:#FFFDE0}
-.btn-approve,.btn-reject{color:#fff;border:none;border-radius:3px;padding:3px 8px;cursor:pointer;font-size:12px}.btn-approve{background:#28A745;margin-right:3px}.btn-reject{background:#DC3545}
+.dashboard-top-row {display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;flex-shrink:0}
+.stat-card {background:#FFD700;border:2px solid #C8A800;border-radius:8px;padding:10px 12px}
+.stat-card-title {font-size:13px;font-weight:700;color:#3D1F63;text-align:center;border-bottom:1px solid #C8A800;padding-bottom:6px;margin-bottom:8px}
+.stat-row {display:flex;align-items:center;justify-content:space-between;padding:3px 0;font-size:12px;color:#3D1F63}
+.stat-value-box {background:#fff;border:1px solid #C8A800;border-radius:3px;min-width:80px;height:20px;padding:0 8px;font-size:12px;font-weight:600;color:#3D1F63;text-align:center;line-height:20px;display:inline-block}
+.top3-list{list-style:decimal;padding-left:18px;margin:0}.top3-list li{font-size:12px;color:#3D1F63;padding:3px 0;line-height:1.4}
+.reservation-panel{background:#FFD700;border:2px solid #C8A800;border-radius:8px;padding:10px 12px;flex:1;display:flex;flex-direction:column;min-height:0}
+.reservation-panel-title{text-align:center;font-size:13px;font-weight:700;color:#3D1F63;margin-bottom:8px;flex-shrink:0}
+.reservation-tables-row{display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;min-height:0}
+.table-left-wrapper{padding-right:10px;border-right:2px solid #C8A800;overflow-y:auto}
+.table-right-wrapper{padding-left:10px;overflow-y:auto}
