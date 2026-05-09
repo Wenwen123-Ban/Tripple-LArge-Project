@@ -185,8 +185,8 @@ async function confirmGmail() {
 }
 
 async function getOneTimeCode() {
-  if (!adminConfirmToken || !isAwaitingOneTimeCode) {
-    showNotification('Confirm Gmail first. The checkbox will be checked after the email link is clicked.', 'error');
+  if (!adminConfirmToken) {
+    showNotification('Confirm Gmail first.', 'error');
     return;
   }
 
@@ -199,6 +199,13 @@ async function getOneTimeCode() {
     password: document.getElementById('admin-password').value,
     gmail: document.getElementById('admin-gmail').value.trim(),
     token: adminConfirmToken,
+    registered_by: document.getElementById('registering-admin-name')?.textContent || 'Administrator',
+    registered_at: new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    }),
   };
 
   try {
@@ -213,13 +220,13 @@ async function getOneTimeCode() {
       document.getElementById('admin-form-section').style.display = 'none';
       document.getElementById('admin-code-section').style.display = 'flex';
       document.getElementById('admin-one-time-code').textContent = data.setup_code;
-      showNotification('Admin registered. Write down the code.', 'success');
+      showNotification('Admin registered. Write down the code now.', 'success');
       loadUsers();
     } else {
       showNotification(data.error || 'Registration failed.', 'error');
     }
   } catch (err) {
-    showNotification('Connection error.', 'error');
+    showNotification('Connection error. Try again.', 'error');
   }
 }
 
@@ -253,8 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('admin-done-btn')?.addEventListener('click', () => {
     document.getElementById('admin-modal-overlay').style.display = 'none';
     resetAdminForm();
-    showNotification('Admin account created. They may now log in.', 'success');
-    window.location.href = '/main/sign_in';
+    showNotification('Admin account created successfully.', 'success');
   });
 
   document.getElementById('save-course-btn')?.addEventListener('click', async () => {

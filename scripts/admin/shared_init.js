@@ -3,8 +3,62 @@
 document.addEventListener('DOMContentLoaded', () => {
   const hamburgerBtn = document.querySelector('.hamburger-btn');
   const hamburgerDropdown = document.querySelector('.hamburger-dropdown');
+
+  async function loadAdminAccountCard() {
+    try {
+      const res = await fetch('/api/admin/me');
+      if (!res.ok) return;
+      const data = await res.json();
+      const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value || '—';
+      };
+      setText('acc-name', data.full_name);
+      setText('acc-id', data.admin_id);
+      setText('acc-lbc', data.lbc_no);
+      setText('acc-email', data.gmail);
+      setText('acc-joined', data.created_at);
+    } catch (err) {
+      console.error('Failed to load account card:', err);
+    }
+  }
+
+  function ensureAccountDropdown() {
+    if (!hamburgerDropdown || document.getElementById('account-card')) return;
+
+    hamburgerDropdown.innerHTML = `
+      <div class="account-card" id="account-card">
+        <div class="account-card-header">My Account</div>
+        <div class="account-detail"><span class="detail-label">Name</span><span class="detail-value" id="acc-name">—</span></div>
+        <div class="account-detail"><span class="detail-label">ID</span><span class="detail-value" id="acc-id">—</span></div>
+        <div class="account-detail"><span class="detail-label">LBC No</span><span class="detail-value" id="acc-lbc">—</span></div>
+        <div class="account-detail"><span class="detail-label">Email</span><span class="detail-value" id="acc-email">—</span></div>
+        <div class="account-detail"><span class="detail-label">Joined</span><span class="detail-value" id="acc-joined">—</span></div>
+      </div>
+      <div class="hamburger-divider"></div>
+      <a href="#" class="logout-btn" id="logout-btn">Log Out →</a>
+    `;
+  }
+
+  function initLogout() {
+    document.getElementById('logout-btn')?.addEventListener('click', async (event) => {
+      event.preventDefault();
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+      } catch (err) {
+        console.error('Logout error:', err);
+      } finally {
+        window.location.href = '/main/sign_in';
+      }
+    });
+  }
+
   if (hamburgerBtn && hamburgerDropdown) {
+    ensureAccountDropdown();
+    loadAdminAccountCard();
+    initLogout();
     hamburgerBtn.addEventListener('click', (e) => { e.stopPropagation(); hamburgerDropdown.classList.toggle('open'); });
+    hamburgerDropdown.addEventListener('click', (e) => e.stopPropagation());
     document.addEventListener('click', () => { hamburgerDropdown.classList.remove('open'); });
   }
 

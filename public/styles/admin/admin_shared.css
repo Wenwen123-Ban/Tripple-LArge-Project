@@ -47,3 +47,63 @@ body {
 .gold-panel{background:#FFD700;border:2px solid #C8A800;border-radius:8px;padding:10px 12px}
 .gold-panel-title{font-size:13px;font-weight:700;color:#3D1F63;border-bottom:1px solid #C8A800;padding-bottom:6px;margin-bottom:8px}
 .form-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}.form-input{background:white;border:1px solid #C8A800;border-radius:4px;height:28px;padding:0 8px;font-size:12px;color:#333;outline:none}.form-input:focus{border-color:#5B2D8E}.form-input::placeholder{color:#aaa}.form-select{background:white;border:1px solid #C8A800;border-radius:4px;height:28px;padding:0 6px;font-size:12px;color:#3D1F63;cursor:pointer;outline:none}.form-label{font-size:12px;color:#3D1F63;font-weight:600;white-space:nowrap}.color-dot-green{width:14px;height:14px;background:#28A745;border-radius:2px;flex-shrink:0}.icon-btn{background:white;border:1px solid #C8A800;border-radius:4px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}.icon-btn i{font-size:14px;color:#5B2D8E}.icon-btn:hover{background:#f0e8ff}.icon-btn-sm{background:none;border:none;cursor:pointer;padding:2px;display:flex;align-items:center}.icon-btn-sm i{font-size:15px;color:#3D1F63}
+
+.hamburger-dropdown{
+  display:none;
+  position:absolute;
+  top:100%;
+  right:0;
+  background:#FFFFFF;
+  border:1.5px solid var(--dark-navy,#3D1F63);
+  border-radius:10px;
+  min-width:240px;
+  z-index:999;
+  box-shadow:0 4px 16px rgba(0,0,0,0.12);
+  overflow:hidden;
+}
+.hamburger-dropdown.open{display:block}
+.account-card{
+  padding:14px 16px;
+  background:#f4f4f8;
+}
+.account-card-header{
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--deep-purple,#5B2D8E);
+  margin-bottom:10px;
+}
+.account-detail{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  margin-bottom:6px;
+}
+.detail-label{
+  font-size:11px;
+  color:#888;
+  white-space:nowrap;
+  min-width:48px;
+}
+.detail-value{
+  font-size:12px;
+  font-weight:700;
+  color:var(--dark-navy,#3D1F63);
+  text-align:right;
+  word-break:break-all;
+}
+.hamburger-divider{
+  border-top:1px solid #e0e0e0;
+  margin:0;
+}
+.logout-btn{
+  display:block;
+  padding:12px 16px;
+  font-size:14px;
+  font-weight:700;
+  color:#e53e3e;
+  text-decoration:none;
+}
+.logout-btn:hover{background:#fff5f5}
