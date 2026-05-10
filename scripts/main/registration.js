@@ -99,13 +99,24 @@ function applyContactFormat(inputEl) {
   inputEl.setAttribute('placeholder', '09XXXXXXXXX');
   inputEl.setAttribute('inputmode', 'numeric');
   inputEl.addEventListener('input', (e) => {
-    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 11);
+    let val = e.target.value.replace(/\D/g, '').slice(0, 11);
+    if (val.length >= 1 && val[0] !== '0') val = `0${val.slice(0, 10)}`;
+    if (val.length >= 2 && val[1] !== '9') val = `${val[0]}9${val.slice(1, 10)}`;
+    e.target.value = val;
     e.target.setCustomValidity('');
   });
 }
 
 
 let confirmationToken = null;
+
+function getAddressValue() {
+  const sel = document.getElementById('address-select');
+  if (!sel) return '';
+  if (sel.value === 'other') return (document.getElementById('address-other')?.value || '').trim();
+  return sel.value;
+}
+
 let pollInterval = null;
 let pollTimeout = null;
 
@@ -159,7 +170,7 @@ async function saveRegistration() {
     student_id: getVal('id-input'),
     lbc_no: getVal('lbc-input'),
     full_name: getVal('name-input') || getVal('registrationName'),
-    address: getVal('address-input') || getVal('registrationAddress'),
+    address: getAddressValue(),
     contact_no: getVal('contact-input') || getVal('registrationContactNo'),
     password: getRaw('password-input') || getRaw('registrationPassword'),
     course: getRaw('course-select', 'N/A') || 'N/A',
@@ -252,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (courseSelect) {
     courseSelect.addEventListener('change', (e) => {
-      const isHighSchool = e.target.value === 'NA';
+      const isHighSchool = e.target.value === 'N/A';
       updateYearOptions(isHighSchool);
     });
   }
@@ -264,6 +275,13 @@ document.addEventListener('DOMContentLoaded', () => {
       showNotification('Please confirm your Gmail from the email link first.', 'info');
     });
   }
+
+  document.getElementById('address-select')?.addEventListener('change', (e) => {
+    const other = document.getElementById('address-other');
+    if (!other) return;
+    other.style.display = e.target.value === 'other' ? 'block' : 'none';
+    if (e.target.value !== 'other') other.value = '';
+  });
 
   if (confirmGmailButton && gmailInput && nameInput && confirmationCheckbox) {
     confirmGmailButton.addEventListener('click', () => {

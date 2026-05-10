@@ -612,21 +612,65 @@ def _clean(value, default=''):
     return str(value).strip()
 
 
-def validate_registration_fields(data, is_admin=False):
-    """Returns list of validation errors for registration payloads."""
-    errors = []
 
+
+def check_duplicates(cursor, user_id, lbc_no, gmail, contact_no, is_admin=False):
+    errors = []
+    id_col = 'admin_id' if is_admin else 'student_id'
+    table = 'admins' if is_admin else 'students'
+
+    cursor.execute(f"SELECT id FROM {table} WHERE {id_col} = %s", (user_id,))
+    if cursor.fetchone():
+        errors.append('This ID number is already registered')
+
+    cursor.execute("SELECT id FROM students WHERE gmail = %s", (gmail,))
+    if cursor.fetchone():
+        errors.append('This Gmail is already registered as a student account')
+
+    cursor.execute("SELECT id FROM admins WHERE gmail = %s", (gmail,))
+    if cursor.fetchone():
+        errors.append('This Gmail is already registered as an admin account')
+
+    cursor.execute(f"SELECT id FROM {table} WHERE lbc_no = %s", (lbc_no,))
+    if cursor.fetchone():
+        errors.append('This LBC number is already in use')
+
+    cursor.execute(f"SELECT id FROM {table} WHERE contact_no = %s", (contact_no,))
+    if cursor.fetchone():
+        errors.append('This contact number is already registered')
+
+    return errors
+def validate_registration_fields(data, is_admin=False):
+    errors = []
     id_field = _clean(data.get('admin_id' if is_admin else 'student_id'))
     if not re.match(r'^\d{4}-\d{5}$', id_field):
         errors.append('ID must be in format YYYY-NNNNN (4 digits, hyphen, 5 digits)')
-    if not re.match(r'^\d{4}-\d{5}$', _clean(data.get('lbc_no'))):
+    else:
+        year_part = int(id_field.split('-')[0])
+        if year_part < 2000 or year_part > 2099:
+            errors.append('ID year part must be between 2000 and 2099')
+
+    lbc = _clean(data.get('lbc_no'))
+    if not re.match(r'^\d{4}-\d{5}$', lbc):
         errors.append('LBC No must be in format XXXX-XXXXX (4 digits, hyphen, 5 digits)')
-    if not re.match(r'^\d{11}$', _clean(data.get('contact_no'))):
-        errors.append('Contact No must be exactly 11 digits')
+    elif lbc.replace('-', '') == '0' * 9:
+        errors.append('LBC No cannot be all zeros')
+
+    if not re.match(r'^09\d{9}$', _clean(data.get('contact_no'))):
+        errors.append('Contact No must be 11 digits starting with 09 (e.g. 09XXXXXXXXX)')
     if not re.match(r'^[^\s@]+@gmail\.com$', _clean(data.get('gmail')), re.IGNORECASE):
-        errors.append('Gmail must be a valid @gmail.com address')
+        errors.append('Must be a valid @gmail.com address')
     if len(data.get('password') or '') < 8:
         errors.append('Password must be at least 8 characters')
+
+    if not is_admin:
+        course = _clean(data.get('course'), 'N/A') or 'N/A'
+        year_level = str(_clean(data.get('year_level')))
+        if course == 'N/A':
+            if year_level not in {'7', '8', '9', '10'}:
+                errors.append('For N/A course (Junior High), level must be Grade 7, 8, 9, or 10')
+        elif year_level not in {'1', '2', '3', '4'}:
+            errors.append('For college courses, year must be 1st, 2nd, 3rd, or 4th year')
 
     return errors
 
@@ -664,6 +708,11 @@ def register_student():
         (token, gmail),
     )
     confirmation = cursor.fetchone()
+
+    dup_errors = check_duplicates(cursor, student_id, lbc_no, gmail, contact_no, is_admin=False)
+    if dup_errors:
+        cursor.close()
+        return jsonify({'error': dup_errors[0]}), 409
 
     if not confirmation:
         cursor.close()
@@ -1596,6 +1645,11 @@ def admin_send_confirmation():
     if cursor.fetchone():
         cursor.close()
         return jsonify({'error': 'Admin ID or Gmail already exists'}), 409
+
+    dup_errors = check_duplicates(cursor, admin_id, lbc_no, gmail, contact_no, is_admin=True)
+    if dup_errors:
+        cursor.close()
+        return jsonify({'error': dup_errors[0]}), 409
 
     setup_code = generate_setup_code()
     setup_code_hash = hash_password(setup_code)
