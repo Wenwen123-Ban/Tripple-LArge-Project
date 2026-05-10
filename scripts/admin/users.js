@@ -85,11 +85,12 @@ function buildHeaders(users) {
 }
 
 function renderTable(users) {
+  const tbody = document.getElementById('users-tbody');
+  if (!tbody) return;
   const columns = buildHeaders(users);
   let sorted = [...users];
   if (currentSecondary === 'course') sorted.sort((a, b) => (a.course || '').localeCompare(b.course || ''));
   if (currentSecondary === 'year' || currentSecondary === 'level') sorted.sort((a, b) => String(a.year_level || '').localeCompare(String(b.year_level || '')));
-  const tbody = document.getElementById('users-tbody');
   if (!sorted.length) { tbody.innerHTML = `<tr><td colspan="${columns.length}" style="text-align:center;padding:20px;color:#888;">No records found.</td></tr>`; return; }
   tbody.innerHTML = sorted.map((user) => `<tr>${columns.map((col) => {
     if (col.key === 'action') {
@@ -103,12 +104,30 @@ function renderTable(users) {
     }
     return `<td>${escapeHtml(user[col.key] || '—')}</td>`;
   }).join('')}</tr>`).join('');
+  if (typeof padTableRows === 'function') padTableRows('users-tbody', columns.length, 8);
 }
 
 function applySearch() {
   const q = (document.getElementById('user-search')?.value || '').toLowerCase();
   const filtered = currentUsers.filter((u) => Object.values(u).some((v) => String(v).toLowerCase().includes(q)));
   renderTable(filtered);
+}
+
+async function loadCourses() {
+  try {
+    const res = await fetch('/api/courses');
+    const data = res.ok ? await res.json() : [];
+    const courses = Array.isArray(data) ? data : [];
+    const select = document.getElementById('course-list-select');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">— Select —</option>'
+      + courses.map((course) => `<option value="${escapeHtml(course.id)}">${escapeHtml(course.name)}</option>`).join('');
+  } catch (err) {
+    console.error('Failed to load courses:', err);
+    const select = document.getElementById('course-list-select');
+    if (select) select.innerHTML = '<option value="">— Select —</option>';
+  }
 }
 
 async function loadUsers() {
