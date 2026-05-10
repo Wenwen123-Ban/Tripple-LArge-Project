@@ -224,6 +224,7 @@ def _ensure_deletion_and_notification_tables(cursor):
             message TEXT,
             data TEXT,
             is_read TINYINT(1) DEFAULT 0,
+            is_used TINYINT(1) DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """
@@ -259,6 +260,13 @@ def request_admin_deletion():
     db = get_db()
     cursor = db.cursor(dictionary=True)
     _ensure_deletion_and_notification_tables(cursor)
+    cursor.execute(
+        "SELECT COUNT(*) AS cnt FROM admins WHERE deleted_at IS NULL"
+    )
+    admin_count = (cursor.fetchone() or {}).get('cnt', 0)
+    if admin_count <= 1:
+        cursor.close()
+        return jsonify({'error': 'Cannot delete the only remaining admin account.'}), 400
     cursor.execute(
         """
         SELECT admin_id, full_name, gmail
@@ -350,6 +358,7 @@ def finalize_admin_deletion():
     data = request.get_json(silent=True) or {}
     target_id = str(data.get('target_id') or '').strip()
     code = str(data.get('code') or '').strip()
+    notif_id = data.get('notif_id')
     requester = session.get('admin_id')
     if not requester:
         return jsonify({'error': 'Admin login required'}), 401
@@ -381,21 +390,25 @@ def finalize_admin_deletion():
         cursor.close()
         return jsonify({'error': 'Admin not found'}), 404
 
+    if target_id == requester:
+        cursor.close()
+        return jsonify({'error': 'You cannot delete your own account.'}), 400
+
     deleted_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     cursor.execute(
         "UPDATE admins SET deleted_at = NOW(), deleted_by = %s WHERE admin_id = %s",
         (requester, target_id),
     )
     cursor.execute("UPDATE deletion_codes SET used = 1 WHERE id = %s", (deletion['id'],))
-    cursor.execute(
-        """
-        UPDATE notifications
-        SET is_read = 1
-        WHERE recipient_id = %s AND type = 'deletion_code'
-          AND JSON_EXTRACT(data, '$.target_id') = %s
-        """,
-        (requester, json.dumps(target_id)),
-    )
+    if notif_id:
+        cursor.execute(
+            """
+            UPDATE notifications
+            SET is_read = 1, is_used = 1
+            WHERE id = %s AND recipient_id = %s
+            """,
+            (notif_id, requester),
+        )
     db.commit()
     cursor.close()
 
@@ -416,7 +429,7 @@ def get_notifications():
     _ensure_deletion_and_notification_tables(cursor)
     cursor.execute(
         """
-        SELECT id, recipient_id, type, title, message, data, is_read, created_at
+        SELECT id, recipient_id, type, title, message, data, is_read, is_used, created_at
         FROM notifications
         WHERE recipient_id = %s
         ORDER BY created_at DESC
@@ -428,6 +441,52 @@ def get_notifications():
     cursor.close()
     for row in rows:
         row['is_read'] = bool(row.get('is_read'))
+        row['is_used'] = bool(row.get('is_used'))
         if row.get('created_at'):
             row['created_at'] = row['created_at'].strftime('%m/%d/%Y %I:%M:%S %p')
     return jsonify(rows)
+
+
+def mark_notification_read(notif_id):
+    admin_id = session.get('admin_id')
+    if not admin_id:
+        return jsonify({'error': 'Admin login required'}), 401
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(
+        """
+        UPDATE notifications
+        SET is_read = 1
+        WHERE id = %s AND recipient_id = %s
+        """,
+        (notif_id, admin_id),
+    )
+    db.commit()
+    cursor.close()
+    return jsonify({'status': 'read'})
+
+
+def clear_notifications():
+    admin_id = session.get('admin_id')
+    if not admin_id:
+        return jsonify({'error': 'Admin login required'}), 401
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(
+        """
+        UPDATE notifications
+        SET is_read = 1
+        WHERE recipient_id = %s AND (is_read = 1 OR is_used = 1)
+        """,
+        (admin_id,),
+    )
+    cursor.execute(
+        """
+        DELETE FROM notifications
+        WHERE recipient_id = %s AND is_read = 1 AND is_used = 1
+        """,
+        (admin_id,),
+    )
+    db.commit()
+    cursor.close()
+    return jsonify({'status': 'cleared'})

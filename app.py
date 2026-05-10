@@ -268,6 +268,8 @@ app.add_url_rule('/api/admin/request-deletion', 'request_admin_deletion', admin.
 app.add_url_rule('/api/admin/confirm-deletion', 'confirm_admin_deletion', admin.confirm_admin_deletion, methods=['GET'])
 app.add_url_rule('/api/admin/finalize-deletion', 'finalize_admin_deletion', admin.finalize_admin_deletion, methods=['POST'])
 app.add_url_rule('/api/admin/notifications', 'get_notifications', admin.get_notifications, methods=['GET'])
+app.add_url_rule('/api/admin/notifications/<int:notif_id>/read', 'mark_notification_read', admin.mark_notification_read, methods=['POST'])
+app.add_url_rule('/api/admin/notifications/clear', 'clear_notifications', admin.clear_notifications, methods=['POST'])
 app.add_url_rule('/api/admin/health', 'api_admin_health', admin.server_health, methods=['GET'])
 app.add_url_rule('/api/admin/server-health', 'api_admin_server_health', admin.server_health, methods=['GET'])
 
