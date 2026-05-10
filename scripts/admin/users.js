@@ -113,6 +113,23 @@ function applySearch() {
   renderTable(filtered);
 }
 
+async function loadCourses() {
+  try {
+    const res = await fetch('/api/courses');
+    const data = res.ok ? await res.json() : [];
+    const courses = Array.isArray(data) ? data : [];
+    const select = document.getElementById('course-list-select');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">— Select —</option>'
+      + courses.map((course) => `<option value="${escapeHtml(course.id)}">${escapeHtml(course.name)}</option>`).join('');
+  } catch (err) {
+    console.error('Failed to load courses:', err);
+    const select = document.getElementById('course-list-select');
+    if (select) select.innerHTML = '<option value="">— Select —</option>';
+  }
+}
+
 async function loadUsers() {
   try {
     const res = await fetch(`/api/users?type=${currentSort}`);
