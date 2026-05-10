@@ -62,6 +62,12 @@ let currentSort = 'admin';
 let currentSecondary = '';
 let currentUsers = [];
 
+let adminConfirmToken = null;
+let adminPollInterval = null;
+let adminConfirmTimeout = null;
+let adminFlowStep = 'idle';
+
+
 function getYearSuffix(n) { return ({ 1: 'st', 2: 'nd', 3: 'rd', 4: 'th' }[String(n)] || 'th'); }
 
 function getStudentColumns(users) {
@@ -106,9 +112,16 @@ function applySearch() {
 }
 
 async function loadUsers() {
-  const res = await fetch(`/api/users?type=${currentSort}`);
-  currentUsers = res.ok ? await res.json() : [];
-  applySearch();
+  try {
+    const res = await fetch(`/api/users?type=${currentSort}`);
+    const data = res.ok ? await res.json() : [];
+    currentUsers = Array.isArray(data) ? data : [];
+    applySearch();
+  } catch (err) {
+    console.error('Failed to load users:', err);
+    currentUsers = [];
+    renderTable([]);
+  }
 }
 
 function setAdminEmailConfirmed(confirmed) {
@@ -301,7 +314,7 @@ async function deleteStudentAccount(studentId, name) {
     const data = await res.json();
     if (data.status === 'deleted') {
       showNotification(`${name}'s account deleted.`, 'success');
-      loadUsers();
+      await loadUsers();
     } else {
       showNotification(data.error || 'Deletion failed.', 'error');
     }
@@ -341,7 +354,7 @@ async function finalizeAdminDeletion(targetId, code) {
   const data = await res.json();
   if (data.status === 'deleted') {
     showNotification('Admin account deleted.', 'success');
-    loadUsers();
+    await loadUsers();
     if (typeof window.loadNotifications === 'function') window.loadNotifications();
   } else {
     showNotification(data.error || 'Code invalid.', 'error');
@@ -358,7 +371,7 @@ function handleAdminAction() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   applyIdFormat(document.getElementById('admin-id-input'));
   applyLbcFormat(document.getElementById('admin-lbc-input'));
   applyContactFormat(document.getElementById('admin-contact'));
@@ -398,20 +411,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el) el.value = '';
     applySearch();
   });
-  document.getElementById('primary-sort')?.addEventListener('change', (e) => {
+  document.getElementById('primary-sort')?.addEventListener('change', async (e) => {
     currentSort = e.target.value;
     const sec = document.getElementById('secondary-sort-group');
     if (sec) sec.style.display = currentSort === 'student' ? 'flex' : 'none';
     const secSel = document.getElementById('secondary-sort');
     if (secSel) secSel.value = '';
     currentSecondary = '';
-    loadUsers();
+    await loadUsers();
   });
   document.getElementById('secondary-sort')?.addEventListener('change', (e) => {
     currentSecondary = e.target.value;
     applySearch();
   });
 
-  loadCourses();
-  loadUsers();
+  await loadCourses();
+  await loadUsers();
 });
