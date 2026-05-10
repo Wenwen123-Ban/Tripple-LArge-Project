@@ -306,6 +306,19 @@ async function sendAdminForm() {
 }
 
 async function initiateDelete(id, type, name, gmail) {
+  try {
+    const meRes = await fetch('/api/admin/me');
+    const meData = await meRes.json();
+    const myId = meData.admin_id;
+    if (id === myId) {
+      showNotification('You cannot delete your own account.', 'error');
+      return;
+    }
+  } catch (err) {
+    showNotification('Unable to verify admin session.', 'error');
+    return;
+  }
+
   if (type === 'student') {
     const confirmed = confirm(
       `Delete student account?\n\nName: ${name}\nID: ${id}\n\nThis will notify the student by email.`,
@@ -364,16 +377,17 @@ async function requestAdminDeletion(adminId, name) {
   }
 }
 
-async function finalizeAdminDeletion(targetId, code) {
+async function finalizeAdminDeletion(targetId, code, notifId) {
   const res = await fetch('/api/admin/finalize-deletion', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ target_id: targetId, code }),
+    body: JSON.stringify({ target_id: targetId, code, notif_id: notifId }),
   });
   const data = await res.json();
   if (data.status === 'deleted') {
     showNotification('Admin account deleted.', 'success');
     await loadUsers();
+    if (typeof window.markNotificationRead === 'function' && notifId) await window.markNotificationRead(notifId);
     if (typeof window.loadNotifications === 'function') window.loadNotifications();
   } else {
     showNotification(data.error || 'Code invalid.', 'error');

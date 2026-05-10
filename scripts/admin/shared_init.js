@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dropdown = document.createElement('div');
     dropdown.id = 'notif-dropdown';
     dropdown.className = 'notif-dropdown';
-    dropdown.innerHTML = '<div class="notif-empty">No notifications</div>';
+    dropdown.innerHTML = '<div class="notif-header"><span class="notif-heading">Notifications</span><button id="notif-clear-btn" class="notif-clear-btn" type="button">Clear All</button></div><div id="notif-list" class="notif-list"><div class="notif-empty">No notifications</div></div>';
     wrapper.appendChild(dropdown);
 
     bellBtn.addEventListener('click', (event) => {
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) return;
       const notifs = await res.json();
       const bell = document.getElementById('notif-btn');
-      const unread = notifs.filter((n) => !n.is_read).length;
+      const unread = notifs.filter((n) => !n.is_read && !n.is_used).length;
       if (bell) {
         if (unread > 0) {
           bell.setAttribute('data-badge', unread);
@@ -108,17 +108,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      const dropdown = document.getElementById('notif-dropdown');
-      if (!dropdown) return;
-      dropdown.innerHTML = notifs.length
-        ? notifs.map((n) => `
-            <div class="notif-item ${n.is_read ? '' : 'unread'}" data-notif='${JSON.stringify(n).replace(/'/g, '&#39;')}'>
-              <div class="notif-title">${n.title || ''}</div>
+      const list = document.getElementById('notif-list');
+      if (!list) return;
+      list.innerHTML = notifs.length
+        ? notifs.map((n) => {
+            const used = !!n.is_used;
+            const unreadClass = (!n.is_read && !used) ? 'unread' : 'read';
+            return `
+            <div class="notif-item ${unreadClass} ${used ? 'used' : ''}" data-notif='${JSON.stringify(n).replace(/'/g, '&#39;')}'>
+              <div class="notif-title">${n.title || ''}${used ? ' <span class="notif-used-badge">Used</span>' : ''}</div>
               <div class="notif-msg">${n.message || ''}</div>
               <div class="notif-time">${n.created_at || ''}</div>
-            </div>`).join('')
+            </div>`;
+          }).join('')
         : '<div class="notif-empty">No notifications</div>';
-      dropdown.querySelectorAll('.notif-item').forEach((item) => {
+      list.querySelectorAll('.notif-item').forEach((item) => {
         item.addEventListener('click', () => {
           const notif = JSON.parse(item.dataset.notif || '{}');
           window.handleNotification(notif);
@@ -131,14 +135,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.handleNotification = function handleNotification(notif) {
     if (notif.type === 'deletion_code') {
+      window.markNotificationRead(notif.id);
       const parsed = JSON.parse(notif.data || '{}');
+      if (notif.is_used) {
+        if (typeof showNotification === 'function') showNotification('This deletion code has already been used.', 'info');
+        return;
+      }
       const code = prompt(
         `Deletion confirmation code received:\n${parsed.code}\n\n`
           + `Enter the code below to confirm deletion of admin ${parsed.target_id}:`,
       );
       if (code === parsed.code) {
         if (typeof window.finalizeAdminDeletion === 'function') {
-          window.finalizeAdminDeletion(parsed.target_id, code);
+          window.finalizeAdminDeletion(parsed.target_id, code, notif.id);
         } else {
           fetch('/api/admin/finalize-deletion', {
             method: 'POST',
@@ -152,6 +161,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  document.addEventListener('click', (event) => {
+    if (event.target?.id === 'notif-clear-btn') {
+      event.stopPropagation();
+      clearNotifications();
+    }
+  });
+
+  window.markNotificationRead = async function markNotificationRead(notifId) {
+    if (!notifId) return;
+    try {
+      await fetch(`/api/admin/notifications/${notifId}/read`, { method: 'POST' });
+    } catch (err) {
+      console.error('Failed to mark notification read:', err);
+    }
+  };
+
+  async function clearNotifications() {
+    await fetch('/api/admin/notifications/clear', { method: 'POST' });
+    window.loadNotifications();
+  }
   ensureNotificationDropdown();
   window.loadNotifications();
   setInterval(window.loadNotifications, 30000);

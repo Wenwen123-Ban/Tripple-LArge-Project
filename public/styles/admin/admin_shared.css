@@ -121,3 +121,11 @@ body {
 .notif-msg{font-size:12px;color:#333;line-height:1.4}
 .notif-time{font-size:10px;color:#777;margin-top:6px}
 .notif-empty{font-size:12px;color:#777;text-align:center;padding:16px}
+
+.notif-header{display:flex;justify-content:space-between;align-items:center;padding:8px 6px 10px;border-bottom:1px solid #eee;margin-bottom:6px}
+.notif-heading{font-size:12px;font-weight:800;color:#3D1F63;text-transform:uppercase}
+.notif-clear-btn{font-size:11px;border:1px solid #C8A800;background:#fff8c7;border-radius:6px;padding:3px 8px;cursor:pointer}
+.notif-list{max-height:300px;overflow:auto}
+.notif-item.read{opacity:.78}
+.notif-item.used{opacity:.5;pointer-events:none}
+.notif-used-badge{font-size:10px;background:#e5e5e5;color:#777;padding:1px 6px;border-radius:999px;margin-left:6px}

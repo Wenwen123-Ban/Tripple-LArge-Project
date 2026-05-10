@@ -106,6 +106,7 @@ def initialize_schema():
             message TEXT,
             data TEXT,
             is_read TINYINT(1) DEFAULT 0,
+            is_used TINYINT(1) DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """
