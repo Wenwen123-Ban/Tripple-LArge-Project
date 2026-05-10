@@ -37,68 +37,78 @@ function applyContactFormat(inputEl) {
   });
 }
 
-let allUsers = [];
-let userSearch = '';
-let adminConfirmToken = null;
-let adminPollInterval = null;
-let adminConfirmTimeout = null;
-let adminFlowStep = 'idle';
+const ADMIN_COLUMNS = [
+  { key: 'admin_id', label: 'ID No.' },
+  { key: 'full_name', label: 'Full Name' },
+  { key: 'lbc_no', label: 'LBC No.' },
+  { key: 'gmail', label: 'Gmail account' },
+  { key: 'address', label: 'Address' },
+  { key: 'action', label: 'Action' },
+];
 
-function renderUsersTable(users) {
-  const tbody = document.getElementById('users-tbody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  users.forEach((user) => {
-    const tr = document.createElement('tr');
-    const idNo = user.student_id || user.admin_id || user.id || '';
-    const accountType = String(user.account_type || 'student').toLowerCase();
-    tr.innerHTML = `
-      <td>${escapeHtml(idNo || '—')}</td>
-      <td>${escapeHtml(user.full_name || '—')}</td>
-      <td>${escapeHtml(user.lbc_no || '—')}</td>
-      <td>${escapeHtml(user.gmail || '—')}</td>
-      <td>${escapeHtml(user.address || '—')}</td>
-      <td>
-        <button class="btn-delete" type="button"
-                data-id="${escapeHtml(idNo)}"
-                data-type="${escapeHtml(accountType)}"
-                data-name="${escapeHtml(user.full_name || '')}"
-                data-gmail="${escapeHtml(user.gmail || '')}">
-          Delete
-        </button>
-      </td>`;
-    tr.querySelector('.btn-delete')?.addEventListener('click', (event) => {
-      const btn = event.currentTarget;
-      initiateDelete(btn.dataset.id, btn.dataset.type, btn.dataset.name, btn.dataset.gmail);
-    });
-    tbody.appendChild(tr);
-  });
+const STUDENT_COLUMNS_BASE = [
+  { key: 'student_id', label: 'ID No.' },
+  { key: 'full_name', label: 'Full Name' },
+  { key: 'course', label: 'Course' },
+  { key: 'gmail', label: 'Gmail account' },
+  { key: 'address', label: 'Address' },
+  { key: 'action', label: 'Action' },
+];
+
+const YEAR_COLUMN = { key: 'year_level', label: 'Year' };
+const LEVEL_COLUMN = { key: 'year_level', label: 'Level' };
+
+let currentSort = 'admin';
+let currentSecondary = '';
+let currentUsers = [];
+
+function getYearSuffix(n) { return ({ 1: 'st', 2: 'nd', 3: 'rd', 4: 'th' }[String(n)] || 'th'); }
+
+function getStudentColumns(users) {
+  const cols = [...STUDENT_COLUMNS_BASE];
+  const idx = cols.findIndex((c) => c.key === 'course');
+  const hasJHS = users.some((u) => !u.course || u.course === 'N/A');
+  cols.splice(idx + 1, 0, hasJHS ? LEVEL_COLUMN : YEAR_COLUMN);
+  return cols;
 }
 
-function renderUsers() {
-  const type = document.getElementById('user-type-filter')?.value || 'all';
-  const rows = allUsers.filter((user) => {
-    const accountType = String(user.account_type || 'student').toLowerCase();
-    const matchesType = type === 'all' || accountType === type;
-    const term = `${user.student_id || ''} ${user.admin_id || ''} ${user.full_name || ''} ${user.lbc_no || ''} ${user.gmail || ''} ${user.address || ''}`.toLowerCase();
-    return matchesType && term.includes(userSearch.toLowerCase());
-  });
-  renderUsersTable(rows);
+function buildHeaders(users) {
+  const columns = currentSort === 'admin' ? ADMIN_COLUMNS : getStudentColumns(users);
+  document.getElementById('users-thead').innerHTML = `<tr>${columns.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
+  return columns;
+}
+
+function renderTable(users) {
+  const columns = buildHeaders(users);
+  let sorted = [...users];
+  if (currentSecondary === 'course') sorted.sort((a, b) => (a.course || '').localeCompare(b.course || ''));
+  if (currentSecondary === 'year' || currentSecondary === 'level') sorted.sort((a, b) => String(a.year_level || '').localeCompare(String(b.year_level || '')));
+  const tbody = document.getElementById('users-tbody');
+  if (!sorted.length) { tbody.innerHTML = `<tr><td colspan="${columns.length}" style="text-align:center;padding:20px;color:#888;">No records found.</td></tr>`; return; }
+  tbody.innerHTML = sorted.map((user) => `<tr>${columns.map((col) => {
+    if (col.key === 'action') {
+      const id = user.admin_id || user.student_id || '';
+      return `<td><button class="btn-delete" type="button" onclick="initiateDelete('${escapeHtml(id)}','${currentSort}','${escapeHtml(user.full_name || '')}','${escapeHtml(user.gmail || '')}')">Delete</button></td>`;
+    }
+    if (col.key === 'course') { const v = user.course || 'N/A'; return `<td>${v === 'N/A' ? '<span class="badge-jhs">JHS / N/A</span>' : escapeHtml(v)}</td>`; }
+    if (col.key === 'year_level') {
+      const v = user.year_level || '—'; const isJHS = !user.course || user.course === 'N/A';
+      return `<td>${isJHS ? `Grade ${escapeHtml(v)}` : `${escapeHtml(v)}${getYearSuffix(v)} Year`}</td>`;
+    }
+    return `<td>${escapeHtml(user[col.key] || '—')}</td>`;
+  }).join('')}</tr>`).join('');
+}
+
+function applySearch() {
+  const q = (document.getElementById('user-search')?.value || '').toLowerCase();
+  const filtered = currentUsers.filter((u) => Object.values(u).some((v) => String(v).toLowerCase().includes(q)));
+  renderTable(filtered);
 }
 
 async function loadUsers() {
-  const res = await fetch('/api/users');
-  allUsers = res.ok ? await res.json() : [];
-  renderUsers();
-}
-
-async function loadCourses() {
-  const res = await fetch('/api/courses');
-  const data = res.ok ? await res.json() : [];
-  const courseListSelect = document.getElementById('course-list-select');
-  if (courseListSelect) {
-    courseListSelect.innerHTML = '<option value="">— Select —</option>' + data.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
-  }
+  const res = await fetch(`/api/users?type=${currentSort}`);
+  currentUsers = res.ok ? await res.json() : [];
+  applySearch();
 }
 
 function setAdminEmailConfirmed(confirmed) {
@@ -382,11 +392,25 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCourses();
   });
 
-  document.getElementById('users-search')?.addEventListener('input', (event) => {
-    userSearch = event.target.value || '';
-    renderUsers();
+  document.getElementById('user-search')?.addEventListener('input', applySearch);
+  document.getElementById('search-clear')?.addEventListener('click', () => {
+    const el = document.getElementById('user-search');
+    if (el) el.value = '';
+    applySearch();
   });
-  document.getElementById('user-type-filter')?.addEventListener('change', renderUsers);
+  document.getElementById('primary-sort')?.addEventListener('change', (e) => {
+    currentSort = e.target.value;
+    const sec = document.getElementById('secondary-sort-group');
+    if (sec) sec.style.display = currentSort === 'student' ? 'flex' : 'none';
+    const secSel = document.getElementById('secondary-sort');
+    if (secSel) secSel.value = '';
+    currentSecondary = '';
+    loadUsers();
+  });
+  document.getElementById('secondary-sort')?.addEventListener('change', (e) => {
+    currentSecondary = e.target.value;
+    applySearch();
+  });
 
   loadCourses();
   loadUsers();

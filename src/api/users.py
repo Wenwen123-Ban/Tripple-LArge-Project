@@ -64,30 +64,37 @@ def _ensure_admins_table(cursor):
 
 
 def get_users():
+    user_type = request.args.get('type', 'admin')
     db = get_db()
     cursor = db.cursor(dictionary=True)
     _ensure_account_type(cursor)
     _ensure_admins_table(cursor)
     _ensure_deletion_columns(cursor)
-    cursor.execute(
-        """
-        SELECT id, student_id, NULL AS admin_id, lbc_no, full_name, address,
-               contact_no, course, year_level, gmail,
-               COALESCE(account_type, 'student') AS account_type,
-               created_at
-        FROM students
-        WHERE deleted_at IS NULL
-        UNION ALL
-        SELECT id, NULL AS student_id, admin_id, lbc_no, full_name, address,
-               contact_no, NULL AS course, NULL AS year_level, gmail,
-               'admin' AS account_type, created_at
-        FROM admins
-        WHERE deleted_at IS NULL
-        ORDER BY created_at DESC, id DESC
-        """
-    )
+
+    if user_type == 'admin':
+        cursor.execute(
+            """
+            SELECT admin_id, full_name, lbc_no, gmail, address, created_at
+            FROM admins
+            WHERE deleted_at IS NULL
+            ORDER BY created_at DESC
+            """
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT student_id, full_name, lbc_no, gmail, address, course, year_level, created_at
+            FROM students
+            WHERE deleted_at IS NULL
+            ORDER BY created_at DESC
+            """
+        )
+
     rows = cursor.fetchall()
     cursor.close()
+    for row in rows:
+        if row.get('created_at'):
+            row['created_at'] = row['created_at'].strftime('%m/%d/%Y')
     return jsonify(rows)
 
 

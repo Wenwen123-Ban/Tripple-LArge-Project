@@ -332,3 +332,4 @@ body {
     .select-field { align-items: flex-start; }
     .lbc-display { position: static; margin-bottom: 8px; text-align: right; }
 }
+.address-wrap{width:100%}
