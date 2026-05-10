@@ -39,8 +39,12 @@ def _ensure_tables(cursor):
 
 def _ensure_book_columns(cursor):
     cursor.execute("SHOW COLUMNS FROM books")
-    existing_columns = {row[0] for row in cursor.fetchall()}
+    existing_columns = {row['Field'] for row in cursor.fetchall()}
 
+    if 'status' not in existing_columns:
+        cursor.execute("ALTER TABLE books ADD COLUMN status VARCHAR(30) DEFAULT 'Available'")
+    if 'category_id' not in existing_columns:
+        cursor.execute("ALTER TABLE books ADD COLUMN category_id INT DEFAULT NULL")
     if 'reserved_count' not in existing_columns:
         cursor.execute(
             "ALTER TABLE books ADD COLUMN reserved_count INT DEFAULT 0 AFTER status"

@@ -187,7 +187,7 @@ def get_logs():
     cursor = db.cursor(dictionary=True)
     cursor.execute(
         """
-        SELECT student_id AS account_id, event_type, ip_address, description, created_at
+        SELECT account_id, account_type, event_type, ip_address, description, created_at
         FROM security_logs
         ORDER BY created_at DESC
         LIMIT 100
