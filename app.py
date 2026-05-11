@@ -250,6 +250,8 @@ def serve_components(filename):
 app.add_url_rule('/api/books', 'api_get_books', books.get_books, methods=['GET'])
 app.add_url_rule('/api/books', 'api_add_book', books.add_book, methods=['POST'])
 app.add_url_rule('/api/books/<int:id>', 'api_delete_book', books.delete_book, methods=['DELETE'])
+app.add_url_rule('/api/books/deleted/recent', 'api_recent_deleted_books', books.get_recently_deleted_books, methods=['GET'])
+app.add_url_rule('/api/books/<int:id>/restore', 'api_restore_deleted_book', books.restore_deleted_book, methods=['POST'])
 
 app.add_url_rule('/api/categories', 'api_get_categories', books.get_categories, methods=['GET'])
 app.add_url_rule('/api/categories', 'api_add_category', books.add_category, methods=['POST'])
@@ -294,4 +296,3 @@ if __name__ == '__main__':
     print("📖 Starting development server...")
     print("🔗 Open browser: http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)
-

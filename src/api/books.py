@@ -43,6 +43,10 @@ def _ensure_tables(cursor):
             if err.errno != 1060:
                 raise
         cursor.execute("UPDATE books SET availability_hint = COALESCE(status, 'Available') WHERE availability_hint IS NULL")
+    if 'deleted_at' not in cols:
+        cursor.execute("ALTER TABLE books ADD COLUMN deleted_at DATETIME NULL DEFAULT NULL")
+    if 'delete_expires_at' not in cols:
+        cursor.execute("ALTER TABLE books ADD COLUMN delete_expires_at DATETIME NULL DEFAULT NULL")
 
     try:
         cursor.execute("ALTER TABLE books DROP INDEX book_no")
@@ -79,13 +83,26 @@ def _book_lookup(cursor, book_no, category_id):
         cursor.execute('SELECT id, availability_hint FROM books WHERE book_no=%s AND category_id=%s LIMIT 1', (book_no, category_id))
     return cursor.fetchone()
 
+def _get_delete_grace_minutes(cursor):
+    try:
+        cursor.execute("SELECT book_delete_grace_mins FROM admin_rules WHERE id=1 LIMIT 1")
+        row = cursor.fetchone()
+        value = (row.get('book_delete_grace_mins') if isinstance(row, dict) else (row[0] if row else None))
+        mins = int(value) if value is not None else 20
+        return max(1, mins)
+    except Exception:
+        return 20
+
+def _purge_expired_deleted_books(cursor):
+    cursor.execute("DELETE FROM books WHERE deleted_at IS NOT NULL AND delete_expires_at IS NOT NULL AND delete_expires_at <= NOW()")
+
 def get_categories():
     db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); c.execute('SELECT id, name FROM categories ORDER BY name'); r=c.fetchall(); c.close(); return jsonify(r)
 
 def add_category():
     name=str(_payload().get('name') or '').strip()
     if not name: return jsonify({'error':'Category name is required'}),400
-    db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c)
+    db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); _purge_expired_deleted_books(c)
     try: c.execute('INSERT INTO categories (name) VALUES (%s)',(name,)); db.commit(); return jsonify({'id':c.lastrowid,'name':name}),201
     except mysql.connector.IntegrityError: db.rollback(); return jsonify({'error':'Category already exists'}),409
     finally: c.close()
@@ -100,7 +117,7 @@ def get_books():
     if search: cond.append('(b.book_no LIKE %s OR b.title LIKE %s OR c.name LIKE %s)'); lk=f'%{search}%'; p += [lk,lk,lk]
     if category!='all': cond.append('b.category_id=%s'); p.append(category)
     order={'title_asc':'b.title ASC','title_desc':'b.title DESC','status':'b.availability_hint ASC','most_borrowed':'b.borrow_count DESC','least_borrowed':'b.borrow_count ASC'}.get(sort,'b.title ASC')
-    c.execute(f"""SELECT b.*, c.name AS category_name, b.availability_hint AS computed_status FROM books b LEFT JOIN categories c ON b.category_id=c.id WHERE {' AND '.join(cond)} ORDER BY {order} LIMIT %s OFFSET %s""", p+[per_page,off])
+    c.execute(f"""SELECT b.*, c.name AS category_name, b.availability_hint AS computed_status FROM books b LEFT JOIN categories c ON b.category_id=c.id WHERE b.deleted_at IS NULL AND {' AND '.join(cond)} ORDER BY {order} LIMIT %s OFFSET %s""", p+[per_page,off])
     rows=c.fetchall()
     for b in rows:
         if b.get('computed_status')=='Borrowed':
@@ -121,7 +138,31 @@ def add_book():
     finally: c.close()
 
 def delete_book(id):
-    db=get_db(); c=db.cursor(); _ensure_tables(c); c.execute('DELETE FROM books WHERE id=%s',(id,)); db.commit(); c.close(); return jsonify({'status':'deleted'})
+    db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); _purge_expired_deleted_books(c)
+    mins = _get_delete_grace_minutes(c)
+    c.execute("UPDATE books SET deleted_at=NOW(), delete_expires_at=DATE_ADD(NOW(), INTERVAL %s MINUTE) WHERE id=%s AND deleted_at IS NULL", (mins, id))
+    if c.rowcount == 0:
+        c.close()
+        return jsonify({'error':'Book not found or already deleted'}),404
+    db.commit(); c.close(); return jsonify({'status':'pending_delete','undo_minutes':mins})
+
+def get_recently_deleted_books():
+    db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); _purge_expired_deleted_books(c)
+    c.execute("""SELECT b.id,b.book_no,b.title,cg.name AS category_name,TIMESTAMPDIFF(SECOND,NOW(),b.delete_expires_at) AS seconds_left
+                 FROM books b LEFT JOIN categories cg ON b.category_id=cg.id
+                 WHERE b.deleted_at IS NOT NULL AND b.delete_expires_at > NOW()
+                 ORDER BY b.deleted_at DESC LIMIT 50""")
+    rows=c.fetchall(); c.close()
+    for r in rows: r['seconds_left']=max(0,int(r.get('seconds_left') or 0))
+    return jsonify(rows)
+
+def restore_deleted_book(id):
+    db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); _purge_expired_deleted_books(c)
+    c.execute("UPDATE books SET deleted_at=NULL, delete_expires_at=NULL WHERE id=%s AND deleted_at IS NOT NULL AND delete_expires_at > NOW()", (id,))
+    if c.rowcount == 0:
+        c.close()
+        return jsonify({'error':'Restore window expired or book not found'}),404
+    db.commit(); c.close(); return jsonify({'status':'restored'})
 
 def _parse_import_text(raw_input):
     rows = []

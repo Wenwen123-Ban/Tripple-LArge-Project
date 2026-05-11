@@ -32,6 +32,7 @@ DEFAULT_RULES = {
     'inactive_days': None,
     'warn_enabled': False,
     'warn_before_days': 30,
+    'book_delete_grace_mins': 20,
 }
 
 
@@ -52,6 +53,7 @@ def _ensure_tables(cursor):
             inactive_days INT NULL,
             warn_enabled TINYINT(1) DEFAULT 0,
             warn_before_days INT DEFAULT 30,
+            book_delete_grace_mins INT DEFAULT 20,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
         """
@@ -75,6 +77,7 @@ def _ensure_tables(cursor):
         'inactive_days INT NULL',
         'warn_enabled TINYINT(1) DEFAULT 0',
         'warn_before_days INT DEFAULT 30',
+        'book_delete_grace_mins INT DEFAULT 20',
     ):
         try:
             cursor.execute(f"ALTER TABLE admin_rules ADD COLUMN {column_def}")
@@ -142,17 +145,18 @@ def save_rules():
         'inactive_days': data.get('inactive_days'),
         'warn_enabled': 1 if data.get('warn_enabled') else 0,
         'warn_before_days': data.get('warn_before_days') or 30,
+        'book_delete_grace_mins': data.get('book_delete_grace_mins') or 20,
     }
     cursor.execute(
         """
         INSERT INTO admin_rules
             (id, nearest_day_rule, return_days, return_hours, expire_days, expire_hours,
              expire_mins, expiry_enabled, expiry_years, inactive_enabled, inactive_days,
-             warn_enabled, warn_before_days)
+             warn_enabled, warn_before_days, book_delete_grace_mins)
         VALUES (1, %(nearest_day_rule)s, %(return_days)s, %(return_hours)s,
                 %(expire_days)s, %(expire_hours)s, %(expire_mins)s,
                 %(expiry_enabled)s, %(expiry_years)s, %(inactive_enabled)s,
-                %(inactive_days)s, %(warn_enabled)s, %(warn_before_days)s)
+                %(inactive_days)s, %(warn_enabled)s, %(warn_before_days)s, %(book_delete_grace_mins)s)
         ON DUPLICATE KEY UPDATE
             nearest_day_rule = VALUES(nearest_day_rule),
             return_days = VALUES(return_days),
@@ -165,7 +169,8 @@ def save_rules():
             inactive_enabled = VALUES(inactive_enabled),
             inactive_days = VALUES(inactive_days),
             warn_enabled = VALUES(warn_enabled),
-            warn_before_days = VALUES(warn_before_days)
+            warn_before_days = VALUES(warn_before_days),
+            book_delete_grace_mins = VALUES(book_delete_grace_mins)
         """,
         values,
     )
