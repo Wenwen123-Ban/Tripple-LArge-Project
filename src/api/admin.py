@@ -506,6 +506,15 @@ def clear_notifications():
     cursor.close()
     return jsonify({'status': 'cleared'})
 
+
+def _first_existing_book_metric(cursor, candidates, alias):
+    cursor.execute("SHOW COLUMNS FROM books")
+    cols = {row[0] for row in cursor.fetchall()}
+    for col in candidates:
+        if col in cols:
+            return f"{col} AS {alias}"
+    return f"0 AS {alias}"
+
 def get_dashboard_stats():
     db = get_db()
     cur = db.cursor(dictionary=True)
@@ -521,15 +530,24 @@ def get_dashboard_stats():
         cur.execute("SELECT COUNT(*) AS cnt FROM students")
     total_users = (cur.fetchone() or {}).get('cnt', 0)
 
+    try:
+        cur.execute("ALTER TABLE books ADD COLUMN availability_hint VARCHAR(20) DEFAULT 'Available'")
+    except mysql.connector.Error as exc:
+        if exc.errno != 1060:
+            raise
+
     cur.execute('SELECT availability_hint, COUNT(*) AS cnt FROM books GROUP BY availability_hint')
     status_rows = {r['availability_hint']: r['cnt'] for r in cur.fetchall()}
 
     cur.execute("""SELECT COUNT(*) AS cnt FROM transactions WHERE action='borrowed' AND returned_at IS NULL AND due_at IS NOT NULL AND due_at < NOW()""")
     due_count = (cur.fetchone() or {}).get('cnt', 0)
 
-    cur.execute('SELECT title, reserve_count AS count FROM books ORDER BY reserve_count DESC LIMIT 3')
+    reserve_metric = _first_existing_book_metric(cur, ['reserve_count', 'reserved_count'], 'count')
+    borrow_metric = _first_existing_book_metric(cur, ['borrow_count', 'borrowed_count'], 'count')
+
+    cur.execute(f"SELECT title, {reserve_metric} FROM books ORDER BY count DESC, title ASC LIMIT 3")
     top_reserved = cur.fetchall()
-    cur.execute('SELECT title, borrow_count AS count FROM books ORDER BY borrow_count DESC LIMIT 3')
+    cur.execute(f"SELECT title, {borrow_metric} FROM books ORDER BY count DESC, title ASC LIMIT 3")
     top_borrowed = cur.fetchall()
 
     cur.close()
