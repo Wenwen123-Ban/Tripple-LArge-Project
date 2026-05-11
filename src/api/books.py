@@ -17,6 +17,25 @@ def _ensure_tables(cursor):
     cursor.execute("""CREATE TABLE IF NOT EXISTS categories (id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(120) NOT NULL UNIQUE,created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
     cursor.execute("""CREATE TABLE IF NOT EXISTS books (id INT AUTO_INCREMENT PRIMARY KEY,book_no VARCHAR(60) NOT NULL UNIQUE,title VARCHAR(255) NOT NULL,category_id INT NULL,status VARCHAR(40) DEFAULT 'Available',reserved_count INT DEFAULT 0,borrowed_count INT DEFAULT 0,borrow_count INT DEFAULT 0,reserve_count INT DEFAULT 0,availability_hint VARCHAR(20) DEFAULT 'Available',created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
 
+    # Backfill columns for legacy databases created before recent schema updates.
+    cursor.execute("SHOW COLUMNS FROM books")
+    cols = set()
+    for row in cursor.fetchall():
+        if isinstance(row, dict):
+            field_name = row.get('Field') or row.get('field') or next(iter(row.values()), None)
+        else:
+            field_name = row[0] if row else None
+        if field_name:
+            cols.add(str(field_name).strip().lower())
+
+    if 'availability_hint' not in cols:
+        try:
+            cursor.execute("ALTER TABLE books ADD COLUMN availability_hint VARCHAR(20) DEFAULT 'Available'")
+        except mysql.connector.ProgrammingError as err:
+            if err.errno != 1060:
+                raise
+        cursor.execute("UPDATE books SET availability_hint = COALESCE(status, 'Available') WHERE availability_hint IS NULL")
+
 def get_categories():
     db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); c.execute('SELECT id, name FROM categories ORDER BY name'); r=c.fetchall(); c.close(); return jsonify(r)
 
