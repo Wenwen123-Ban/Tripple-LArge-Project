@@ -1,103 +1,42 @@
-let allBooks = [];
-let bookSearch = '';
-
-function statusClass(status) {
-  const value = String(status || 'available').toLowerCase();
-  if (value.includes('borrow')) return 'status-borrowed';
-  if (value.includes('pending') || value.includes('reserved')) return 'status-pending';
-  return 'status-available';
-}
-
-function renderBooks() {
-  const tbody = document.getElementById('books-tbody');
-  if (!tbody) return;
-  const filter = document.getElementById('book-status-filter')?.value || 'all';
-  const rows = allBooks.filter((book) => {
-    const status = String(book.status || 'available').toLowerCase();
-    const matchesStatus = filter === 'all' || status.includes(filter);
-    const term = `${book.title || ''} ${book.book_no || ''}`.toLowerCase();
-    return matchesStatus && term.includes(bookSearch.toLowerCase());
-  });
-  tbody.innerHTML = rows.map((book) => `
-    <tr>
-      <td>${book.book_no || '—'}</td>
-      <td>${book.title || '—'}</td>
-      <td>${book.category || book.category_name || '—'}</td>
-      <td class="${statusClass(book.status)}">${book.status || 'Available'}</td>
-    </tr>`).join('');
-  if (window.padTableRows) window.padTableRows('books-tbody', 4, 8);
-}
+let bookFilters = { status: 'all', category: 'all', sort: 'title_asc', search: '', page: 1 };
+let importData = null;
 
 async function loadCategories() {
   const res = await fetch('/api/categories');
   const data = res.ok ? await res.json() : [];
-  const list = document.getElementById('category-list');
-  list.innerHTML = data.map((c) => `
-    <div class="list-item">
-      <span>${c.name}</span>
-      <button onclick="deleteCategory(${c.id})">✕</button>
-    </div>`).join('');
   const sel = document.getElementById('book-category');
-  sel.innerHTML = '<option value="">Category</option>' + data.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
+  if (sel) sel.innerHTML = '<option value="">Category</option>' + data.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
+  const filter = document.getElementById('category-filter');
+  if (filter) filter.innerHTML = '<option value="all">All Categories</option>' + data.map((c)=>`<option value="${c.id}">${c.name}</option>`).join('');
 }
 
 async function loadBooks() {
-  try {
-    const res = await fetch('/api/books');
-    allBooks = res.ok ? await res.json() : [];
-    if (!Array.isArray(allBooks)) allBooks = [];
-    renderBooks();
-  } catch (error) {
-    console.error('Books load error:', error);
-    allBooks = [];
-    renderBooks();
-  }
+  const params = new URLSearchParams({ ...bookFilters, per_page: 50 });
+  const res = await fetch(`/api/books?${params}`);
+  const books = res.ok ? await res.json() : [];
+  renderBookTable(Array.isArray(books) ? books : []);
 }
+function renderBookTable(books) { const tbody = document.getElementById('books-tbody'); if(!tbody) return; tbody.innerHTML = books.map((b)=>`<tr><td>${b.book_no}</td><td>${b.title}</td><td>${b.category_name || '—'}</td><td><span class="status-badge status-${(b.computed_status||'available').toLowerCase()}">${b.computed_status || 'Available'}</span>${b.computed_status==='Due'?'<span class="due-tooltip" title="Past due date">⚠</span>':''}</td><td>${b.borrow_count||0}</td><td><button class="btn-row-action" onclick="viewHistory(${b.id})">History</button>${b.computed_status!=='Available'?`<button class="btn-row-action btn-force" onclick="forceReturn(${b.id})">Force Return</button>`:''}<button class="btn-row-action" onclick="notifyBorrower(${b.id})">Notify</button></td></tr>`).join('') || '<tr><td colspan="6">No books found.</td></tr>'; }
 
-async function deleteCategory(id) {
-  await fetch(`/api/categories/${id}`, { method: 'DELETE' });
-  await loadCategories();
-}
+async function addBook(){ const title=document.getElementById('book-title').value.trim(); const category_id=document.getElementById('book-category').value; const book_no=document.getElementById('book-no').value.trim(); if(!title||!book_no) return; await fetch('/api/books',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,category_id,book_no})}); loadBooks(); }
+async function viewHistory(bookId){ const res=await fetch(`/api/books/history?book_id=${bookId}`); const rows=await res.json(); alert(rows.map(r=>`${r.action}: ${r.student_name||r.student_id||''}`).join('\n')||'No transaction history.'); }
+async function forceReturn(bookId){ const notes=prompt('Reason for force return (optional):')||''; const res=await fetch('/api/transactions/force-return',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({book_id:bookId,notes})}); const data=await res.json(); showNotification?.(data.status==='force_returned'?'Book force-returned successfully.':(data.error||'Force return failed.'), data.status==='force_returned'?'success':'error'); loadBooks(); }
+async function notifyBorrower(bookId){ const res=await fetch('/api/transactions/notify-borrower',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({book_id:bookId})}); const data=await res.json(); showNotification?.(data.status==='sent'?'Borrower notified by email.':(data.error||'Notification failed.'), data.status==='sent'?'success':'error'); }
 
-async function deleteBook(id) {
-  await fetch(`/api/books/${id}`, { method: 'DELETE' });
-  await loadBooks();
-}
+function showImportPreview(data){ document.getElementById('import-step-1').style.display='none'; document.getElementById('import-step-2').style.display='block'; document.getElementById('import-preview-stats').innerHTML=`<strong>Found:</strong> ${data.total} | <strong>New:</strong> ${data.new_count} | <strong>Duplicate:</strong> ${data.dup_count} | <strong>Skipped (active):</strong> ${data.skipped_count}`; document.getElementById('import-preview-table').innerHTML = `<table class="data-table"><tbody>${(data.preview||[]).map(r=>`<tr><td>${r.book_no}</td><td>${r.title}</td><td>${r.category||'—'}</td><td>${r.action}</td></tr>`).join('')}</tbody></table>`; }
+function resetImport(){importData=null; document.getElementById('import-step-1').style.display='block'; document.getElementById('import-step-2').style.display='none';}
 
-async function addBook() {
-  const title = document.getElementById('book-title').value.trim();
-  const category_id = document.getElementById('book-category').value;
-  const book_no = document.getElementById('book-no').value.trim();
-  if (!title || !book_no) return;
-  await fetch('/api/books', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, category_id, book_no }),
-  });
-  document.getElementById('book-title').value = '';
-  document.getElementById('book-no').value = '';
-  await loadBooks();
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-  document.getElementById('save-category-btn').addEventListener('click', async () => {
-    const name = document.getElementById('new-category').value.trim();
-    if (!name) return;
-    await fetch('/api/categories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    });
-    document.getElementById('new-category').value = '';
-    loadCategories();
-  });
-  document.getElementById('add-book-btn').addEventListener('click', addBook);
-  document.getElementById('save-book-btn').addEventListener('click', addBook);
-  document.getElementById('book-status-filter').addEventListener('change', renderBooks);
-  const booksSearch = document.getElementById('books-search');
-  const booksSearchClear = document.getElementById('books-search-clear');
-  if (booksSearch) booksSearch.addEventListener('input', (event) => { bookSearch = event.target.value || ''; renderBooks(); });
-  if (booksSearchClear) booksSearchClear.addEventListener('click', () => { if (booksSearch) { booksSearch.value=''; bookSearch=''; renderBooks(); booksSearch.focus(); } });
-  await loadCategories();
-  await loadBooks();
+document.addEventListener('DOMContentLoaded', async ()=>{
+  document.getElementById('save-book-btn')?.addEventListener('click', addBook);
+  document.getElementById('add-book-btn')?.addEventListener('click', addBook);
+  ['status-filter','category-filter','sort-select'].forEach((id)=>document.getElementById(id)?.addEventListener('change',(e)=>{const map={'status-filter':'status','category-filter':'category','sort-select':'sort'}; bookFilters[map[id]]=e.target.value; loadBooks();}));
+  document.getElementById('book-search')?.addEventListener('input',(e)=>{bookFilters.search=e.target.value; loadBooks();});
+  document.getElementById('open-import-btn')?.addEventListener('click',()=>document.getElementById('import-modal').style.display='flex');
+  document.getElementById('import-close')?.addEventListener('click',()=>{document.getElementById('import-modal').style.display='none'; resetImport();});
+  document.getElementById('import-analyze-btn')?.addEventListener('click', async()=>{ const file=document.getElementById('import-file').files[0]; const mode=document.getElementById('import-mode').value; const fd=new FormData(); fd.append('file', file); fd.append('mode', mode); const res=await fetch('/api/books/import/analyze',{method:'POST',body:fd}); const data=await res.json(); importData=data; showImportPreview(data);});
+  document.getElementById('import-commit-btn')?.addEventListener('click', async()=>{const file=document.getElementById('import-file').files[0]; const mode=document.getElementById('import-mode').value; if(mode==='dryrun') return; const fd=new FormData(); fd.append('file',file); fd.append('mode',mode); const data=await (await fetch('/api/books/import/commit',{method:'POST',body:fd})).json(); document.getElementById('import-result').innerHTML=`Inserted: ${data.inserted} | Updated: ${data.updated} | Skipped: ${data.skipped}`; loadBooks();});
+  document.getElementById('open-sheets-btn')?.addEventListener('click',()=>document.getElementById('sheets-modal').style.display='flex');
+  document.getElementById('sheets-close')?.addEventListener('click',()=>document.getElementById('sheets-modal').style.display='none');
+  document.getElementById('sheets-sync-btn')?.addEventListener('click', async()=>{const url=document.getElementById('sheets-url').value.trim(); const data=await (await fetch('/api/sheets/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sheet_url:url})})).json(); document.getElementById('sheets-result').innerHTML=data.error?data.error:`Inserted: ${data.inserted} | Updated: ${data.updated} | Skipped: ${data.skipped}`; loadBooks();});
+  await loadCategories(); await loadBooks();
 });
