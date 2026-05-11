@@ -19,7 +19,10 @@ async function loadDashboardWidgets() {
         el.innerHTML = '<li>—</li><li>—</li><li>—</li>';
         return;
       }
-      el.innerHTML = items.slice(0, 3).map((x, i) => `<li>${i + 1}. ${x.title} (${x.count})</li>`).join('');
+      el.innerHTML = items.slice(0, 3).map((x) => {
+        const metric = x.count ?? x.cnt ?? 0;
+        return `<li>${x.title} (${metric})</li>`;
+      }).join('');
     };
 
     render('top3-reserved', stats.top_reserved || []);

@@ -521,10 +521,24 @@ def _first_existing_book_metric(cursor, candidates, alias):
         if row:
             cols.add(row[0])
 
-    for col in candidates:
-        if col in cols:
-            return f"{col} AS {alias}"
-    return f"0 AS {alias}"
+    existing = [col for col in candidates if col in cols]
+    if not existing:
+        return f"0 AS {alias}"
+
+    if len(existing) == 1:
+        return f"{existing[0]} AS {alias}"
+
+    best_col = existing[0]
+    best_total = -1
+    for col in existing:
+        cursor.execute(f"SELECT COALESCE(SUM({col}), 0) AS total FROM books")
+        row = cursor.fetchone() or {}
+        total = row.get('total', 0) if isinstance(row, dict) else (row[0] if row else 0)
+        if total > best_total:
+            best_total = total
+            best_col = col
+
+    return f"{best_col} AS {alias}"
 
 def get_dashboard_stats():
     db = get_db()
