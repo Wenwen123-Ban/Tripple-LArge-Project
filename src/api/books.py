@@ -13,6 +13,14 @@ from src.core.db import get_db
 
 def _payload(): return request.get_json(silent=True) or {}
 
+
+def _pick(row, *keys):
+    for key in keys:
+        v = row.get(key)
+        if v is not None and str(v).strip() != '':
+            return str(v).strip()
+    return ''
+
 def _ensure_tables(cursor):
     cursor.execute("""CREATE TABLE IF NOT EXISTS categories (id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(120) NOT NULL UNIQUE,created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
     cursor.execute("""CREATE TABLE IF NOT EXISTS books (id INT AUTO_INCREMENT PRIMARY KEY,book_no VARCHAR(60) NOT NULL UNIQUE,title VARCHAR(255) NOT NULL,category_id INT NULL,status VARCHAR(40) DEFAULT 'Available',reserved_count INT DEFAULT 0,borrowed_count INT DEFAULT 0,borrow_count INT DEFAULT 0,reserve_count INT DEFAULT 0,availability_hint VARCHAR(20) DEFAULT 'Available',created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
@@ -86,13 +94,27 @@ def _parse_import_file(file):
         for row in ws.iter_rows(min_row=2, values_only=True): rows.append(dict(zip(hdr,row)))
     return rows
 
+
+def _validate_import_rows(rows):
+    if not rows:
+        return 'File is empty.'
+    sample = rows[0]
+    title = _pick(sample, 'title', 'Title', 'book_title', 'Book Title')
+    book_no = _pick(sample, 'book_no', 'Book No', 'BookNo', 'book number', 'Book Number')
+    if not title and not book_no:
+        return 'Missing required columns. Add headers for both Book No and Title.'
+    return None
+
 def import_analyze():
     file=request.files.get('file'); mode=request.form.get('mode','insert')
     if not file: return jsonify({'error':'No file uploaded'}),400
-    rows=_parse_import_file(file); db=get_db(); c=db.cursor(dictionary=True)
+    rows=_parse_import_file(file)
+    err = _validate_import_rows(rows)
+    if err: return jsonify({'error': err}),400
+    db=get_db(); c=db.cursor(dictionary=True)
     preview=[]; new=dup=skip=0
     for row in rows:
-        book_no=str(row.get('book_no') or row.get('Book No') or row.get('BookNo') or '').strip(); title=str(row.get('title') or row.get('Title') or '').strip()
+        book_no=_pick(row, 'book_no', 'Book No', 'BookNo', 'book number', 'Book Number'); title=_pick(row, 'title', 'Title', 'book_title', 'Book Title')
         if not book_no or not title: continue
         c.execute('SELECT id, availability_hint FROM books WHERE book_no=%s',(book_no,)); ex=c.fetchone()
         if not ex: action='insert'; new+=1
@@ -105,9 +127,12 @@ def import_analyze():
 def import_commit():
     file=request.files.get('file'); mode=request.form.get('mode','insert')
     if not file: return jsonify({'error':'No file uploaded'}),400
-    rows=_parse_import_file(file); db=get_db(); c=db.cursor(dictionary=True); ins=upd=sk=0
+    rows=_parse_import_file(file)
+    err = _validate_import_rows(rows)
+    if err: return jsonify({'error': err}),400
+    db=get_db(); c=db.cursor(dictionary=True); ins=upd=sk=0
     for row in rows:
-        book_no=str(row.get('book_no','') or '').strip(); title=str(row.get('title','') or '').strip(); category=str(row.get('category','') or '').strip()
+        book_no=_pick(row, 'book_no', 'Book No', 'BookNo', 'book number', 'Book Number'); title=_pick(row, 'title', 'Title', 'book_title', 'Book Title'); category=_pick(row, 'category', 'Category')
         if not book_no or not title: sk+=1; continue
         cat_id=None
         if category:

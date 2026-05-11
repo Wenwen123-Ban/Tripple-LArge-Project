@@ -8,6 +8,14 @@ from flask import jsonify, request, session
 from src.core.db import get_db
 
 
+def _pick(row, *keys):
+    for key in keys:
+        val = row.get(key)
+        if val is not None and str(val).strip() != '':
+            return str(val).strip()
+    return ''
+
+
 def _fetch_sheet_rows(sheet_url):
     if 'spreadsheets/d/' in sheet_url:
         sid = sheet_url.split('/d/')[1].split('/')[0]
@@ -37,9 +45,16 @@ def sync_sheet():
     inserted = updated = skipped = 0
     diff_log = []
 
+    if not rows:
+        return jsonify({'error': 'Sheet has no rows.'}), 400
+
+    sample = rows[0]
+    if not _pick(sample, 'book_no', 'Book No', 'BookNo', 'book number', 'Book Number') or not _pick(sample, 'title', 'Title', 'book_title', 'Book Title'):
+        return jsonify({'error': 'Sheet must include both Book No and Title columns.'}), 400
+
     for row in rows:
-        book_no = str(row.get('book_no', '') or row.get('Book No', '')).strip()
-        title = str(row.get('title', '') or row.get('Title', '')).strip()
+        book_no = _pick(row, 'book_no', 'Book No', 'BookNo', 'book number', 'Book Number')
+        title = _pick(row, 'title', 'Title', 'book_title', 'Book Title')
 
         if not book_no or not title:
             skipped += 1
