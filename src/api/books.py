@@ -23,7 +23,7 @@ def _pick(row, *keys):
 
 def _ensure_tables(cursor):
     cursor.execute("""CREATE TABLE IF NOT EXISTS categories (id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(120) NOT NULL UNIQUE,created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-    cursor.execute("""CREATE TABLE IF NOT EXISTS books (id INT AUTO_INCREMENT PRIMARY KEY,book_no VARCHAR(60) NOT NULL UNIQUE,title VARCHAR(255) NOT NULL,category_id INT NULL,status VARCHAR(40) DEFAULT 'Available',reserved_count INT DEFAULT 0,borrowed_count INT DEFAULT 0,borrow_count INT DEFAULT 0,reserve_count INT DEFAULT 0,availability_hint VARCHAR(20) DEFAULT 'Available',created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
+    cursor.execute("""CREATE TABLE IF NOT EXISTS books (id INT AUTO_INCREMENT PRIMARY KEY,book_no VARCHAR(60) NOT NULL,title VARCHAR(255) NOT NULL,category_id INT NULL,status VARCHAR(40) DEFAULT 'Available',reserved_count INT DEFAULT 0,borrowed_count INT DEFAULT 0,borrow_count INT DEFAULT 0,reserve_count INT DEFAULT 0,availability_hint VARCHAR(20) DEFAULT 'Available',created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
 
     # Backfill columns for legacy databases created before recent schema updates.
     cursor.execute("SHOW COLUMNS FROM books")
@@ -43,6 +43,41 @@ def _ensure_tables(cursor):
             if err.errno != 1060:
                 raise
         cursor.execute("UPDATE books SET availability_hint = COALESCE(status, 'Available') WHERE availability_hint IS NULL")
+
+    try:
+        cursor.execute("ALTER TABLE books DROP INDEX book_no")
+    except mysql.connector.Error:
+        pass
+    cursor.execute("SHOW INDEX FROM books")
+    idx_rows = cursor.fetchall()
+    idx_names = set((r.get('Key_name') if isinstance(r, dict) else r[2]) for r in idx_rows if (r.get('Key_name') if isinstance(r, dict) else r[2]) != 'PRIMARY')
+    if 'uniq_books_no_category' not in idx_names:
+        cursor.execute("ALTER TABLE books ADD UNIQUE INDEX uniq_books_no_category (book_no, category_id)")
+
+
+
+def _normalize_category(value):
+    return str(value or '').strip()
+
+
+def _find_or_create_category(cursor, category_name):
+    category_name = _normalize_category(category_name)
+    if not category_name:
+        return None
+    cursor.execute('SELECT id FROM categories WHERE LOWER(name)=LOWER(%s) LIMIT 1', (category_name,))
+    cat = cursor.fetchone()
+    if cat:
+        return cat['id'] if isinstance(cat, dict) else cat[0]
+    cursor.execute('INSERT INTO categories (name) VALUES (%s)', (category_name,))
+    return cursor.lastrowid
+
+
+def _book_lookup(cursor, book_no, category_id):
+    if category_id is None:
+        cursor.execute('SELECT id, availability_hint FROM books WHERE book_no=%s AND category_id IS NULL LIMIT 1', (book_no,))
+    else:
+        cursor.execute('SELECT id, availability_hint FROM books WHERE book_no=%s AND category_id=%s LIMIT 1', (book_no, category_id))
+    return cursor.fetchone()
 
 def get_categories():
     db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); c.execute('SELECT id, name FROM categories ORDER BY name'); r=c.fetchall(); c.close(); return jsonify(r)
@@ -80,11 +115,23 @@ def add_book():
     if not book_no or not title: return jsonify({'error':'Book number and title are required'}),400
     db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c)
     try: c.execute("INSERT INTO books (book_no,title,category_id,status,availability_hint) VALUES (%s,%s,%s,%s,%s)",(book_no,title,category_id,d.get('status') or 'Available',d.get('status') or 'Available')); db.commit(); return jsonify({'id':c.lastrowid,'book_no':book_no,'title':title}),201
-    except mysql.connector.IntegrityError: db.rollback(); return jsonify({'error':'Book number already exists'}),409
+    except mysql.connector.IntegrityError: db.rollback(); return jsonify({'error':'Duplicate book number in the same category is not allowed'}),409
     finally: c.close()
 
 def delete_book(id):
     db=get_db(); c=db.cursor(); _ensure_tables(c); c.execute('DELETE FROM books WHERE id=%s',(id,)); db.commit(); c.close(); return jsonify({'status':'deleted'})
+
+def _parse_import_text(raw_input):
+    rows = []
+    for line in str(raw_input or '').splitlines():
+        if not line.strip():
+            continue
+        parts = [p.strip() for p in line.split('/') if p.strip()]
+        if len(parts) < 3:
+            continue
+        rows.append({'book no': parts[0], 'title': parts[1], 'category': parts[2]})
+    return rows
+
 
 def _parse_import_file(file):
     fn=file.filename.lower(); rows=[]
@@ -115,9 +162,9 @@ def _validate_import_rows(rows):
     return None
 
 def import_analyze():
-    file=request.files.get('file'); mode=request.form.get('mode','insert')
-    if not file: return jsonify({'error':'No file uploaded'}),400
-    rows=_parse_import_file(file)
+    file=request.files.get('file'); mode=request.form.get('mode','insert'); raw_input=request.form.get('raw_input','')
+    rows=_parse_import_file(file) if file else _parse_import_text(raw_input)
+    if not rows: return jsonify({'error':'No import data provided'}),400
     err = _validate_import_rows(rows)
     if err: return jsonify({'error': err}),400
     db=get_db(); c=db.cursor(dictionary=True)
@@ -125,7 +172,9 @@ def import_analyze():
     for row in rows:
         book_no=_pick(row, 'book_no', 'Book No', 'BookNo', 'book number', 'Book Number'); title=_pick(row, 'title', 'Title', 'book_title', 'Book Title')
         if not book_no or not title: continue
-        c.execute('SELECT id, availability_hint FROM books WHERE book_no=%s',(book_no,)); ex=c.fetchone()
+        category = _pick(row, 'category', 'Category')
+        cat_id = _find_or_create_category(c, category) if category else None
+        ex = _book_lookup(c, book_no, cat_id)
         if not ex: action='insert'; new+=1
         elif mode=='upsert' and ex['availability_hint']=='Available': action='update'; dup+=1
         elif mode=='upsert': action='skip'; skip+=1
@@ -134,21 +183,17 @@ def import_analyze():
     c.close(); return jsonify({'total':len(preview),'new_count':new,'dup_count':dup,'skipped_count':skip,'preview':preview[:20]})
 
 def import_commit():
-    file=request.files.get('file'); mode=request.form.get('mode','insert')
-    if not file: return jsonify({'error':'No file uploaded'}),400
-    rows=_parse_import_file(file)
+    file=request.files.get('file'); mode=request.form.get('mode','insert'); raw_input=request.form.get('raw_input','')
+    rows=_parse_import_file(file) if file else _parse_import_text(raw_input)
+    if not rows: return jsonify({'error':'No import data provided'}),400
     err = _validate_import_rows(rows)
     if err: return jsonify({'error': err}),400
     db=get_db(); c=db.cursor(dictionary=True); ins=upd=sk=0
     for row in rows:
         book_no=_pick(row, 'book_no', 'Book No', 'BookNo', 'book number', 'Book Number'); title=_pick(row, 'title', 'Title', 'book_title', 'Book Title'); category=_pick(row, 'category', 'Category')
         if not book_no or not title: sk+=1; continue
-        cat_id=None
-        if category:
-            c.execute('SELECT id FROM categories WHERE name=%s',(category,)); cat=c.fetchone()
-            if cat: cat_id=cat['id']
-            else: c.execute('INSERT INTO categories (name) VALUES (%s)',(category,)); cat_id=c.lastrowid
-        c.execute('SELECT id, availability_hint FROM books WHERE book_no=%s',(book_no,)); ex=c.fetchone()
+        cat_id = _find_or_create_category(c, category) if category else None
+        ex = _book_lookup(c, book_no, cat_id)
         if not ex: c.execute('INSERT INTO books (book_no,title,category_id) VALUES (%s,%s,%s)',(book_no,title,cat_id)); ins+=1
         elif mode=='upsert' and ex['availability_hint']=='Available': c.execute('UPDATE books SET title=%s, category_id=%s WHERE book_no=%s',(title,cat_id,book_no)); upd+=1
         else: sk+=1
