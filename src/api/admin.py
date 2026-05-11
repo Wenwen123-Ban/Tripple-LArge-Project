@@ -509,7 +509,18 @@ def clear_notifications():
 
 def _first_existing_book_metric(cursor, candidates, alias):
     cursor.execute("SHOW COLUMNS FROM books")
-    cols = {row[0] for row in cursor.fetchall()}
+    rows = cursor.fetchall()
+
+    cols = set()
+    for row in rows:
+        if isinstance(row, dict):
+            field_name = row.get('Field')
+            if field_name:
+                cols.add(field_name)
+            continue
+        if row:
+            cols.add(row[0])
+
     for col in candidates:
         if col in cols:
             return f"{col} AS {alias}"
