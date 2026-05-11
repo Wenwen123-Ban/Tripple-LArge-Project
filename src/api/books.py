@@ -107,7 +107,9 @@ def get_books():
             c.execute("SELECT due_at FROM transactions WHERE book_id=%s AND returned_at IS NULL AND action='borrowed' LIMIT 1", (b['id'],))
             tx=c.fetchone()
             if tx and tx.get('due_at') and datetime.now()>tx['due_at']: b['computed_status']='Due'
-    if status!='all': rows=[b for b in rows if b.get('computed_status')==status]
+    if status!='all':
+        wanted=str(status or '').strip().lower()
+        rows=[b for b in rows if str(b.get('computed_status') or '').strip().lower()==wanted]
     c.close(); return jsonify(rows)
 
 def add_book():
