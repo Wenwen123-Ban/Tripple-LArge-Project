@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 load_dotenv('C:\\CC-Config\\.env')
 
 from src.api import admin, auth, books, users
+from src.api import transactions as tx_api
+from src.api import sheets as sheets_api
 from src.api.auth import (
     build_confirm_url,
     create_confirmation_token,
@@ -273,9 +275,26 @@ app.add_url_rule('/api/admin/notifications/clear', 'clear_notifications', admin.
 app.add_url_rule('/api/admin/health', 'api_admin_health', admin.server_health, methods=['GET'])
 app.add_url_rule('/api/admin/server-health', 'api_admin_server_health', admin.server_health, methods=['GET'])
 
+from src.core.scheduler import start_scheduler
+
+app.add_url_rule('/api/transactions/reserve','reserve_book',tx_api.reserve_book,methods=['POST'])
+app.add_url_rule('/api/transactions/borrow','borrow_book',tx_api.borrow_book,methods=['POST'])
+app.add_url_rule('/api/transactions/return','return_book',tx_api.return_book,methods=['POST'])
+app.add_url_rule('/api/transactions/force-return','force_return',tx_api.force_return,methods=['POST'])
+app.add_url_rule('/api/books/history','get_book_history',tx_api.get_book_history,methods=['GET'])
+app.add_url_rule('/api/transactions/notify-borrower','notify_borrower',tx_api.notify_borrower,methods=['POST'])
+app.add_url_rule('/api/books/import/analyze','import_analyze',books.import_analyze,methods=['POST'])
+app.add_url_rule('/api/books/import/commit','import_commit',books.import_commit,methods=['POST'])
+app.add_url_rule('/api/sheets/sync','sync_sheet',sheets_api.sync_sheet,methods=['POST'])
+app.add_url_rule('/api/admin/dashboard-stats','get_dashboard_stats',admin.get_dashboard_stats,methods=['GET'])
+
+with app.app_context():
+    start_scheduler(app)
 
 if __name__ == '__main__':
     print("🚀 Click & Collect - Welcome Page")
     print("📖 Starting development server...")
     print("🔗 Open browser: http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+
