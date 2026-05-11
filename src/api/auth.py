@@ -1795,13 +1795,21 @@ def login():
             (_client_ip(), student_id),
         )
         db.commit()
+        log_security_event(student_id, 'ADMIN_LOGIN_SUCCESS', _client_ip(), 'Admin logged in successfully')
         cursor.close()
         return jsonify({'status': 'ok', 'redirect': '/admin/dashboard', 'type': 'admin', 'account_type': 'admin'})
 
+    session['student_id'] = student_id
+    session['student_name'] = user['full_name']
+    session['account_type'] = 'student'
+    log_security_event(student_id, 'USER_LOGIN_SUCCESS', _client_ip(), 'User logged in successfully')
     cursor.close()
     return jsonify({'status': 'ok', 'redirect': '/user/books', 'type': 'student', 'account_type': 'student'})
 
 
 def logout():
+    actor_id = session.get('admin_id') or session.get('student_id') or 'UNKNOWN'
+    actor_type = session.get('account_type') or 'user'
+    log_security_event(actor_id, f"{str(actor_type).upper()}_LOGOUT", _client_ip(), f"{actor_type.title()} logged out")
     session.clear()
     return jsonify({'status': 'logged_out', 'redirect': '/main/sign_in'})

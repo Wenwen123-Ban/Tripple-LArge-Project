@@ -267,6 +267,7 @@ app.add_url_rule('/api/courses/<int:id>', 'api_delete_course', users.delete_cour
 app.add_url_rule('/api/admin/rules', 'api_admin_get_rules', admin.get_rules, methods=['GET'])
 app.add_url_rule('/api/admin/rules', 'api_admin_save_rules', admin.save_rules, methods=['POST'])
 app.add_url_rule('/api/admin/logs', 'api_admin_logs', admin.get_logs, methods=['GET'])
+app.add_url_rule('/api/admin/logs/clear', 'api_admin_clear_logs', admin.clear_logs, methods=['POST'])
 app.add_url_rule('/api/admin/request-deletion', 'request_admin_deletion', admin.request_admin_deletion, methods=['POST'])
 app.add_url_rule('/api/admin/confirm-deletion', 'confirm_admin_deletion', admin.confirm_admin_deletion, methods=['GET'])
 app.add_url_rule('/api/admin/finalize-deletion', 'finalize_admin_deletion', admin.finalize_admin_deletion, methods=['POST'])

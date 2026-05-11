@@ -1,4 +1,4 @@
-const CHECK_COOLDOWN = 60 * 60 * 1000;
+const CHECK_COOLDOWN = 10 * 1000;
 let lastCheck = null;
 
 function showInlineNotification(message, type = 'info') {
@@ -6,29 +6,56 @@ function showInlineNotification(message, type = 'info') {
   else console.log(`[${type}] ${message}`);
 }
 
+function formatEventType(eventType = '') {
+  return String(eventType || '')
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 async function loadLogs() {
   try {
     const res = await fetch('/api/admin/logs');
+    if (!res.ok) throw new Error('Unable to load security logs');
     const logs = await res.json();
     const list = document.getElementById('logs-list');
     if (!logs.length) {
       list.innerHTML = '<p class="no-logs">No logs yet.</p>';
       return;
     }
+
     list.innerHTML = logs.map((log) => `
       <div class="log-entry">
-        <span class="log-id">${log.account_id}</span>
-        <span class="log-type">${log.event_type}</span>
-        <span class="log-time">${log.created_at}</span>
-        <span class="log-desc">${log.description || ''}</span>
+        <div class="log-entry-head">
+          <span class="log-id">${log.account_id || 'Unknown'}</span>
+          <span class="log-type">${formatEventType(log.event_type)}</span>
+          <span class="log-time">${log.created_at || ''}</span>
+        </div>
+        <div class="log-desc">${log.description || ''}</div>
       </div>
     `).join('');
   } catch (err) {
     console.error('Failed to load logs:', err);
+    showInlineNotification('Unable to load security logs right now.', 'error');
   }
 }
 
-async function loadRules() {
+async function clearLogs() {
+  const ok = window.confirm('Clear all web security logs from the list?');
+  if (!ok) return;
+
+  const res = await fetch('/api/admin/logs/clear', { method: 'POST' });
+  if (!res.ok) {
+    showInlineNotification('Failed to clear logs.', 'error');
+    return;
+  }
+
+  showInlineNotification('Security logs cleared.', 'success');
+  loadLogs();
+}
+
+async function loadRules() { /* unchanged */
   const res = await fetch('/api/admin/rules');
   if (!res.ok) return;
   const rules = await res.json();
@@ -47,7 +74,7 @@ async function loadRules() {
   document.getElementById('book-delete-grace-mins').value = rules.book_delete_grace_mins || 20;
 }
 
-async function saveRules() {
+async function saveRules() { /* unchanged */
   await fetch('/api/admin/rules', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -73,21 +100,30 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('check-btn').addEventListener('click', async () => {
     const now = Date.now();
     if (lastCheck && (now - lastCheck) < CHECK_COOLDOWN) {
-      const remaining = Math.ceil((CHECK_COOLDOWN - (now - lastCheck)) / 60000);
-      showInlineNotification(`Please wait ${remaining} more minute(s) before checking again.`, 'info');
+      const remaining = Math.ceil((CHECK_COOLDOWN - (now - lastCheck)) / 1000);
+      showInlineNotification(`Please wait ${remaining} second(s) before checking again.`, 'info');
       return;
     }
-    lastCheck = now;
+
     const res = await fetch('/api/admin/server-health');
+    if (!res.ok) {
+      showInlineNotification('Unable to ping server health endpoint.', 'error');
+      return;
+    }
+
+    lastCheck = now;
     const data = await res.json();
-    document.getElementById('server-load').value = `CPU: ${data.cpu}% | RAM: ${data.ram}%`;
+    document.getElementById('server-load').textContent = Number(data.load || 0).toFixed(1);
+
     const status = document.getElementById('server-status');
-    status.textContent = data.status;
-    status.style.background =
-      data.status === 'Normal' ? '#22C55E'
-        : data.status === 'Moderate' ? '#F59E0B' : '#EF4444';
-    showInlineNotification(`Server status: ${data.status}`, 'info');
+    status.textContent = data.status || 'Unknown';
+    status.style.background = data.status === 'Normal' ? '#22C55E' : data.status === 'Moderate' ? '#F59E0B' : '#EF4444';
+
+    showInlineNotification(`Server ping ok • Load ${Number(data.load || 0).toFixed(1)}% • Status ${data.status}`, 'success');
   });
+
+  document.getElementById('clear-logs-btn').addEventListener('click', clearLogs);
+
   document.querySelectorAll('#nearest-day-rule, #return-days, #return-hours, #expire-days, #expire-hours, #expire-mins, #expiry-enabled, #expiry-years, #inactive-enabled, #inactive-days, #warn-enabled, #warn-days, #book-delete-grace-mins')
     .forEach((el) => el.addEventListener('change', saveRules));
   loadLogs();
