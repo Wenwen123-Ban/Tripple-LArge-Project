@@ -108,6 +108,10 @@ def _validate_import_rows(rows):
         return 'Column #2 must be Title.'
     if ordered_headers[2] not in {'category'}:
         return 'Column #3 must be Category.'
+    title = _pick(sample, 'title', 'Title', 'book_title', 'Book Title')
+    book_no = _pick(sample, 'book_no', 'Book No', 'BookNo', 'book number', 'Book Number')
+    if not title and not book_no:
+        return 'Missing required columns. Add headers for both Book No and Title.'
     return None
 
 def import_analyze():
