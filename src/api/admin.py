@@ -205,6 +205,16 @@ def get_logs():
     cursor.close()
     return jsonify(rows)
 
+
+def clear_logs():
+    """Clear security logs to prevent unbounded growth in the admin UI."""
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("TRUNCATE TABLE security_logs")
+    db.commit()
+    cursor.close()
+    return jsonify({'status': 'cleared'})
+
 def _add_column_if_missing(cursor, table, column_def):
     try:
         cursor.execute(f"ALTER TABLE {table} ADD COLUMN {column_def}")
