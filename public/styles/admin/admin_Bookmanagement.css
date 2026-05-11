@@ -20,3 +20,7 @@
 
 #import-step-1 #import-analyze-btn{min-width:180px}
 
+
+.btn-add-book{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid #C8A800;border-radius:6px;background:#fff;color:#3D1F63;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.btn-add-book i{font-size:14px}
+.btn-add-book:hover{background:#f5edff;border-color:#5B2D8E}
