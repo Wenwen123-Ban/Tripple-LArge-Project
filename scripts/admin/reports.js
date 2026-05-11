@@ -44,6 +44,7 @@ async function loadRules() {
   document.getElementById('inactive-days').value = rules.inactive_days || '';
   document.getElementById('warn-enabled').checked = Boolean(rules.warn_enabled);
   document.getElementById('warn-days').value = rules.warn_before_days || 30;
+  document.getElementById('book-delete-grace-mins').value = rules.book_delete_grace_mins || 20;
 }
 
 async function saveRules() {
@@ -63,6 +64,7 @@ async function saveRules() {
       inactive_days: document.getElementById('inactive-days').value || null,
       warn_enabled: document.getElementById('warn-enabled').checked,
       warn_before_days: document.getElementById('warn-days').value || 30,
+      book_delete_grace_mins: document.getElementById('book-delete-grace-mins').value || 20,
     }),
   });
 }
@@ -86,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         : data.status === 'Moderate' ? '#F59E0B' : '#EF4444';
     showInlineNotification(`Server status: ${data.status}`, 'info');
   });
-  document.querySelectorAll('#nearest-day-rule, #return-days, #return-hours, #expire-days, #expire-hours, #expire-mins, #expiry-enabled, #expiry-years, #inactive-enabled, #inactive-days, #warn-enabled, #warn-days')
+  document.querySelectorAll('#nearest-day-rule, #return-days, #return-hours, #expire-days, #expire-hours, #expire-mins, #expiry-enabled, #expiry-years, #inactive-enabled, #inactive-days, #warn-enabled, #warn-days, #book-delete-grace-mins')
     .forEach((el) => el.addEventListener('change', saveRules));
   loadLogs();
   loadRules();
