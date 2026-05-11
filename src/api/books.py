@@ -19,6 +19,7 @@ def _ensure_tables(cursor):
 
     # Backfill columns for legacy databases created before recent schema updates.
     cursor.execute("SHOW COLUMNS FROM books")
+    cols = {r['Field'] if isinstance(r, dict) else r[0] for r in cursor.fetchall()}
     cols = {r[0] for r in cursor.fetchall()}
     if 'availability_hint' not in cols:
         cursor.execute("ALTER TABLE books ADD COLUMN availability_hint VARCHAR(20) DEFAULT 'Available'")
