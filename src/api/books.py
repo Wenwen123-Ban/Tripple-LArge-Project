@@ -99,6 +99,15 @@ def _validate_import_rows(rows):
     if not rows:
         return 'File is empty.'
     sample = rows[0]
+    ordered_headers = [str(k).strip().lower() for k in sample.keys()]
+    if len(ordered_headers) < 3:
+        return 'Missing required columns. Required order: Book No, Title, Category.'
+    if ordered_headers[0] not in {'book no', 'book_no', 'bookno', 'book number'}:
+        return 'Column #1 must be Book No.'
+    if ordered_headers[1] not in {'title', 'book title', 'book_title'}:
+        return 'Column #2 must be Title.'
+    if ordered_headers[2] not in {'category'}:
+        return 'Column #3 must be Category.'
     title = _pick(sample, 'title', 'Title', 'book_title', 'Book Title')
     book_no = _pick(sample, 'book_no', 'Book No', 'BookNo', 'book number', 'Book Number')
     if not title and not book_no:
