@@ -156,7 +156,7 @@ def _validate_import_rows(rows):
     if ordered_headers[2] not in {'category'}:
         return 'Column #3 must be Category.'
     title = _pick(sample, 'title', 'Title', 'book_title', 'Book Title')
-    book_no = _pick(sample, 'book_no', 'Book No', 'BookNo', 'book number', 'Book Number')
+    book_no = _pick(sample, 'book_no', 'book no', 'Book No', 'BookNo', 'book number', 'Book Number')
     if not title and not book_no:
         return 'Missing required columns. Add headers for both Book No and Title.'
     return None
@@ -170,7 +170,7 @@ def import_analyze():
     db=get_db(); c=db.cursor(dictionary=True)
     preview=[]; new=dup=skip=0
     for row in rows:
-        book_no=_pick(row, 'book_no', 'Book No', 'BookNo', 'book number', 'Book Number'); title=_pick(row, 'title', 'Title', 'book_title', 'Book Title')
+        book_no=_pick(row, 'book_no', 'book no', 'Book No', 'BookNo', 'book number', 'Book Number'); title=_pick(row, 'title', 'Title', 'book_title', 'Book Title')
         if not book_no or not title: continue
         category = _pick(row, 'category', 'Category')
         cat_id = _find_or_create_category(c, category) if category else None
@@ -190,7 +190,7 @@ def import_commit():
     if err: return jsonify({'error': err}),400
     db=get_db(); c=db.cursor(dictionary=True); ins=upd=sk=0
     for row in rows:
-        book_no=_pick(row, 'book_no', 'Book No', 'BookNo', 'book number', 'Book Number'); title=_pick(row, 'title', 'Title', 'book_title', 'Book Title'); category=_pick(row, 'category', 'Category')
+        book_no=_pick(row, 'book_no', 'book no', 'Book No', 'BookNo', 'book number', 'Book Number'); title=_pick(row, 'title', 'Title', 'book_title', 'Book Title'); category=_pick(row, 'category', 'Category')
         if not book_no or not title: sk+=1; continue
         cat_id = _find_or_create_category(c, category) if category else None
         ex = _book_lookup(c, book_no, cat_id)
