@@ -24,7 +24,11 @@
 .btn-add-book{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid #C8A800;border-radius:6px;background:#fff;color:#3D1F63;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
 .btn-add-book i{font-size:14px}
 .btn-add-book:hover{background:#f5edff;border-color:#5B2D8E}
-.category-list-dropdown{width:100%;max-height:120px;overflow-y:auto;background:#fff;border:1px solid #C8A800;border-radius:6px;padding:2px}
+.category-list-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#fff;border:1px solid #C8A800;border-radius:6px;color:#3D1F63;font-size:12px;cursor:pointer}
+.category-list-toggle i{transition:transform .2s ease}
+.category-list-toggle[aria-expanded="true"] i{transform:rotate(180deg)}
+.category-list-dropdown{display:none;width:100%;max-height:120px;overflow-y:auto;background:#fff;border:1px solid #C8A800;border-radius:6px;padding:2px;margin-top:6px}
+.category-list-dropdown.open{display:block}
 .category-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 6px;border-radius:4px}
 .category-row:hover{background:#f5edff}
 .category-row-name{font-size:12px;color:#3D1F63;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
