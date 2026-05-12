@@ -13,7 +13,7 @@ async function loadCategories() {
 function renderCategoryList(categories) {
   const holder = document.getElementById('category-list');
   if (!holder) return;
-  holder.innerHTML = (categories || []).map((c) => `<span class="category-pill"><button class="category-pill-x" title="Delete category" onclick="deleteCategory(${c.id})">✕</button><span>${c.name}</span><button class="category-pill-x" title="Delete category" onclick="deleteCategory(${c.id})">✕</button></span>`).join('') || '<span style="font-size:12px;color:#666;">No categories yet.</span>';
+  holder.innerHTML = (categories || []).map((c) => `<div class="category-row"><span class="category-row-name" title="${c.name}">${c.name}</span><button class="category-row-delete" title="Delete category" onclick="deleteCategory(${c.id})">✕</button></div>`).join('') || '<div class="category-row-empty">No categories yet.</div>';
 }
 
 async function loadBooks() {
