@@ -1,6 +1,32 @@
 let bookFilters = { status: 'all', category: 'all', sort: 'title_asc', search: '', page: 1 };
 let importData = null;
 
+function bindCategoryListToggle() {
+  const toggle = document.getElementById('category-list-toggle');
+  const list = document.getElementById('category-list');
+  const wrap = document.querySelector('.category-list-wrapper');
+  if (!toggle || !list || !wrap || toggle.dataset.bound === '1') return;
+  toggle.dataset.bound = '1';
+
+  const setOpen = (isOpen) => {
+    toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    list.classList.toggle('open', isOpen);
+  };
+
+  toggle.addEventListener('click', () => {
+    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+    setOpen(!expanded);
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!wrap.contains(event.target)) setOpen(false);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') setOpen(false);
+  });
+}
+
 async function loadCategories() {
   const res = await fetch('/api/categories');
   const data = res.ok ? await res.json() : [];
@@ -9,6 +35,7 @@ async function loadCategories() {
   const filter = document.getElementById('category-filter');
   if (filter) filter.innerHTML = '<option value="all">All Categories</option>' + data.map((c)=>`<option value="${c.id}">${c.name}</option>`).join('');
   renderCategoryList(data);
+  bindCategoryListToggle();
 }
 function renderCategoryList(categories) {
   const holder = document.getElementById('category-list');
