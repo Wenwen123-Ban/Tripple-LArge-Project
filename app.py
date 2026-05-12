@@ -282,6 +282,8 @@ app.add_url_rule('/api/books/<int:id>/restore', 'api_restore_deleted_book', book
 app.add_url_rule('/api/categories', 'api_get_categories', books.get_categories, methods=['GET'])
 app.add_url_rule('/api/categories', 'api_add_category', books.add_category, methods=['POST'])
 app.add_url_rule('/api/categories/<int:id>', 'api_delete_category', books.delete_category, methods=['DELETE'])
+app.add_url_rule('/api/categories/deleted/recent', 'api_recent_deleted_categories', books.get_recently_deleted_categories, methods=['GET'])
+app.add_url_rule('/api/categories/<int:id>/restore', 'api_restore_deleted_category', books.restore_deleted_category, methods=['POST'])
 
 app.add_url_rule('/api/users', 'api_get_users', users.get_users, methods=['GET'])
 app.add_url_rule('/api/users/<int:id>', 'api_update_user', users.update_user, methods=['PATCH'])
