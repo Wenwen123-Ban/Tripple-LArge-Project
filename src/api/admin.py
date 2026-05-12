@@ -200,10 +200,24 @@ def get_logs():
     db = get_db()
     cursor = db.cursor(dictionary=True)
     _ensure_tables(cursor)
+    cursor.execute("SHOW COLUMNS FROM security_logs LIKE 'account_id'")
+    has_account_id = cursor.fetchone() is not None
+    cursor.execute("SHOW COLUMNS FROM security_logs LIKE 'student_id'")
+    has_student_id = cursor.fetchone() is not None
+
+    if has_account_id and has_student_id:
+        account_expr = 'COALESCE(account_id, student_id)'
+    elif has_account_id:
+        account_expr = 'account_id'
+    elif has_student_id:
+        account_expr = 'student_id'
+    else:
+        account_expr = "'UNKNOWN'"
+
     cursor.execute(
-        """
+        f"""
         SELECT
-            COALESCE(account_id, student_id) AS account_id,
+            {account_expr} AS account_id,
             COALESCE(account_type, 'unknown') AS account_type,
             event_type,
             ip_address,
