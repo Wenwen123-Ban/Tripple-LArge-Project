@@ -969,19 +969,41 @@ def _client_ip():
     return request.remote_addr
 
 
-def log_security_event(student_id, event_type, ip_address, description):
-    """Reusable logger that writes recovery events to the security_logs table."""
+def log_security_event(student_id, event_type, ip_address, description, account_type=None):
+    """Reusable logger for security and audit events across auth/admin/user actions."""
     try:
         db = get_db()
         cursor = db.cursor()
-        cursor.execute(
-            """
-            INSERT INTO security_logs
-                (student_id, event_type, ip_address, description)
-            VALUES (%s, %s, %s, %s)
-            """,
-            (student_id or 'UNKNOWN', event_type, ip_address, description[:255]),
-        )
+        cursor.execute("SHOW COLUMNS FROM security_logs LIKE 'account_id'")
+        has_account_id = bool(cursor.fetchone())
+        cursor.execute("SHOW COLUMNS FROM security_logs LIKE 'account_type'")
+        has_account_type = bool(cursor.fetchone())
+
+        if has_account_id and has_account_type:
+            cursor.execute(
+                """
+                INSERT INTO security_logs
+                    (account_id, account_type, event_type, ip_address, description)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (
+                    student_id or 'UNKNOWN',
+                    (account_type or 'unknown')[:20],
+                    event_type,
+                    ip_address,
+                    description[:255],
+                ),
+            )
+        else:
+            # Backward-compatible fallback for older schemas.
+            cursor.execute(
+                """
+                INSERT INTO security_logs
+                    (student_id, event_type, ip_address, description)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (student_id or 'UNKNOWN', event_type, ip_address, description[:255]),
+            )
         db.commit()
         cursor.close()
     except Exception as exc:
@@ -1747,6 +1769,7 @@ def login():
     password = data.get('password') or ''
 
     if not student_id or not password:
+        log_security_event(student_id or 'UNKNOWN', 'LOGIN_INVALID_REQUEST', _client_ip(), 'Missing student ID or password', 'unknown')
         return jsonify({'error': 'Student ID and password are required.'}), 400
 
     db = get_db()
@@ -1772,11 +1795,34 @@ def login():
         user = cursor.fetchone()
 
     if not user:
+        log_security_event(student_id, 'LOGIN_ACCOUNT_NOT_FOUND', _client_ip(), 'Login attempted for unknown or unverified account', 'unknown')
         cursor.close()
         return jsonify({'error': 'Account not found'}), 404
 
     if not verify_password(password, user['password_hash']):
-        log_security_event(student_id, 'LOGIN_FAIL', _client_ip(), 'Wrong password on login attempt')
+        log_security_event(student_id, 'LOGIN_FAIL', _client_ip(), 'Wrong password on login attempt', user['account_type'])
+        # Track brute-force / spam attempts by IP in a short time window.
+        fail_cursor = db.cursor(dictionary=True)
+        fail_cursor.execute(
+            """
+            SELECT COUNT(*) AS attempts
+            FROM security_logs
+            WHERE ip_address = %s
+              AND event_type = 'LOGIN_FAIL'
+              AND created_at >= (NOW() - INTERVAL 10 MINUTE)
+            """,
+            (_client_ip(),),
+        )
+        recent_fails = (fail_cursor.fetchone() or {}).get('attempts', 0)
+        fail_cursor.close()
+        if recent_fails >= 5:
+            log_security_event(
+                student_id,
+                'LOGIN_SPAM_SUSPECTED',
+                _client_ip(),
+                f'High failed-login volume from IP ({recent_fails} failures in 10 minutes)',
+                user['account_type'],
+            )
         cursor.close()
         return jsonify({'error': 'Incorrect password'}), 401
 
@@ -1795,21 +1841,21 @@ def login():
             (_client_ip(), student_id),
         )
         db.commit()
-        log_security_event(student_id, 'ADMIN_LOGIN_SUCCESS', _client_ip(), 'Admin logged in successfully')
+        log_security_event(student_id, 'ADMIN_LOGIN_SUCCESS', _client_ip(), 'Admin logged in successfully', 'admin')
         cursor.close()
         return jsonify({'status': 'ok', 'redirect': '/admin/dashboard', 'type': 'admin', 'account_type': 'admin'})
 
     session['student_id'] = student_id
     session['student_name'] = user['full_name']
     session['account_type'] = 'student'
-    log_security_event(student_id, 'USER_LOGIN_SUCCESS', _client_ip(), 'User logged in successfully')
+    log_security_event(student_id, 'USER_LOGIN_SUCCESS', _client_ip(), 'User logged in successfully', 'student')
     cursor.close()
     return jsonify({'status': 'ok', 'redirect': '/user/books', 'type': 'student', 'account_type': 'student'})
 
 
 def logout():
     actor_id = session.get('admin_id') or session.get('student_id') or 'UNKNOWN'
-    actor_type = session.get('account_type') or 'user'
-    log_security_event(actor_id, f"{str(actor_type).upper()}_LOGOUT", _client_ip(), f"{actor_type.title()} logged out")
+    actor_type = session.get('account_type') or 'unknown'
+    log_security_event(actor_id, f"{str(actor_type).upper()}_LOGOUT", _client_ip(), f"{actor_type.title()} logged out", actor_type)
     session.clear()
     return jsonify({'status': 'logged_out', 'redirect': '/main/sign_in'})
