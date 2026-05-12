@@ -544,16 +544,25 @@ def get_dashboard_stats():
     db = get_db()
     cur = db.cursor(dictionary=True)
 
+    def _count_active_rows(table_name):
+        """Count active rows, tolerating optional soft-delete columns/tables."""
+        try:
+            cur.execute(f"SELECT COUNT(*) AS cnt FROM {table_name} WHERE deleted_at IS NULL")
+        except mysql.connector.Error as exc:
+            if exc.errno == 1054:  # Unknown column
+                cur.execute(f"SELECT COUNT(*) AS cnt FROM {table_name}")
+            elif exc.errno == 1146:  # Table does not exist
+                return 0
+            else:
+                raise
+        return (cur.fetchone() or {}).get('cnt', 0)
+
     cur.execute('SELECT COUNT(*) AS cnt FROM books')
     total_books = (cur.fetchone() or {}).get('cnt', 0)
 
-    try:
-        cur.execute("SELECT COUNT(*) AS cnt FROM students WHERE deleted_at IS NULL")
-    except mysql.connector.Error as exc:
-        if exc.errno != 1054:
-            raise
-        cur.execute("SELECT COUNT(*) AS cnt FROM students")
-    total_users = (cur.fetchone() or {}).get('cnt', 0)
+    total_students = _count_active_rows('students')
+    total_admins = _count_active_rows('admins')
+    total_users = total_students + total_admins
 
     try:
         cur.execute("ALTER TABLE books ADD COLUMN availability_hint VARCHAR(20) DEFAULT 'Available'")
