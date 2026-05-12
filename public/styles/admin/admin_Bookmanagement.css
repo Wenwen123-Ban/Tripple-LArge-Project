@@ -24,3 +24,5 @@
 .btn-add-book{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid #C8A800;border-radius:6px;background:#fff;color:#3D1F63;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
 .btn-add-book i{font-size:14px}
 .btn-add-book:hover{background:#f5edff;border-color:#5B2D8E}
+.category-pill{display:inline-flex;align-items:center;gap:6px;background:#f5f1ff;border:1px solid #6b2ea0;border-radius:999px;padding:2px 8px;color:#3D1F63;font-size:12px}
+.category-pill-x{border:none;background:transparent;color:#c11414;cursor:pointer;font-size:12px;line-height:1}
