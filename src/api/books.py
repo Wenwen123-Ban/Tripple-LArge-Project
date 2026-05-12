@@ -47,6 +47,19 @@ def _ensure_tables(cursor):
         cursor.execute("ALTER TABLE books ADD COLUMN deleted_at DATETIME NULL DEFAULT NULL")
     if 'delete_expires_at' not in cols:
         cursor.execute("ALTER TABLE books ADD COLUMN delete_expires_at DATETIME NULL DEFAULT NULL")
+    cursor.execute("SHOW COLUMNS FROM categories")
+    category_cols = set()
+    for row in cursor.fetchall():
+        if isinstance(row, dict):
+            field_name = row.get('Field') or row.get('field') or next(iter(row.values()), None)
+        else:
+            field_name = row[0] if row else None
+        if field_name:
+            category_cols.add(str(field_name).strip().lower())
+    if 'deleted_at' not in category_cols:
+        cursor.execute("ALTER TABLE categories ADD COLUMN deleted_at DATETIME NULL DEFAULT NULL")
+    if 'delete_expires_at' not in category_cols:
+        cursor.execute("ALTER TABLE categories ADD COLUMN delete_expires_at DATETIME NULL DEFAULT NULL")
 
     try:
         cursor.execute("ALTER TABLE books DROP INDEX book_no")
@@ -96,8 +109,12 @@ def _get_delete_grace_minutes(cursor):
 def _purge_expired_deleted_books(cursor):
     cursor.execute("DELETE FROM books WHERE deleted_at IS NOT NULL AND delete_expires_at IS NOT NULL AND delete_expires_at <= NOW()")
 
+
+def _purge_expired_deleted_categories(cursor):
+    cursor.execute("DELETE FROM categories WHERE deleted_at IS NOT NULL AND delete_expires_at IS NOT NULL AND delete_expires_at <= NOW()")
+
 def get_categories():
-    db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); c.execute('SELECT id, name FROM categories ORDER BY name'); r=c.fetchall(); c.close(); return jsonify(r)
+    db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); _purge_expired_deleted_categories(c); c.execute('SELECT id, name FROM categories WHERE deleted_at IS NULL ORDER BY name'); r=c.fetchall(); c.close(); return jsonify(r)
 
 def add_category():
     name=str(_payload().get('name') or '').strip()
@@ -108,7 +125,33 @@ def add_category():
     finally: c.close()
 
 def delete_category(id):
-    db=get_db(); c=db.cursor(); _ensure_tables(c); c.execute('UPDATE books SET category_id=NULL WHERE category_id=%s',(id,)); c.execute('DELETE FROM categories WHERE id=%s',(id,)); db.commit(); c.close(); return jsonify({'status':'deleted'})
+    db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); _purge_expired_deleted_categories(c)
+    mins = _get_delete_grace_minutes(c)
+    c.execute("UPDATE categories SET deleted_at=NOW(), delete_expires_at=DATE_ADD(NOW(), INTERVAL %s MINUTE) WHERE id=%s AND deleted_at IS NULL", (mins, id))
+    if c.rowcount == 0:
+        c.close()
+        return jsonify({'error': 'Category not found or already deleted'}), 404
+    db.commit(); c.close(); return jsonify({'status':'pending_delete','undo_minutes':mins})
+
+
+def get_recently_deleted_categories():
+    db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); _purge_expired_deleted_categories(c)
+    c.execute("""SELECT id,name,TIMESTAMPDIFF(SECOND,NOW(),delete_expires_at) AS seconds_left
+                 FROM categories
+                 WHERE deleted_at IS NOT NULL AND delete_expires_at > NOW()
+                 ORDER BY deleted_at DESC LIMIT 50""")
+    rows=c.fetchall(); c.close()
+    for r in rows: r['seconds_left']=max(0,int(r.get('seconds_left') or 0))
+    return jsonify(rows)
+
+
+def restore_deleted_category(id):
+    db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); _purge_expired_deleted_categories(c)
+    c.execute("UPDATE categories SET deleted_at=NULL, delete_expires_at=NULL WHERE id=%s AND deleted_at IS NOT NULL AND delete_expires_at > NOW()", (id,))
+    if c.rowcount == 0:
+        c.close()
+        return jsonify({'error':'Restore window expired or category not found'}),404
+    db.commit(); c.close(); return jsonify({'status':'restored'})
 
 def get_books():
     status=request.args.get('status','all'); category=request.args.get('category','all'); sort=request.args.get('sort','title_asc'); search=request.args.get('search','').strip(); page=int(request.args.get('page',1)); per_page=int(request.args.get('per_page',50)); off=(page-1)*per_page
