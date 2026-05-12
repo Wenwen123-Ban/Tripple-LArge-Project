@@ -69,6 +69,15 @@ def _ensure_tables(cursor):
         )
         """
     )
+    for column_def in (
+        'account_id VARCHAR(40) DEFAULT NULL',
+        "account_type VARCHAR(20) DEFAULT 'unknown'",
+    ):
+        try:
+            cursor.execute(f"ALTER TABLE security_logs ADD COLUMN {column_def}")
+        except mysql.connector.Error as exc:
+            if exc.errno != 1060:
+                raise
 
     for column_def in (
         'expiry_enabled TINYINT(1) DEFAULT 0',
@@ -190,9 +199,16 @@ def server_health():
 def get_logs():
     db = get_db()
     cursor = db.cursor(dictionary=True)
+    _ensure_tables(cursor)
     cursor.execute(
         """
-        SELECT account_id, account_type, event_type, ip_address, description, created_at
+        SELECT
+            COALESCE(account_id, student_id) AS account_id,
+            COALESCE(account_type, 'unknown') AS account_type,
+            event_type,
+            ip_address,
+            description,
+            created_at
         FROM security_logs
         ORDER BY created_at DESC
         LIMIT 100

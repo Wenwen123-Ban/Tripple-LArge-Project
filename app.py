@@ -38,6 +38,32 @@ PUBLIC_DIR = os.path.join(BASE_DIR, 'public')
 PAGES_DIR = os.path.join(PUBLIC_DIR, 'pages')
 
 
+@app.before_request
+def audit_authenticated_api_actions():
+    """Audit admin/student API activity for anomaly investigations."""
+    if not request.path.startswith('/api/'):
+        return
+    if request.path.startswith('/api/admin/logs'):
+        return
+    if request.path in ('/api/auth/login', '/api/auth/logout'):
+        return
+    if request.method not in ('POST', 'PUT', 'PATCH', 'DELETE'):
+        return
+
+    account_id = session.get('admin_id') or session.get('student_id')
+    account_type = session.get('account_type') or 'unknown'
+    if not account_id:
+        return
+
+    auth.log_security_event(
+        student_id=account_id,
+        event_type=f"API_{request.method}",
+        ip_address=request.remote_addr,
+        description=f"{request.method} {request.path}",
+        account_type=account_type,
+    )
+
+
 @app.route('/api/auth/send-confirmation', methods=['POST'])
 def send_auth_confirmation():
     """Send a Gmail confirmation email for registration testing."""
