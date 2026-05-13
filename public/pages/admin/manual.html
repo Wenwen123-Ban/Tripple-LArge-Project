@@ -88,14 +88,16 @@
     }
     .manual-section p,
     .manual-section li { font-size: 14px; line-height: 1.7; }
+    .admin-body-no-sidebar { display:block; }
+    .admin-body-no-sidebar .admin-main-content { width:100%; }
+    .manual-page-shell { overflow-y:auto; height:calc(100vh - 138px); padding:18px 24px 24px; }
   </style>
 </head>
 <body>
   <div id="header-placeholder"></div>
   <div id="navbar-placeholder"></div>
 
-  <div class="admin-body">
-    <div id="sidebar-placeholder"></div>
+  <div class="admin-body admin-body-no-sidebar">
     <main class="admin-main-content manual-page-shell">
       <div class="manual-wrap">
         <h2>📖 Librarian Manual</h2>
@@ -351,10 +353,6 @@
           loadAccountCard();
           initLogout();
           initNotifications();
-      });
-      loadComponent('#sidebar-placeholder',
-        '/components/sidebar.html', () => {
-          initSidebar();
       });
       loadComponent('#footer-placeholder',
         '/components/footer.html', () => {

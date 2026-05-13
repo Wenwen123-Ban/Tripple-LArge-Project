@@ -67,14 +67,16 @@
     .about-section { margin-bottom: 0; }
     .about-section p { font-size: 15px; line-height: 1.75; }
     .about-meta { margin-top: 20px; }
+    .admin-body-no-sidebar { display:block; }
+    .admin-body-no-sidebar .admin-main-content { width:100%; }
+    .about-page-shell { overflow-y:auto; height:calc(100vh - 138px); padding:18px 24px 24px; }
   </style>
 </head>
 <body>
   <div id="header-placeholder"></div>
   <div id="navbar-placeholder"></div>
 
-  <div class="admin-body">
-    <div id="sidebar-placeholder"></div>
+  <div class="admin-body admin-body-no-sidebar">
     <main class="admin-main-content about-page-shell">
       <div class="about-card">
         <div class="about-grid">
@@ -161,10 +163,6 @@
           loadAccountCard();
           initLogout();
           initNotifications();
-      });
-      loadComponent('#sidebar-placeholder',
-        '/components/sidebar.html', () => {
-          initSidebar();
       });
       loadComponent('#footer-placeholder',
         '/components/footer.html', () => {
