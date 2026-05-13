@@ -2,9 +2,53 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>About — Click &amp; Collect</title>
   <link rel="stylesheet" href="/styles/main/welcome.css">
   <link rel="stylesheet" href="/styles/admin/admin_shared.css">
+  <style>
+    .about-card {
+      max-width: 680px;
+      background: var(--card-bg, #F5C400);
+      border: 2px solid var(--dark-navy);
+      border-radius: 12px;
+      padding: 32px 40px;
+    }
+    .about-card h2 {
+      color: var(--deep-purple);
+      font-size: 22px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--gold-accent);
+      padding-bottom: 10px;
+    }
+    .about-section {
+      margin-bottom: 22px;
+    }
+    .about-section h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--dark-navy);
+      margin-bottom: 8px;
+    }
+    .about-section p {
+      font-size: 14px;
+      color: #1a1a1a;
+      line-height: 1.8;
+    }
+    .about-meta {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0,0,0,0.1);
+      font-size: 12px;
+      color: #444;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .about-meta span strong {
+      color: var(--deep-purple);
+    }
+  </style>
 </head>
 <body>
   <div id="header-placeholder"></div>
@@ -12,43 +56,99 @@
 
   <div class="admin-body">
     <div id="sidebar-placeholder"></div>
-    <main class="admin-main-content" style="padding:32px 40px;">
-      <div class="card" style="max-width:640px;">
-        <h2 style="color:var(--deep-purple); font-size:20px;margin-bottom:16px;">About Click &amp; Collect</h2>
-        <p style="font-size:14px;color:#333; line-height:1.8;margin-bottom:12px;">
-          <strong>Click &amp; Collect</strong> is the Library Borrowing and Assistance System (LBAS) developed for
-          North Western Mindanao State College of Science and Technology (NMSC-ST).
-        </p>
-        <p style="font-size:14px;color:#333;line-height:1.8;">
-          The system allows students to reserve and borrow books online, and provides librarians with tools to manage
-          the library catalog, user accounts, circulation transactions, and operational rules.
-        </p>
-        <hr style="margin:20px 0;border-color:#e0e0e0;">
-        <p style="font-size:12px;color:#888;">Version 1.0 &bull; NMSC-ST Library &bull; 2026</p>
+    <main class="admin-main-content"
+          style="padding:32px 36px;overflow-y:auto;">
+      <div class="about-card">
+        <h2>About Click &amp; Collect</h2>
+
+        <div class="about-section">
+          <h3>What is Click &amp; Collect?</h3>
+          <p>
+            <strong>Click &amp; Collect</strong> is the
+            <strong>Library Borrowing and Assistance System (LBAS)</strong>
+            developed for the
+            <strong>North Western Mindanao State College of
+            Science and Technology (NMSC-ST)</strong>.
+            It is a web-based system that enables students to reserve
+            and borrow library books online, and provides librarians
+            with a complete set of tools to manage the library catalog,
+            user accounts, circulation transactions, and operational rules.
+          </p>
+        </div>
+
+        <div class="about-section">
+          <h3>Purpose</h3>
+          <p>
+            The system was created to modernize and streamline the
+            library borrowing process at NMSC-ST — reducing manual
+            paperwork, preventing duplicate reservations, and giving
+            both students and librarians a clear, real-time view of
+            book availability and circulation status.
+          </p>
+        </div>
+
+        <div class="about-section">
+          <h3>Key Features</h3>
+          <p>
+            Online book reservation and borrowing for students —
+            automated email confirmation and Gmail-verified account
+            registration — real-time book lifecycle tracking
+            (Available, Reserved, Borrowed, Due) — admin dashboard
+            with overview statistics — bulk book import via CSV or
+            Excel — Google Sheets catalog sync — librarian account
+            management with multi-layer security — configurable
+            borrowing and reservation rules — security logs and
+            server health monitoring.
+          </p>
+        </div>
+
+        <div class="about-section">
+          <h3>Technology Stack</h3>
+          <p>
+            Built with <strong>Python Flask</strong> as the backend
+            framework, <strong>MySQL (XAMPP MariaDB)</strong> as the
+            database, <strong>Bootstrap 5</strong> and
+            <strong>Vanilla JavaScript</strong> on the frontend,
+            and <strong>Gmail SMTP</strong> for email notifications.
+            Hosted locally with optional
+            <strong>Cloudflare Tunnel</strong> for external access.
+          </p>
+        </div>
+
+        <div class="about-meta">
+          <span><strong>System:</strong> Click &amp; Collect LBAS</span>
+          <span><strong>School:</strong> NMSC-ST</span>
+          <span><strong>Version:</strong> 1.0</span>
+          <span><strong>Year:</strong> 2026</span>
+          <span><strong>Type:</strong> Capstone Project</span>
+        </div>
       </div>
     </main>
   </div>
 
   <div id="footer-placeholder"></div>
-
   <script src="/scripts/shared/components.js"></script>
-  <script src="/scripts/admin/shared_init.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      loadComponent('#header-placeholder', '/components/header.html', () => {
-        setPortalLabel('/ Librarian Portal /');
+      loadComponent('#header-placeholder',
+        '/components/header.html', () => {
+          setPortalLabel('/ Librarian Portal /');
       });
-      loadComponent('#navbar-placeholder', '/components/navbar.html', () => {
-        setActiveNav('about');
-        initHamburger();
-        loadAccountCard();
-        initLogout();
+      loadComponent('#navbar-placeholder',
+        '/components/navbar.html', () => {
+          setActiveNav('about');
+          initHamburger();
+          loadAccountCard();
+          initLogout();
+          initNotifications();
       });
-      loadComponent('#sidebar-placeholder', '/components/sidebar.html', () => {
-        initSidebar('dashboard');
+      loadComponent('#sidebar-placeholder',
+        '/components/sidebar.html', () => {
+          initSidebar();
       });
-      loadComponent('#footer-placeholder', '/components/footer.html', () => {
-        startClock();
+      loadComponent('#footer-placeholder',
+        '/components/footer.html', () => {
+          startClock();
       });
     });
   </script>
