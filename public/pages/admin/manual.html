@@ -2,41 +2,354 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manual — Click &amp; Collect</title>
   <link rel="stylesheet" href="/styles/main/welcome.css">
   <link rel="stylesheet" href="/styles/admin/admin_shared.css">
+  <style>
+    .manual-wrap {
+      max-width: 760px;
+      background: #F5C400;
+      border: 2px solid var(--dark-navy);
+      border-radius: 12px;
+      padding: 32px 40px;
+    }
+    .manual-wrap h2 {
+      color: var(--deep-purple);
+      font-size: 22px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--dark-navy);
+      padding-bottom: 10px;
+    }
+    .manual-section {
+      margin-bottom: 26px;
+    }
+    .manual-section h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--deep-purple);
+      background: rgba(75,0,130,0.08);
+      padding: 6px 12px;
+      border-left: 4px solid var(--deep-purple);
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 10px;
+    }
+    .manual-section p,
+    .manual-section li {
+      font-size: 13.5px;
+      color: #1a1a1a;
+      line-height: 1.85;
+    }
+    .manual-section ul {
+      padding-left: 20px;
+      margin: 6px 0;
+    }
+    .manual-section ul li {
+      margin-bottom: 4px;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .pill-green  { background:#DCFCE7; color:#166534; }
+    .pill-yellow { background:#FEF9C3; color:#854D0E; }
+    .pill-blue   { background:#DBEAFE; color:#1E40AF; }
+    .pill-red    { background:#FEE2E2; color:#991B1B; }
+    .step-num {
+      display: inline-block;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--deep-purple);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      line-height: 22px;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+    .step-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+  </style>
 </head>
 <body>
   <div id="header-placeholder"></div>
   <div id="navbar-placeholder"></div>
+
   <div class="admin-body">
     <div id="sidebar-placeholder"></div>
-    <main class="admin-main-content" style="padding:32px 40px;overflow-y:auto;">
-      <div class="card" style="max-width:720px;">
-        <h2 style="color:var(--deep-purple);font-size:22px; margin-bottom:24px;">Librarian Manual</h2>
-        <p style="font-size:14px;color:#333;line-height:1.8;">Manual content for dashboard, books, users, and security workflows.</p>
+    <main class="admin-main-content"
+          style="padding:32px 36px;overflow-y:auto;
+                 max-height:calc(100vh - 32px - 46px - 60px);">
+      <div class="manual-wrap">
+        <h2>📖 Librarian Manual</h2>
+
+        <!-- SECTION 1 -->
+        <div class="manual-section">
+          <h3>Getting Started as Admin</h3>
+          <p>To access the admin portal:</p>
+          <div class="step-row">
+            <span class="step-num">1</span>
+            <p>Go to the login page and enter your
+               <strong>Admin ID</strong> and
+               <strong>Password</strong>.</p>
+          </div>
+          <div class="step-row">
+            <span class="step-num">2</span>
+            <p>The system checks your account type. If you are
+               an admin, you are automatically redirected to the
+               <strong>Admin Dashboard</strong>.</p>
+          </div>
+          <div class="step-row">
+            <span class="step-num">3</span>
+            <p>To log out, click the <strong>☰ menu icon</strong>
+               in the top-right of the navbar and select
+               <strong>Log Out</strong>.</p>
+          </div>
+        </div>
+
+        <!-- SECTION 2 -->
+        <div class="manual-section">
+          <h3>Dashboard</h3>
+          <p>The dashboard shows a live overview of the library system:</p>
+          <ul>
+            <li><strong>Total of books</strong> — number of books
+              in the catalog</li>
+            <li><strong>Total of users</strong> — number of
+              registered and verified students</li>
+            <li><strong>Top 3 Most Reserved</strong> — books with
+              the highest reservation count</li>
+            <li><strong>Top 3 Most Borrowed</strong> — books with
+              the highest borrow count</li>
+            <li><strong>Reservation Area</strong> — pending student
+              reservations awaiting admin approval</li>
+            <li><strong>Borrowing Area</strong> — books currently
+              borrowed by students</li>
+          </ul>
+          <p style="margin-top:10px;">
+            <strong>Control buttons in the table:</strong>
+          </p>
+          <ul>
+            <li>🟩 <strong>Green button</strong> — Approve a
+              reservation (moves book from Reserved → Borrowed)</li>
+            <li>🟥 <strong>Red button</strong> — Reject/cancel a
+              reservation (moves book back to Available)</li>
+          </ul>
+        </div>
+
+        <!-- SECTION 3 -->
+        <div class="manual-section">
+          <h3>Manage Books</h3>
+          <ul>
+            <li><strong>Add Book</strong> — Fill in Title, select
+              Category, enter Book No, then save</li>
+            <li><strong>Add Category</strong> — Type a category name
+              and click the green save button. Categories appear
+              in both the book form and the Add Books dropdown.
+              Delete a category using the ✕ beside it in the list</li>
+            <li><strong>Search &amp; Sort</strong> — Filter by status
+              (Available, Reserved, Borrowed, Due), category, or sort
+              by title or borrow frequency</li>
+            <li><strong>Book row actions:</strong>
+              <ul>
+                <li><em>History</em> — View full transaction history
+                  for that book</li>
+                <li><em>Force Return</em> — Manually return a borrowed
+                  book with an audit note (admin only)</li>
+                <li><em>Notify</em> — Send an email reminder to the
+                  borrower</li>
+              </ul>
+            </li>
+            <li><strong>Bulk Import</strong> — Upload a CSV or Excel
+              file. Required columns: book_no, title. Optional:
+              category. Use Dry Run to preview before committing</li>
+            <li><strong>Google Sheets Sync</strong> — Paste the URL
+              of a published Google Sheet to sync the catalog.
+              Books with active reservations or borrows are
+              never overwritten</li>
+          </ul>
+        </div>
+
+        <!-- SECTION 4 -->
+        <div class="manual-section">
+          <h3>Book Status Guide</h3>
+          <ul>
+            <li>
+              <span class="status-pill pill-green">Available</span>
+              — Book is in the library and can be reserved by students
+            </li>
+            <li>
+              <span class="status-pill pill-yellow">Reserved</span>
+              — A student has reserved this book and it is awaiting
+              your approval for pickup
+            </li>
+            <li>
+              <span class="status-pill pill-blue">Borrowed</span>
+              — Book is currently checked out to a student
+            </li>
+            <li>
+              <span class="status-pill pill-red">Due</span>
+              — The return deadline has passed. The borrower should
+              be notified and the book returned immediately
+            </li>
+          </ul>
+        </div>
+
+        <!-- SECTION 5 -->
+        <div class="manual-section">
+          <h3>Manage Users</h3>
+          <ul>
+            <li><strong>Sort By Admin</strong> — shows all admin
+              accounts (ID, Name, LBC, Email, Address)</li>
+            <li><strong>Sort By Student</strong> — shows all student
+              accounts with additional sort options: by Course, Year,
+              or Level (Junior High)</li>
+            <li><strong>Add Admin</strong> — Click Add Admin +,
+              fill in the form (no Course/Year for admins), click
+              Confirm Gmail. An invitation email is sent to the
+              new admin's Gmail. After they confirm, their one-time
+              recovery code is shown privately on their screen only.
+              You will see "Registration Complete" when done</li>
+            <li><strong>Add Course</strong> — Type a course name and
+              click the green save button. The new course immediately
+              appears in the student registration form dropdown.
+              Delete a course using the ✕ beside it</li>
+            <li><strong>Delete Student Account</strong> — Click
+              Delete beside the student row. Confirm in the dialog.
+              The student receives an email notification with your
+              contact details</li>
+            <li><strong>Delete Admin Account</strong> — Click Delete
+              beside the admin row. A confirmation email is sent to
+              that admin. After they confirm, you receive a deletion
+              code via the bell notification. Enter the code to
+              finalize. You cannot delete your own account or the
+              last remaining admin</li>
+          </ul>
+        </div>
+
+        <!-- SECTION 6 -->
+        <div class="manual-section">
+          <h3>Web Security</h3>
+          <ul>
+            <li><strong>Logs Report</strong> — Live log of all
+              system events: logins, failed attempts, account
+              deletions, and more. Each entry shows the account ID,
+              event type, IP address, and timestamp</li>
+            <li><strong>Server Health</strong> — Click the Check
+              button to see current CPU and RAM load. This can only
+              be checked once per hour to avoid overloading the server.
+              Status shows Normal, Moderate, or High Load</li>
+            <li><strong>Reserve and Borrow Rules</strong>:
+              <ul>
+                <li><em>Nearest operation day</em> — If a book is
+                  reserved on a holiday or non-operating day, the
+                  system automatically moves the pickup to the
+                  nearest valid day</li>
+                <li><em>Unapproved reservation expiry</em> — Set how
+                  long a reservation stays pending before it auto-
+                  cancels (default 30 minutes)</li>
+                <li><em>Return deadline</em> — Set the number of days
+                  and/or hours a student has to return a borrowed book.
+                  Leave blank for no deadline (N/A)</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- SECTION 7 -->
+        <div class="manual-section">
+          <h3>Forgot Password (Admin Recovery)</h3>
+          <p>If you forget your admin password:</p>
+          <div class="step-row">
+            <span class="step-num">1</span>
+            <p>Go to the login page and click
+              <strong>Forgot password click this</strong></p>
+          </div>
+          <div class="step-row">
+            <span class="step-num">2</span>
+            <p>Enter your <strong>Admin ID</strong>,
+              <strong>LBC No</strong>, and
+              <strong>Gmail</strong>. All three must match
+              your registered account exactly</p>
+          </div>
+          <div class="step-row">
+            <span class="step-num">3</span>
+            <p>Recovery is only available
+              <strong>Monday to Friday, 8:00 AM to 5:00 PM</strong>.
+              Attempts outside this window are blocked and logged</p>
+          </div>
+          <div class="step-row">
+            <span class="step-num">4</span>
+            <p>A <strong>6-digit code</strong> is sent to your Gmail.
+              Enter it on the recovery form</p>
+          </div>
+          <div class="step-row">
+            <span class="step-num">5</span>
+            <p>You will then be asked for your
+              <strong>One-Time Setup Code</strong> — this is the
+              physical code you wrote down when your account was
+              first created. Without this code, recovery requires
+              manual intervention from another admin</p>
+          </div>
+          <div class="step-row">
+            <span class="step-num">6</span>
+            <p>After both codes are verified, set your new password
+              and log in normally</p>
+          </div>
+        </div>
+
+        <!-- SECTION 8 -->
+        <div class="manual-section">
+          <h3>Notifications (Bell Icon)</h3>
+          <ul>
+            <li>A <strong>red badge</strong> on the bell icon
+              means you have unread notifications</li>
+            <li>Notifications include: overdue book alerts,
+              admin deletion confirmation codes, Google Sheets
+              sync results</li>
+            <li><strong>Unread</strong> notifications have a purple
+              left border. <strong>Used</strong> notifications
+              are greyed out and cannot be re-used</li>
+            <li>Click <strong>Clear All</strong> to remove read
+              and used notifications. Active unread ones
+              are never cleared automatically</li>
+          </ul>
+        </div>
+
       </div>
     </main>
   </div>
+
   <div id="footer-placeholder"></div>
   <script src="/scripts/shared/components.js"></script>
-  <script src="/scripts/admin/shared_init.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      loadComponent('#header-placeholder', '/components/header.html', () => {
-        setPortalLabel('/ Librarian Portal /');
+      loadComponent('#header-placeholder',
+        '/components/header.html', () => {
+          setPortalLabel('/ Librarian Portal /');
       });
-      loadComponent('#navbar-placeholder', '/components/navbar.html', () => {
-        setActiveNav('manual');
-        initHamburger();
-        loadAccountCard();
-        initLogout();
+      loadComponent('#navbar-placeholder',
+        '/components/navbar.html', () => {
+          setActiveNav('manual');
+          initHamburger();
+          loadAccountCard();
+          initLogout();
+          initNotifications();
       });
-      loadComponent('#sidebar-placeholder', '/components/sidebar.html', () => {
-        initSidebar('dashboard');
+      loadComponent('#sidebar-placeholder',
+        '/components/sidebar.html', () => {
+          initSidebar();
       });
-      loadComponent('#footer-placeholder', '/components/footer.html', () => {
-        startClock();
+      loadComponent('#footer-placeholder',
+        '/components/footer.html', () => {
+          startClock();
       });
     });
   </script>
