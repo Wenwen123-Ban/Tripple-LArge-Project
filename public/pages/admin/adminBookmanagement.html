@@ -12,7 +12,25 @@
 <body>
 <div class="app-shell">
   <header class="top-header-bar"><span class="header-portal-label">/ Librarian Portal /</span><div class="header-brand"><span class="header-brand-text">Click &amp; Collect</span><i class="ti ti-book-2 header-brand-icon"></i></div></header>
-  <nav class="navbar"><div class="navbar-left"><span class="dot" style="background:#FF5F57"></span><span class="dot" style="background:#FEBC2E"></span><span class="dot" style="background:#28C840"></span></div><div class="navbar-center"><a href="/admin/dashboard" class="nav-icon-btn"><i class="ti ti-home"></i></a><button class="nav-icon-btn"><i class="ti ti-info-circle"></i></button><button class="nav-icon-btn"><i class="ti ti-switch-horizontal"></i></button><button class="nav-icon-btn"><i class="ti ti-id-badge-2"></i></button><div class="search-wrapper"><input type="text" class="search-bar" placeholder="Search..."><button class="search-clear"><i class="ti ti-x"></i></button></div></div><div class="navbar-right"><button class="nav-icon-btn"><i class="ti ti-bell"></i></button><div class="hamburger-wrapper"><button class="nav-icon-btn hamburger-btn"><i class="ti ti-menu-2"></i></button><div class="hamburger-dropdown"><a href="/logout"><i class="ti ti-logout"></i> Log Out</a></div></div></div></nav>
+    <nav class="admin-nav">
+    <div class="nav-left"><span class="dot dot-blue"></span><span class="dot dot-yellow"></span><span class="dot dot-red"></span></div>
+    <div class="nav-icons">
+      <a href="/admin/dashboard" class="nav-icon-btn" data-page="dashboard" title="Home — Dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </a>
+      <a href="/admin/about" class="nav-icon-btn" data-page="about" title="About this system">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </a>
+      <a href="/admin/manual" class="nav-icon-btn" data-page="manual" title="Librarian Manual">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      </a>
+    </div>
+    <div class="nav-search"><input type="text" class="search-bar nav-search-input" placeholder="Search..."/><button class="search-clear nav-search-clear" title="Clear"><i class="ti ti-x"></i></button></div>
+    <div class="nav-right">
+      <button class="nav-icon-btn" title="Notifications"><i class="ti ti-bell"></i></button>
+      <div class="hamburger-wrapper"><button class="nav-icon-btn hamburger-btn" title="Menu"><i class="ti ti-menu-2"></i></button><div class="hamburger-dropdown"><a href="/logout"><i class="ti ti-logout"></i> Log Out</a></div></div>
+    </div>
+  </nav>
   <div class="main-layout">
     <aside class="sidebar" id="sidebar"><div class="sidebar-toggle" id="sidebarToggle"><i class="ti ti-chevron-left" id="sidebarChevron"></i></div><nav class="sidebar-nav"><a href="/admin/dashboard" id="nav-dashboard"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></a><a href="/admin/books" id="nav-books"><i class="ti ti-books"></i><span>Manage Books</span></a><a href="/admin/users" id="nav-users"><i class="ti ti-users"></i><span>Manage Users</span></a><a href="/admin/security" id="nav-security"><i class="ti ti-shield-lock"></i><span>Web Security</span></a></nav></aside>
     <main class="page-content">
