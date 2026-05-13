@@ -1,6 +1,47 @@
 /* shared_init.js — loaded on every admin page */
 
 document.addEventListener('DOMContentLoaded', () => {
+  const body = document.body;
+  body.classList.add('page-enter');
+  requestAnimationFrame(() => body.classList.remove('page-enter'));
+
+
+  function currentTopPage() {
+    const path = window.location.pathname;
+    if (path.startsWith('/admin/about')) return 'about';
+    if (path.startsWith('/admin/manual')) return 'manual';
+    return 'dashboard';
+  }
+
+  function syncTopNav() {
+    const navIcons = document.querySelector('.nav-icons');
+    const items = Array.from(document.querySelectorAll('.nav-icon-btn[data-page]'));
+    if (!navIcons || !items.length) return;
+
+    let pill = navIcons.querySelector('.nav-active-pill');
+    if (!pill) {
+      pill = document.createElement('span');
+      pill.className = 'nav-active-pill';
+      navIcons.prepend(pill);
+    }
+
+    const activePage = currentTopPage();
+    items.forEach((el) => el.classList.toggle('active', el.dataset.page === activePage));
+    const activeEl = items.find((el) => el.classList.contains('active'));
+    if (!activeEl) return;
+    const x = activeEl.offsetLeft - 2;
+    pill.style.transform = `translateX(${x}px)`;
+    navIcons.classList.add('has-active-pill');
+
+    items.forEach((el) => {
+      el.addEventListener('click', (event) => {
+        if (el.dataset.page === activePage) return;
+        event.preventDefault();
+        body.classList.add('page-exit');
+        setTimeout(() => { window.location.href = el.href; }, 170);
+      });
+    });
+  }
   const hamburgerBtn = document.querySelector('.hamburger-btn');
   const hamburgerDropdown = document.querySelector('.hamburger-dropdown');
 
@@ -52,6 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  syncTopNav();
 
   if (hamburgerBtn && hamburgerDropdown) {
     ensureAccountDropdown();
