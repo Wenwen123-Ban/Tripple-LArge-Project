@@ -21,6 +21,50 @@ body {
 .header-brand {display:flex;align-items:center;gap:5px}
 .header-brand-text {font-family:'Dancing Script',cursive;font-size:22px;font-weight:700;color:#5B2D8E;line-height:1}
 .header-brand-icon {font-size:20px;color:#5B2D8E}
+
+
+/* Shared component header (About/Manual) */
+.admin-header{
+  width:100%;
+  height:36px;
+  background:#FFF;
+  border-bottom:1px solid #E0E0E0;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  padding:0 16px;
+  position:relative;
+  flex-shrink:0;
+  z-index:200;
+}
+.portal-label{
+  font-size:13px;
+  color:#444;
+  font-weight:400;
+  letter-spacing:.3px;
+}
+.admin-header .brand-lockup{
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin:0;
+  white-space:nowrap;
+}
+.admin-header .brand-name{
+  font-family:'Dancing Script',cursive;
+  font-size:34px;
+  font-weight:700;
+  color:#5B2D8E;
+  line-height:1;
+}
+.admin-header .brand-book{
+  height:20px;
+  width:auto;
+  margin:0;
+}
 .navbar {display:flex;align-items:center;background:#5B2D8E;height:46px;padding:0 12px;gap:4px;flex-shrink:0;position:relative;z-index:100}
 .traffic-lights{display:flex;gap:7px;align-items:center;margin-right:10px}.dot{width:13px;height:13px;border-radius:50%;display:block;flex-shrink:0}
 .navbar-center{display:flex;align-items:center;gap:2px;flex:1;justify-content:center}
