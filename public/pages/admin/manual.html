@@ -77,6 +77,17 @@
       gap: 6px;
       margin-bottom: 6px;
     }
+
+    .manual-page-shell { padding: 28px 34px 36px; width: 100%; }
+    .manual-wrap {
+      width: min(1120px, 100%);
+      max-width: none;
+      margin: 0 auto;
+      min-height: calc(100vh - 210px);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.08);
+    }
+    .manual-section p,
+    .manual-section li { font-size: 14px; line-height: 1.7; }
   </style>
 </head>
 <body>
@@ -85,9 +96,7 @@
 
   <div class="admin-body">
     <div id="sidebar-placeholder"></div>
-    <main class="admin-main-content"
-          style="padding:32px 36px;overflow-y:auto;
-                 max-height:calc(100vh - 32px - 46px - 60px);">
+    <main class="admin-main-content manual-page-shell">
       <div class="manual-wrap">
         <h2>📖 Librarian Manual</h2>
 

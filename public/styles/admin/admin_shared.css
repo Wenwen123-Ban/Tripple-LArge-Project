@@ -148,15 +148,28 @@ body {
   position: relative;
 }
 
-.nav-icon-btn:hover { background: rgba(255,255,255,0.15); }
+.nav-icon-btn:hover { background: rgba(255,255,255,0.18); }
 .nav-icon-btn.active { background: #FFFFFF; color: var(--deep-purple); box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
 .nav-icon-btn.active svg { stroke: var(--deep-purple); }
 .nav-icon-btn.hamburger-open { background: #1A1A1A; color: #fff; }
 .nav-icons { display: flex; align-items: center; gap: 4px; }
-.admin-nav { display: flex; align-items: center; width: 100%; height: 48px; background: var(--deep-purple); padding: 0 12px; gap: 10px; position: relative; z-index: 3; }
+.admin-nav { display: flex; align-items: center; width: 100%; height: 48px; background:linear-gradient(90deg,#1565C0 0%,#1976D2 45%,#42A5F5 100%); padding: 0 12px; gap: 10px; position: relative; z-index: 3; }
 .nav-left { display: flex; align-items: center; gap: 6px; margin-right: 6px; }
 .nav-search { flex: 1; position: relative; max-width: 280px; }
-.nav-search-input { width: 100%; height: 30px; border-radius: 6px; border: none; padding: 0 28px 0 10px; font-size: 13px; outline: none; background: rgba(255,255,255,0.15); color: #fff; }
+.nav-search-input { width: 100%; height: 30px; border-radius: 6px; border: none; padding: 0 28px 0 10px; font-size: 13px; outline: none; background: rgba(255,255,255,0.22); color: #fff; }
 .nav-search-input::placeholder { color: rgba(255,255,255,0.6); }
 .nav-search-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 12px; padding: 0; line-height: 1; }
 .nav-right { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+
+
+/* Animated top-nav active state + page transitions */
+.nav-icons{position:relative;padding:2px;border-radius:12px}
+.nav-active-pill{position:absolute;top:2px;left:2px;width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),0 6px 14px rgba(0,0,0,.18);transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .2s;pointer-events:none;opacity:0}
+.nav-icons.has-active-pill .nav-active-pill{opacity:1}
+.nav-icon-btn{transition:transform .2s ease,background .2s ease,color .2s ease}
+.nav-icon-btn:active{transform:scale(.95)}
+.nav-icon-btn.active{background:rgba(255,255,255,.08);color:#fff;box-shadow:none}
+.nav-icon-btn.active svg{stroke:currentColor}
+body{opacity:1;transition:opacity .22s ease,transform .22s ease}
+body.page-enter{opacity:0;transform:translateY(6px)}
+body.page-exit{opacity:0;transform:translateY(-6px)}
