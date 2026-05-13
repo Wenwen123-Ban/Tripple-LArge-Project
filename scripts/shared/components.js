@@ -16,9 +16,14 @@ async function loadComponent(selector, url, callback) {
 }
 
 function setActiveNav(page) {
-  document.querySelectorAll('.nav-icon-btn[data-page]').forEach((el) => {
-    el.classList.toggle('active', el.dataset.page === page);
-  });
+  document.querySelectorAll('.nav-icon-btn[data-page]')
+    .forEach((el) => {
+      if (el.dataset.page === page) {
+        el.classList.add('active');
+      } else {
+        el.classList.remove('active');
+      }
+    });
 }
 
 function setActiveSidebar(page) {
