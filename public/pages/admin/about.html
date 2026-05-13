@@ -48,6 +48,25 @@
     .about-meta span strong {
       color: var(--deep-purple);
     }
+
+    .about-page-shell { padding: 28px 34px 36px; width: 100%; }
+    .about-card {
+      width: min(1080px, 100%);
+      max-width: none;
+      margin: 0 auto;
+      min-height: calc(100vh - 210px);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.08);
+    }
+    .about-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(280px, 1fr));
+      gap: 14px 24px;
+    }
+    .about-card h2,
+    .about-meta { grid-column: 1 / -1; }
+    .about-section { margin-bottom: 0; }
+    .about-section p { font-size: 15px; line-height: 1.75; }
+    .about-meta { margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -56,9 +75,9 @@
 
   <div class="admin-body">
     <div id="sidebar-placeholder"></div>
-    <main class="admin-main-content"
-          style="padding:32px 36px;overflow-y:auto;">
+    <main class="admin-main-content about-page-shell">
       <div class="about-card">
+        <div class="about-grid">
         <h2>About Click &amp; Collect</h2>
 
         <div class="about-section">
@@ -115,6 +134,7 @@
           </p>
         </div>
 
+        </div>
         <div class="about-meta">
           <span><strong>System:</strong> Click &amp; Collect LBAS</span>
           <span><strong>School:</strong> NMSC-ST</span>
