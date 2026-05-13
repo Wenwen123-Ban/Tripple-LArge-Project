@@ -238,6 +238,16 @@ def admin_reports():
     return send_from_directory(os.path.join(PAGES_DIR, 'admin'), 'adminSecurityreports.html')
 
 
+@app.route('/admin/about')
+def admin_about():
+    return send_from_directory('public/pages/admin', 'about.html')
+
+
+@app.route('/admin/manual')
+def admin_manual():
+    return send_from_directory('public/pages/admin', 'manual.html')
+
+
 @app.route('/pages/<path:filename>')
 def serve_pages(filename):
     """Serve pages from public/pages directory"""

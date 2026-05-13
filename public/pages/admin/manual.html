@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manual — Click &amp; Collect</title>
+  <link rel="stylesheet" href="/styles/main/welcome.css">
+  <link rel="stylesheet" href="/styles/admin/admin_shared.css">
+</head>
+<body>
+  <div id="header-placeholder"></div>
+  <div id="navbar-placeholder"></div>
+  <div class="admin-body">
+    <div id="sidebar-placeholder"></div>
+    <main class="admin-main-content" style="padding:32px 40px;overflow-y:auto;">
+      <div class="card" style="max-width:720px;">
+        <h2 style="color:var(--deep-purple);font-size:22px; margin-bottom:24px;">Librarian Manual</h2>
+        <p style="font-size:14px;color:#333;line-height:1.8;">Manual content for dashboard, books, users, and security workflows.</p>
+      </div>
+    </main>
+  </div>
+  <div id="footer-placeholder"></div>
+  <script src="/scripts/shared/components.js"></script>
+  <script src="/scripts/admin/shared_init.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      loadComponent('#header-placeholder', '/components/header.html', () => {
+        setPortalLabel('/ Librarian Portal /');
+      });
+      loadComponent('#navbar-placeholder', '/components/navbar.html', () => {
+        setActiveNav('manual');
+        initHamburger();
+        loadAccountCard();
+        initLogout();
+      });
+      loadComponent('#sidebar-placeholder', '/components/sidebar.html', () => {
+        initSidebar('dashboard');
+      });
+      loadComponent('#footer-placeholder', '/components/footer.html', () => {
+        startClock();
+      });
+    });
+  </script>
+</body>
+</html>
