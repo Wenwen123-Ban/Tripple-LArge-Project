@@ -10,6 +10,74 @@
     --dot-red: #F44336;
 }
 
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInError {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 68, 54, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(255, 68, 54, 0);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes glowPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(91, 46, 191, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(91, 46, 191, 0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -28,6 +96,7 @@ body {
     background: var(--background);
     font-family: var(--font-body);
     overflow: hidden;
+    animation: fadeIn 0.6s ease-out;
 }
 
 .top-bar {
@@ -91,6 +160,12 @@ body {
     line-height: 1;
     cursor: pointer;
     transform: translateY(-50%);
+    transition: all 0.3s ease;
+}
+
+.exit-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-50%) scale(1.1);
 }
 
 .page-content {
@@ -110,6 +185,13 @@ body {
     width: clamp(300px, 90vw, 420px);
     max-height: calc(100vh - 32px - 32px);
     overflow-y: auto;
+    animation: fadeInUp 0.7s ease-out;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.3s ease;
+}
+
+.form-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .card-header {
@@ -179,9 +261,15 @@ body {
     padding: 0 16px;
     font-size: 14px;
     outline: none;
+    transition: all 0.3s ease;
+    background: #FFFFFF;
 }
 
-.input-pill:focus { border-color: var(--mid-purple); }
+.input-pill:focus {
+    border-color: var(--mid-purple);
+    box-shadow: 0 0 0 3px rgba(91, 46, 191, 0.1);
+    transform: scale(1.02);
+}
 
 .form-divider {
     border: none;
@@ -200,17 +288,25 @@ body {
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .btn-primary:hover {
     background: var(--dark-navy);
     color: #FFFFFF;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(26, 26, 110, 0.2);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(26, 26, 110, 0.15);
 }
 
 .btn-primary:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
 }
 
 /* Password input wrapper with toggle button */
@@ -239,6 +335,7 @@ body {
 
 .toggle-password-btn.active {
     opacity: 1;
+    animation: glowPulse 2s infinite;
 }
 
 /* Error and loading messages */
@@ -250,6 +347,13 @@ body {
     background: #FFEBEE;
     border-radius: 6px;
     border-left: 3px solid #F44336;
+    animation: slideInError 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: none;
+}
+
+.error-message.show {
+    display: block;
+    animation: slideInError 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), pulse 2s infinite;
 }
 
 .loading-message {
@@ -261,6 +365,25 @@ body {
     border-radius: 6px;
     text-align: center;
     font-weight: 500;
+    animation: fadeIn 0.4s ease-out;
+    display: none;
+    position: relative;
+}
+
+.loading-message.show {
+    display: block;
+}
+
+.loading-message::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-right: 6px;
+    border: 2px solid var(--deep-purple);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
 }
 
 /* Unavailable message for students */
@@ -292,9 +415,15 @@ body {
     color: var(--dark-navy);
     font-weight: 700;
     text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
-.footer-link:hover { text-decoration: underline; }
+.footer-link:hover {
+    text-decoration: underline;
+    color: var(--mid-purple);
+    transform: translateY(-1px);
+}
 
 @media (max-width: 480px) {
     .form-card { padding: 16px 16px; }

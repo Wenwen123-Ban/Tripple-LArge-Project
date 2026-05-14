@@ -52,8 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const studentId = document.getElementById('signinIdNo').value.trim();
       const password = passwordInput.value;
 
-      // Show loading state
-      loadingMessage.style.display = 'block';
+      // Show loading state with animation
+      loadingMessage.classList.add('show');
+      errorMessage.classList.remove('show');
       errorMessage.style.display = 'none';
       signInBtn.disabled = true;
 
@@ -81,18 +82,26 @@ document.addEventListener('DOMContentLoaded', () => {
           togglePasswordBtn.style.display = 'inline-block';
         }
 
-        loadingMessage.style.display = 'none';
+        loadingMessage.classList.remove('show');
 
         if (data.status === 'ok') {
           const accountType = data.type || data.account_type;
           if (accountType === 'admin') {
-            window.location.href = data.redirect || '/admin/dashboard';
+            // Fade out animation before redirect
+            document.body.style.animation = 'fadeOut 0.4s ease-out forwards';
+            setTimeout(() => {
+              window.location.href = data.redirect || '/admin/dashboard';
+            }, 400);
             return;
           }
 
           if (accountType === 'student') {
             if (data.redirect) {
-              window.location.href = data.redirect;
+              // Fade out animation before redirect
+              document.body.style.animation = 'fadeOut 0.4s ease-out forwards';
+              setTimeout(() => {
+                window.location.href = data.redirect;
+              }, 400);
               return;
             }
             signInForm.style.display = 'none';
@@ -100,9 +109,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       } catch (err) {
-        loadingMessage.style.display = 'none';
+        loadingMessage.classList.remove('show');
         errorMessage.textContent = err.message;
         errorMessage.style.display = 'block';
+        errorMessage.classList.add('show');
         signInBtn.disabled = false;
       }
     });
