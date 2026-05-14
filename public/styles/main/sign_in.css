@@ -281,14 +281,6 @@ body {
     font-weight: 700;
     margin-bottom: 16px;
 }
-    color: #000000;
-    cursor: pointer;
-}
-
-.btn-primary:hover {
-    background: var(--mid-purple);
-    color: #FFFFFF;
-}
 
 .form-footer-links {
     text-align: center;
