@@ -144,6 +144,11 @@ let pollTimeout = null;
 let confirmationSendInFlight = false;
 let resendCooldownTimer = null;
 
+function normalizeCourseValue(value) {
+  const normalized = (value || '').trim().toUpperCase();
+  return normalized === 'NA' ? 'N/A' : (value || 'N/A');
+}
+
 function validateGmail(value) {
   return /^[^\s@]+@gmail\.com$/i.test(value);
 }
@@ -197,7 +202,7 @@ async function saveRegistration() {
     address: getAddressValue(),
     contact_no: getVal('contact-input') || getVal('registrationContactNo'),
     password: getRaw('password-input') || getRaw('registrationPassword'),
-    course: getRaw('course-select', 'N/A') || 'N/A',
+    course: normalizeCourseValue(getRaw('course-select', 'N/A')),
     year_level: getRaw('year-select') || '',
     gmail: getVal('gmail-input') || getVal('registrationGmail'),
     token: confirmationToken,
