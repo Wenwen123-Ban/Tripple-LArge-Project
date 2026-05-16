@@ -21,6 +21,7 @@ from src.core.db import get_db
 from src.core.security import generate_setup_code, hash_password, verify_password
 
 TOKEN_TTL_SECONDS = 15 * 60
+CONFIRMATION_RESEND_COOLDOWN_SECONDS = 60
 pending_tokens = {}
 
 
@@ -61,6 +62,41 @@ def create_confirmation_token(gmail):
     db.commit()
     cursor.close()
     return token
+
+
+def create_confirmation_token_with_cooldown(gmail):
+    """Create/reuse a token while throttling repeated send requests per Gmail."""
+    _cleanup_expired_tokens()
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    _ensure_pending_confirmation_columns(cursor)
+    cursor.execute(
+        """
+        SELECT token, confirmed, created_at
+        FROM pending_confirmations
+        WHERE gmail = %s
+          AND type = 'student'
+          AND expires_at > NOW()
+        ORDER BY created_at DESC
+        LIMIT 1
+        """,
+        (gmail,),
+    )
+    existing = cursor.fetchone()
+    if existing and not existing.get('confirmed'):
+        created_at = existing.get('created_at')
+        elapsed = None
+        if created_at:
+            elapsed = (datetime.now() - created_at).total_seconds()
+        if elapsed is not None and elapsed < CONFIRMATION_RESEND_COOLDOWN_SECONDS:
+            retry_after = int(CONFIRMATION_RESEND_COOLDOWN_SECONDS - elapsed)
+            cursor.close()
+            return None, max(retry_after, 1)
+        token = existing.get('token')
+        cursor.close()
+        return token, 0
+    cursor.close()
+    return create_confirmation_token(gmail), 0
 
 
 def mark_token_confirmed(token):
