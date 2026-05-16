@@ -648,7 +648,27 @@ def _clean(value, default=''):
     return str(value).strip()
 
 
-
+def _normalize_year_level(value):
+    raw = _clean(value)
+    if not raw:
+        return ''
+    lowered = raw.lower().strip()
+    mappings = {
+        '1st year': '1',
+        '2nd year': '2',
+        '3rd year': '3',
+        '4th year': '4',
+        'grade 7': '7',
+        'grade 8': '8',
+        'grade 9': '9',
+        'grade 10': '10',
+    }
+    if lowered in mappings:
+        return mappings[lowered]
+    m = re.search(r'\d+', lowered)
+    if m:
+        return m.group(0)
+    return raw
 
 def check_duplicates(cursor, user_id, lbc_no, gmail, contact_no, is_admin=False):
     errors = []
@@ -710,7 +730,7 @@ def validate_registration_fields(data, is_admin=False):
         course = (_clean(data.get('course'), 'N/A') or 'N/A').upper()
         if course == 'NA':
             course = 'N/A'
-        year_level = str(_clean(data.get('year_level')))
+        year_level = _normalize_year_level(data.get('year_level'))
         if course == 'N/A':
             if year_level not in {'7', '8', '9', '10'}:
                 errors.append('For N/A course (Junior High), level must be Grade 7, 8, 9, or 10')
@@ -732,7 +752,7 @@ def register_student():
     contact_no = _clean(data.get('contact_no'))
     password = data.get('password') or ''
     course = _clean(data.get('course'), 'N/A') or 'N/A'
-    year_level = _clean(data.get('year_level'))
+    year_level = _normalize_year_level(data.get('year_level'))
     gmail = _clean(data.get('gmail'))
     token = _clean(data.get('token'))
 
