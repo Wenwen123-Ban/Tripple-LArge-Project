@@ -9,7 +9,7 @@ from src.api import admin, auth, books, users
 from src.api import transactions as tx_api
 from src.api.auth import (
     build_confirm_url,
-    create_confirmation_token,
+    create_confirmation_token_with_cooldown,
     confirm_email_token,
     send_confirmation_email,
     _token_confirmation_status,
@@ -74,7 +74,12 @@ def send_auth_confirmation():
     if not gmail.lower().endswith('@gmail.com'):
         return jsonify({'error': 'Valid Gmail address required'}), 400
 
-    token = create_confirmation_token(gmail)
+    token, retry_after = create_confirmation_token_with_cooldown(gmail)
+    if retry_after > 0:
+        return jsonify({
+            'error': f'Please wait {retry_after} seconds before requesting another confirmation email.',
+            'retry_after_seconds': retry_after,
+        }), 429
     send_confirmation_email(gmail, name, build_confirm_url(token))
     return jsonify({'status': 'sent', 'token': token})
 

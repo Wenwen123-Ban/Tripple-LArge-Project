@@ -141,6 +141,8 @@ function validateAddress() {
 
 let pollInterval = null;
 let pollTimeout = null;
+let confirmationSendInFlight = false;
+let resendCooldownTimer = null;
 
 function validateGmail(value) {
   return /^[^\s@]+@gmail\.com$/i.test(value);
@@ -223,6 +225,8 @@ async function saveRegistration() {
 }
 
 async function handleGmailConfirmation({ gmailInput, nameInput, checkboxEl, buttonEl }) {
+  if (confirmationSendInFlight) return;
+
   const gmail = gmailInput.value.trim();
   const name = nameInput.value.trim() || 'Student';
 
@@ -232,6 +236,7 @@ async function handleGmailConfirmation({ gmailInput, nameInput, checkboxEl, butt
     return;
   }
 
+  confirmationSendInFlight = true;
   buttonEl.disabled = true;
   buttonEl.textContent = 'Sending...';
 
@@ -248,10 +253,33 @@ async function handleGmailConfirmation({ gmailInput, nameInput, checkboxEl, butt
     }
   } catch (err) {
     console.error('Failed to send confirmation:', err);
+    const match = (err.message || '').match(/wait (\d+) seconds/i);
+    if (match) {
+      let remaining = Number(match[1]) || 0;
+      showNotification(`Please wait ${remaining} seconds before resending.`, 'info');
+      buttonEl.disabled = true;
+      buttonEl.textContent = `Resend in ${remaining}s`;
+      if (resendCooldownTimer) clearInterval(resendCooldownTimer);
+      resendCooldownTimer = setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) {
+          clearInterval(resendCooldownTimer);
+          resendCooldownTimer = null;
+          buttonEl.disabled = false;
+          buttonEl.textContent = 'Confirm gmail';
+          return;
+        }
+        buttonEl.textContent = `Resend in ${remaining}s`;
+      }, 1000);
+      return;
+    }
     showNotification(err.message || 'Failed to send confirmation. Try again.', 'error');
   } finally {
-    buttonEl.disabled = false;
-    buttonEl.textContent = 'Confirm gmail';
+    confirmationSendInFlight = false;
+    if (!resendCooldownTimer) {
+      buttonEl.disabled = false;
+      buttonEl.textContent = 'Confirm gmail';
+    }
   }
 }
 
