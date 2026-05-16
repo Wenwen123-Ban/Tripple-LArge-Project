@@ -705,7 +705,9 @@ def validate_registration_fields(data, is_admin=False):
         errors.append('Address must be at least 3 characters long')
 
     if not is_admin:
-        course = _clean(data.get('course'), 'N/A') or 'N/A'
+        course = (_clean(data.get('course'), 'N/A') or 'N/A').upper()
+        if course == 'NA':
+            course = 'N/A'
         year_level = str(_clean(data.get('year_level')))
         if course == 'N/A':
             if year_level not in {'7', '8', '9', '10'}:
