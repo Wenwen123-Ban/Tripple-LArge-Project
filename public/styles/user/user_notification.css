@@ -1,1 +1,185 @@
-.notif-page{background:#fff;border-radius:12px;padding:12px}.notif-page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.notif-page-list{min-height:340px;background:#eee;border-radius:8px;padding:8px;overflow:auto}.notif-item{background:#fff;margin-bottom:8px;padding:8px;border-radius:8px}.notif-item.unread{border-left:4px solid #0288D1}
+/* ===============================================
+   NOTIFICATION PAGE CONTAINER
+   =============================================== */
+.notif-page {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #ddd;
+}
+
+/* ===============================================
+   NOTIFICATION PAGE HEADER
+   =============================================== */
+.notif-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--user-primary);
+}
+
+.notif-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--user-primary);
+}
+
+.notif-page-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dark-navy);
+  flex: 1;
+  text-align: center;
+}
+
+/* ===============================================
+   NOTIFICATION CONTROLS
+   =============================================== */
+.notif-controls {
+  display: flex;
+  gap: 8px;
+}
+
+#notif-filter {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#notif-clear {
+  padding: 6px 12px;
+  border: none;
+  background: var(--status-red);
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: 0.15s;
+}
+
+#notif-clear:hover {
+  background: #d32f2f;
+}
+
+/* ===============================================
+   NOTIFICATION PAGE LIST
+   =============================================== */
+.notif-page-list {
+  min-height: 340px;
+  background: #eee;
+  border-radius: 8px;
+  padding: 8px;
+  overflow-y: auto;
+  max-height: 500px;
+}
+
+/* ===============================================
+   NOTIFICATION ITEM
+   =============================================== */
+.notif-item {
+  background: #fff;
+  margin-bottom: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  transition: 0.15s;
+}
+
+.notif-item:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.notif-item.unread {
+  border-left: 4px solid var(--user-primary);
+  background: #f0f7ff;
+}
+
+/* ===============================================
+   NOTIFICATION ITEM CONTENT
+   =============================================== */
+.notif-item-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dark-navy);
+  margin-bottom: 4px;
+}
+
+.notif-item-message {
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.notif-item-time {
+  font-size: 10px;
+  color: #999;
+  font-style: italic;
+}
+
+/* ===============================================
+   EMPTY STATE
+   =============================================== */
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #999;
+  font-size: 14px;
+}
+
+/* ===============================================
+   RESPONSIVE MEDIA QUERIES
+   =============================================== */
+@media (max-width: 900px) {
+  .notif-page-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .notif-page-title {
+    width: 100%;
+    order: -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .notif-page {
+    padding: 10px;
+  }
+
+  .notif-page-header {
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+  }
+
+  .notif-controls {
+    width: 100%;
+  }
+
+  #notif-filter,
+  #notif-clear {
+    flex: 1;
+  }
+
+  .notif-item {
+    padding: 8px;
+    margin-bottom: 6px;
+  }
+
+  .notif-item-title {
+    font-size: 12px;
+  }
+
+  .notif-item-message {
+    font-size: 11px;
+  }
+}

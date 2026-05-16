@@ -1,2 +1,151 @@
-.manage-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px}.manage-panel{background:#fff;padding:10px;border-radius:10px}.panel-header,.panel-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;font-size:12px}.panel-row{padding:6px 0;border-top:1px solid #eee}.cancel-btn{background:#ef4444;color:#fff}
-@media(max-width:900px){.manage-panels{grid-template-columns:1fr}}
+/* ===============================================
+   MANAGE PANELS LAYOUT
+   =============================================== */
+.manage-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.manage-panel {
+  background: #fff;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+/* ===============================================
+   PANEL TITLE
+   =============================================== */
+.panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dark-navy);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--user-primary);
+}
+
+/* ===============================================
+   PANEL TABLE
+   =============================================== */
+.panel-table {
+  width: 100%;
+}
+
+.panel-header {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.panel-body {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.panel-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  font-size: 12px;
+  padding: 8px 10px;
+  border-top: 1px solid #eee;
+  align-items: center;
+  transition: 0.15s;
+}
+
+.panel-row:hover {
+  background: #f9f9f9;
+}
+
+.panel-row:last-child {
+  border-bottom: none;
+}
+
+.panel-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===============================================
+   ACTION BUTTONS IN PANEL ROWS
+   =============================================== */
+.panel-row button,
+.panel-row a {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.15s;
+}
+
+.reserve-action-btn {
+  background: var(--user-primary);
+  color: #fff;
+}
+
+.reserve-action-btn:hover {
+  background: var(--user-dark);
+}
+
+.cancel-btn {
+  background: var(--status-red);
+  color: #fff;
+}
+
+.cancel-btn:hover {
+  background: #d32f2f;
+}
+
+.return-btn {
+  background: var(--status-green);
+  color: #fff;
+}
+
+.return-btn:hover {
+  background: #1e7e34;
+}
+
+/* ===============================================
+   RESPONSIVE MEDIA QUERIES
+   =============================================== */
+@media (max-width: 900px) {
+  .manage-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .panel-header,
+  .panel-row {
+    font-size: 10px;
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .panel-row button,
+  .panel-row a {
+    padding: 3px 6px;
+    font-size: 10px;
+  }
+
+  .manage-panels {
+    gap: 10px;
+  }
+
+  .manage-panel {
+    padding: 10px;
+  }
+}

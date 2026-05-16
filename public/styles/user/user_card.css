@@ -1,2 +1,138 @@
-.card-layout{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}.library-card,.card-transactions{background:#fff;border-radius:12px;padding:12px;position:relative}.binary-left{position:absolute;left:4px;top:12px;white-space:pre-line;font-size:9px;color:#4B0082}.binary-top{font-size:10px;color:#1A1A6E;margin-left:20px}.transaction-header{display:grid;grid-template-columns:repeat(4,1fr);font-weight:700}
-@media(max-width:900px){.card-layout{grid-template-columns:1fr}}
+/* ===============================================
+   CARD LAYOUT
+   =============================================== */
+.card-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 14px;
+}
+
+/* ===============================================
+   LIBRARY CARD STYLES
+   =============================================== */
+.library-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  border: 2px solid var(--dark-navy);
+  min-height: 250px;
+}
+
+.binary-left {
+  position: absolute;
+  left: 4px;
+  top: 12px;
+  white-space: pre-line;
+  font-size: 9px;
+  color: var(--deep-purple);
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.binary-top {
+  font-size: 10px;
+  color: var(--dark-navy);
+  margin-left: 20px;
+  margin-bottom: 10px;
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.card-content {
+  padding-left: 20px;
+}
+
+.card-title-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--user-dark);
+  margin-bottom: 15px;
+}
+
+.card-content > div {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #333;
+}
+
+/* ===============================================
+   CARD TRANSACTIONS
+   =============================================== */
+.card-transactions {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #ddd;
+}
+
+.transaction-header {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.transaction-header span {
+  text-align: center;
+}
+
+#transaction-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.transaction-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  font-size: 12px;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  gap: 8px;
+  align-items: center;
+}
+
+.transaction-row:last-child {
+  border-bottom: none;
+}
+
+.transaction-row span {
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===============================================
+   RESPONSIVE MEDIA QUERIES
+   =============================================== */
+@media (max-width: 900px) {
+  .card-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .library-card {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .card-layout {
+    gap: 10px;
+  }
+
+  .library-card {
+    padding: 12px;
+  }
+
+  .transaction-header,
+  .transaction-row {
+    font-size: 11px;
+    padding: 8px;
+  }
+}
