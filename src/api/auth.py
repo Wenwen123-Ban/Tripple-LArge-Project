@@ -732,22 +732,38 @@ def register_student():
     gmail = _clean(data.get('gmail'))
     token = _clean(data.get('token'))
 
-    if not all([student_id, full_name, password, gmail, token]):
+    if not all([student_id, full_name, password, gmail]):
         return jsonify({'error': 'Missing required registration fields'}), 400
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute(
-        """
-        SELECT *
-        FROM pending_confirmations
-        WHERE token = %s
-          AND gmail = %s
-          AND confirmed = 1
-          AND expires_at > NOW()
-        """,
-        (token, gmail),
-    )
+
+    if token:
+        cursor.execute(
+            """
+            SELECT *
+            FROM pending_confirmations
+            WHERE token = %s
+              AND gmail = %s
+              AND confirmed = 1
+              AND expires_at > NOW()
+            """,
+            (token, gmail),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT *
+            FROM pending_confirmations
+            WHERE gmail = %s
+              AND type = 'student'
+              AND confirmed = 1
+              AND expires_at > NOW()
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (gmail,),
+        )
     confirmation = cursor.fetchone()
 
     dup_errors = check_duplicates(cursor, student_id, lbc_no, gmail, contact_no, is_admin=False)
@@ -776,10 +792,12 @@ def register_student():
                 year_level, gmail,
             ),
         )
-        cursor.execute(
-            "DELETE FROM pending_confirmations WHERE token = %s",
-            (token,),
-        )
+        used_token = token or confirmation.get('token')
+        if used_token:
+            cursor.execute(
+                "DELETE FROM pending_confirmations WHERE token = %s",
+                (used_token,),
+            )
         db.commit()
         return jsonify({'status': 'registered'})
     except mysql.connector.IntegrityError:
