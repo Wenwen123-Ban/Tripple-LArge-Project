@@ -865,6 +865,59 @@ def register_student():
         cursor.close()
 
 
+def prevalidate_student_registration():
+    data = _json_payload()
+    print('[prevalidate_student_registration] request.json:', data)
+    errors = validate_registration_fields(data, is_admin=False)
+    if errors:
+        print('[prevalidate_student_registration] validation failed:', errors)
+        return jsonify({'error': errors[0], 'errors': errors}), 400
+
+    student_id = _clean(data.get('student_id') or data.get('admin_id'))
+    lbc_no = _clean(data.get('lbc_no'))
+    gmail = _clean(data.get('gmail'))
+    contact_no = _clean(data.get('contact_no'))
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    dup_errors = check_duplicates(cursor, student_id, lbc_no, gmail, contact_no, is_admin=False)
+    if dup_errors:
+        print('[prevalidate_student_registration] duplicate check failed:', dup_errors)
+        cursor.close()
+        return jsonify({'error': dup_errors[0], 'errors': dup_errors}), 409
+    cursor.close()
+    return jsonify({'status': 'ok'})
+
+
+def check_registration_conflicts():
+    data = _json_payload()
+    gmail = _clean(data.get('gmail'))
+    student_id = _clean(data.get('student_id'))
+    lbc_no = _clean(data.get('lbc_no'))
+    conflicts = {}
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    if gmail:
+        cursor.execute("SELECT id FROM students WHERE gmail = %s", (gmail,))
+        if cursor.fetchone():
+            conflicts['gmail'] = 'This Gmail is already registered as a student account'
+        cursor.execute("SELECT id FROM admins WHERE gmail = %s", (gmail,))
+        if cursor.fetchone():
+            conflicts['gmail'] = 'This Gmail is already registered as an admin account'
+
+    if student_id:
+        cursor.execute("SELECT id FROM students WHERE student_id = %s", (student_id,))
+        if cursor.fetchone():
+            conflicts['student_id'] = 'This ID number is already registered'
+
+    if lbc_no:
+        cursor.execute("SELECT id FROM students WHERE lbc_no = %s", (lbc_no,))
+        if cursor.fetchone():
+            conflicts['lbc_no'] = 'This LBC number is already in use'
+    cursor.close()
+    return jsonify({'status': 'ok', 'conflicts': conflicts})
+
 def build_recovery_email(name, code, expires_minutes=15):
     safe_name = escape(name or 'Student')
     safe_code = escape(code or '')

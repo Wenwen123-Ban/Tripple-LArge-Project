@@ -38,6 +38,26 @@ export async function saveStudentRegistration(payload) {
   return parseJsonResponse(response);
 }
 
+export async function prevalidateStudentRegistration(payload) {
+  const response = await fetch(`${AUTH_BASE_URL}/prevalidate-registration`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function checkRegistrationConflicts(payload) {
+  const response = await fetch(`${AUTH_BASE_URL}/check-registration-conflicts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
+}
+
 export async function requestRecoveryCode({ student_id, lbc_no, gmail }) {
   const response = await fetch(`${AUTH_BASE_URL}/recovery/request`, {
     method: 'POST',
