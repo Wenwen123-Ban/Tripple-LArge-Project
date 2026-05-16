@@ -1,4 +1,10 @@
-import { sendConfirmationEmail, checkConfirmationToken, saveStudentRegistration } from '../../services/api/auth.js';
+import {
+  sendConfirmationEmail,
+  checkConfirmationToken,
+  saveStudentRegistration,
+  prevalidateStudentRegistration,
+  checkRegistrationConflicts,
+} from '../../services/api/auth.js';
 import { showNotification } from '../shared/notification.js';
 
 const COLLEGE_YEARS = [
@@ -197,6 +203,7 @@ let pollInterval = null;
 let pollTimeout = null;
 let confirmationSendInFlight = false;
 let resendCooldownTimer = null;
+let gmailConflictTimer = null;
 
 function normalizeCourseValue(value) {
   const normalized = (value || '').trim().toUpperCase();
@@ -205,6 +212,42 @@ function normalizeCourseValue(value) {
 
 function validateGmail(value) {
   return /^[^\s@]+@gmail\.com$/i.test(value);
+}
+
+function ensureInlineError(inputEl) {
+  if (!inputEl) return null;
+  let errorEl = inputEl.parentElement?.querySelector('.inline-error');
+  if (!errorEl) {
+    errorEl = document.createElement('small');
+    errorEl.className = 'inline-error';
+    errorEl.style.color = '#b00020';
+    errorEl.style.display = 'block';
+    errorEl.style.marginTop = '4px';
+    inputEl.parentElement?.appendChild(errorEl);
+  }
+  return errorEl;
+}
+
+function setInlineError(inputEl, message = '') {
+  const errorEl = ensureInlineError(inputEl);
+  if (errorEl) errorEl.textContent = message;
+}
+
+function getPayloadFromForm() {
+  const getVal = (id, fallback = '') => document.getElementById(id)?.value?.trim?.() ?? fallback;
+  const getRaw = (id, fallback = '') => document.getElementById(id)?.value ?? fallback;
+  return {
+    student_id: getVal('id-input'),
+    lbc_no: getVal('lbc-input'),
+    full_name: getVal('name-input') || getVal('registrationName'),
+    address: getAddressValue(),
+    contact_no: getVal('contact-input') || getVal('registrationContactNo'),
+    password: getRaw('password-input') || getRaw('registrationPassword'),
+    course: normalizeCourseValue(getRaw('course-select', 'N/A')),
+    year_level: getRaw('year-select') || '',
+    gmail: getVal('gmail-input') || getVal('registrationGmail'),
+    token: confirmationToken,
+  };
 }
 
 function stopPolling() {
@@ -246,21 +289,7 @@ function startPolling(checkboxEl) {
 
 
 async function saveRegistration() {
-  const getVal = (id, fallback = '') => document.getElementById(id)?.value?.trim?.() ?? fallback;
-  const getRaw = (id, fallback = '') => document.getElementById(id)?.value ?? fallback;
-
-  const payload = {
-    student_id: getVal('id-input'),
-    lbc_no: getVal('lbc-input'),
-    full_name: getVal('name-input') || getVal('registrationName'),
-    address: getAddressValue(),
-    contact_no: getVal('contact-input') || getVal('registrationContactNo'),
-    password: getRaw('password-input') || getRaw('registrationPassword'),
-    course: normalizeCourseValue(getRaw('course-select', 'N/A')),
-    year_level: getRaw('year-select') || '',
-    gmail: getVal('gmail-input') || getVal('registrationGmail'),
-    token: confirmationToken,
-  };
+  const payload = getPayloadFromForm();
 
   persistRegistrationDraft();
 
@@ -296,6 +325,14 @@ async function handleGmailConfirmation({ gmailInput, nameInput, checkboxEl, butt
   if (!validateGmail(gmail)) {
     showNotification('Please enter a valid Gmail address.', 'error');
     gmailInput.focus();
+    return;
+  }
+  const formPayload = getPayloadFromForm();
+  buttonEl.textContent = 'Validating...';
+  try {
+    await prevalidateStudentRegistration(formPayload);
+  } catch (err) {
+    showNotification(err.message || 'Please fix validation errors first.', 'error');
     return;
   }
 
@@ -361,6 +398,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const gmailInput = document.getElementById('registrationGmail');
   const confirmationCheckbox = document.getElementById('registrationAgreement');
   const confirmGmailButton = document.getElementById('confirm-gmail-btn');
+  const passwordInput = document.getElementById('registrationPassword');
+  const yearSelect = document.getElementById('year-select');
 
   const params = new URLSearchParams(window.location.search);
   if (params.get('confirmed') === '1') {
@@ -423,6 +462,46 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+
+  const updateFormState = async () => {
+    const payload = getPayloadFromForm();
+    const password = payload.password || '';
+    const pwdMsg = password.length === 0 ? 'Password is required' : (password.length < 8 ? 'Password must be at least 8 characters' : 'Password strength: acceptable');
+    setInlineError(passwordInput, pwdMsg);
+    if (passwordInput) passwordInput.style.borderColor = password.length >= 8 ? '#2e7d32' : '#b00020';
+
+    setInlineError(yearSelect, payload.year_level ? '' : 'Please select year level');
+    const validLocal = registrationForm?.checkValidity?.() && password.length >= 8;
+    if (!validLocal) {
+      confirmGmailButton.disabled = true;
+      return;
+    }
+    const conflicts = await checkRegistrationConflicts({
+      gmail: payload.gmail,
+      student_id: payload.student_id,
+      lbc_no: payload.lbc_no,
+    }).catch(() => ({ conflicts: {} }));
+    setInlineError(gmailInput, conflicts.conflicts?.gmail || '');
+    setInlineError(idInput, conflicts.conflicts?.student_id || '');
+    setInlineError(lbcInput, conflicts.conflicts?.lbc_no || '');
+    confirmGmailButton.disabled = Boolean(
+      conflicts.conflicts?.gmail || conflicts.conflicts?.student_id || conflicts.conflicts?.lbc_no,
+    );
+  };
+
+  registrationForm?.querySelectorAll('input,select').forEach((el) => {
+    el.addEventListener('input', () => {
+      persistRegistrationDraft();
+      if (el === gmailInput) {
+        if (gmailConflictTimer) clearTimeout(gmailConflictTimer);
+        gmailConflictTimer = setTimeout(updateFormState, 300);
+      } else {
+        updateFormState();
+      }
+    });
+    el.addEventListener('change', updateFormState);
+  });
+  updateFormState();
 
   applyIdFormat(idInput);
   applyLbcFormat(lbcInput);

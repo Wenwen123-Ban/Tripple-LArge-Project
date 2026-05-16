@@ -106,6 +106,18 @@ app.add_url_rule(
     methods=['POST'],
 )
 app.add_url_rule(
+    '/api/auth/prevalidate-registration',
+    'prevalidate_student_registration',
+    auth.prevalidate_student_registration,
+    methods=['POST'],
+)
+app.add_url_rule(
+    '/api/auth/check-registration-conflicts',
+    'check_registration_conflicts',
+    auth.check_registration_conflicts,
+    methods=['POST'],
+)
+app.add_url_rule(
     '/api/auth/recovery/request',
     'recovery_request',
     auth.recovery_request,
