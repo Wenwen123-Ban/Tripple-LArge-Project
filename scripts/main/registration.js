@@ -19,6 +19,8 @@ const HS_LEVELS = [
 // GET /api/courses — returns the admin-managed list of available courses.
 // PATCH /api/users/:id/lbc — lets admins assign or update a student's LBC number.
 async function loadCourses() {
+  persistRegistrationDraft();
+
   try {
     const res = await fetch('/api/courses');
 
@@ -109,6 +111,58 @@ function applyContactFormat(inputEl) {
 
 
 let confirmationToken = null;
+
+const REGISTRATION_DRAFT_KEY = 'registration_draft';
+const REGISTRATION_TOKEN_KEY = 'registration_confirmation_token';
+
+function persistRegistrationDraft() {
+  const draft = {
+    student_id: document.getElementById('id-input')?.value?.trim() || '',
+    lbc_no: document.getElementById('lbc-input')?.value?.trim() || '',
+    full_name: document.getElementById('name-input')?.value?.trim() || document.getElementById('registrationName')?.value?.trim() || '',
+    address_select: document.getElementById('address-select')?.value || '',
+    address_other: document.getElementById('address-other')?.value?.trim() || '',
+    contact_no: document.getElementById('contact-input')?.value?.trim() || document.getElementById('registrationContactNo')?.value?.trim() || '',
+    password: document.getElementById('password-input')?.value || document.getElementById('registrationPassword')?.value || '',
+    course: document.getElementById('course-select')?.value || 'N/A',
+    year_level: document.getElementById('year-select')?.value || '',
+    gmail: document.getElementById('gmail-input')?.value?.trim() || document.getElementById('registrationGmail')?.value?.trim() || '',
+  };
+  localStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify(draft));
+}
+
+function restoreRegistrationDraft() {
+  const raw = localStorage.getItem(REGISTRATION_DRAFT_KEY);
+  if (!raw) return;
+  try {
+    const draft = JSON.parse(raw);
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && typeof val === 'string') el.value = val;
+    };
+    setVal('id-input', draft.student_id || '');
+    setVal('lbc-input', draft.lbc_no || '');
+    setVal('name-input', draft.full_name || '');
+    setVal('registrationName', draft.full_name || '');
+    setVal('contact-input', draft.contact_no || '');
+    setVal('registrationContactNo', draft.contact_no || '');
+    setVal('password-input', draft.password || '');
+    setVal('registrationPassword', draft.password || '');
+    setVal('course-select', draft.course || 'N/A');
+    setVal('year-select', draft.year_level || '');
+    setVal('gmail-input', draft.gmail || '');
+    setVal('registrationGmail', draft.gmail || '');
+    setVal('address-select', draft.address_select || '');
+    setVal('address-other', draft.address_other || '');
+  } catch (err) {
+    console.error('Failed to restore registration draft:', err);
+  }
+}
+
+function clearRegistrationDraft() {
+  localStorage.removeItem(REGISTRATION_DRAFT_KEY);
+}
+
 
 function getAddressValue() {
   const sel = document.getElementById('address-select');
@@ -208,6 +262,8 @@ async function saveRegistration() {
     token: confirmationToken,
   };
 
+  persistRegistrationDraft();
+
   try {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
@@ -218,6 +274,8 @@ async function saveRegistration() {
 
     if (result.status === 'registered') {
       showNotification('Registration complete! Redirecting...', 'success');
+      clearRegistrationDraft();
+      localStorage.removeItem(REGISTRATION_TOKEN_KEY);
       setTimeout(() => {
         window.location.href = '/main/sign_in';
       }, 2000);
@@ -250,6 +308,8 @@ async function handleGmailConfirmation({ gmailInput, nameInput, checkboxEl, butt
 
     if (data.status === 'sent') {
       confirmationToken = data.token;
+      localStorage.setItem(REGISTRATION_TOKEN_KEY, confirmationToken);
+      persistRegistrationDraft();
       checkboxEl.checked = false;
       showNotification('Confirmation email sent! Check your Gmail inbox.', 'success');
       startPolling(checkboxEl);
@@ -290,6 +350,8 @@ async function handleGmailConfirmation({ gmailInput, nameInput, checkboxEl, butt
 
 document.addEventListener('DOMContentLoaded', () => {
   const schoolLink = document.querySelector('.school-link');
+  restoreRegistrationDraft();
+  confirmationToken = localStorage.getItem(REGISTRATION_TOKEN_KEY);
   const registrationForm = document.getElementById('registrationForm');
   const courseSelect = document.getElementById('course-select');
   const idInput = document.getElementById('id-input');
@@ -305,6 +367,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const checkbox = document.getElementById('registrationAgreement');
     if (checkbox) {
       checkbox.checked = true;
+    }
+    if (!confirmationToken) {
+      confirmationToken = params.get('token') || localStorage.getItem(REGISTRATION_TOKEN_KEY);
     }
     showNotification('Email confirmation successful. You can continue registration.', 'success');
     window.history.replaceState({}, document.title, '/main/registration');

@@ -8,6 +8,7 @@ import secrets
 import smtplib
 import string
 import time
+import traceback
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -742,8 +743,10 @@ def validate_registration_fields(data, is_admin=False):
 
 def register_student():
     data = _json_payload()
+    print('[register_student] request.json:', data)
     errors = validate_registration_fields(data, is_admin=False)
     if errors:
+        print('[register_student] validation failed:', errors)
         return jsonify({'error': errors[0]}), 400
     student_id = _clean(data.get('student_id') or data.get('admin_id'))
     lbc_no = _clean(data.get('lbc_no'))
@@ -756,7 +759,15 @@ def register_student():
     gmail = _clean(data.get('gmail'))
     token = _clean(data.get('token'))
 
-    if not all([student_id, full_name, password, gmail]):
+    required_values = {
+        'student_id': student_id,
+        'full_name': full_name,
+        'password': password,
+        'gmail': gmail,
+    }
+    missing_required = [key for key, value in required_values.items() if not value]
+    if missing_required:
+        print('[register_student] missing required fields:', missing_required)
         return jsonify({'error': 'Missing required registration fields'}), 400
 
     db = get_db()
@@ -789,19 +800,34 @@ def register_student():
             (gmail,),
         )
     confirmation = cursor.fetchone()
+    print('[register_student] token verification result:', {
+        'token_provided': bool(token),
+        'gmail': gmail,
+        'confirmed': bool(confirmation),
+        'confirmation_token': (confirmation or {}).get('token') if isinstance(confirmation, dict) else None,
+    })
 
     dup_errors = check_duplicates(cursor, student_id, lbc_no, gmail, contact_no, is_admin=False)
     if dup_errors:
+        print('[register_student] duplicate check failed:', dup_errors)
         cursor.close()
         return jsonify({'error': dup_errors[0]}), 409
 
     if not confirmation:
+        print('[register_student] confirmation missing or invalid for gmail/token')
         cursor.close()
         return jsonify({'error': 'Email not confirmed'}), 403
 
     password_hash = hash_password(password)
 
     try:
+        print('[register_student] database insert attempt:', {
+            'student_id': student_id,
+            'gmail': gmail,
+            'course': course,
+            'year_level': year_level,
+            'has_lbc_no': bool(lbc_no),
+        })
         cursor.execute(
             """
             INSERT INTO students
@@ -824,9 +850,16 @@ def register_student():
             )
         db.commit()
         return jsonify({'status': 'registered'})
-    except mysql.connector.IntegrityError:
+    except mysql.connector.IntegrityError as e:
         db.rollback()
+        print('[register_student] IntegrityError:', str(e))
+        print(traceback.format_exc())
         return jsonify({'error': 'Student ID or Gmail already exists'}), 409
+    except Exception as e:
+        db.rollback()
+        print('[register_student] Unexpected exception:', str(e))
+        print(traceback.format_exc())
+        return jsonify({'error': 'Registration failed due to server error'}), 500
     finally:
         cursor.close()
 
@@ -1667,6 +1700,13 @@ def register_admin():
     password_hash = hash_password(password)
 
     try:
+        print('[register_student] database insert attempt:', {
+            'student_id': student_id,
+            'gmail': gmail,
+            'course': course,
+            'year_level': year_level,
+            'has_lbc_no': bool(lbc_no),
+        })
         cursor.execute(
             """
             INSERT INTO admins (
@@ -1763,6 +1803,13 @@ def admin_send_confirmation():
     expires_at = datetime.now() + timedelta(seconds=TOKEN_TTL_SECONDS)
 
     try:
+        print('[register_student] database insert attempt:', {
+            'student_id': student_id,
+            'gmail': gmail,
+            'course': course,
+            'year_level': year_level,
+            'has_lbc_no': bool(lbc_no),
+        })
         cursor.execute(
             """
             INSERT INTO admins (
