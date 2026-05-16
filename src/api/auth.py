@@ -1826,6 +1826,12 @@ def login():
         cursor.close()
         return jsonify({'error': 'Incorrect password'}), 401
 
+    # Always reset role-specific session keys before assigning the current login role.
+    session.pop('admin_id', None)
+    session.pop('admin_name', None)
+    session.pop('student_id', None)
+    session.pop('student_name', None)
+
     if user['account_type'] == 'admin':
         session['admin_id'] = student_id
         session['admin_name'] = user['full_name']
