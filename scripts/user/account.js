@@ -1,16 +1,4 @@
-/* User Account Page Scripts */
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Initialize user account page
-  console.log('User account page loaded');
-  
-  // Example: Handle edit profile button
-  const editButtons = document.querySelectorAll('.btn-outline');
-  editButtons.forEach(btn => {
-    if (btn.textContent.includes('Edit')) {
-      btn.addEventListener('click', () => {
-        showNotification('Edit Profile', 'Edit profile feature coming soon', 'info');
-      });
-    }
-  });
-});
+function textToBinary(text){return text.split('').map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ')}
+function generateCardBinary(studentId,genNo){const combined=(studentId||'').replace('-','')+String(genNo||0);const n=parseInt(combined.replace(/\D/g,''),10);return Number.isFinite(n)?n.toString(2):'0'}
+function renderBinary(studentId,genNo){document.getElementById('binary-left').textContent=textToBinary('NMSCST').replace(/ /g,'\n');document.getElementById('binary-top').textContent=generateCardBinary(studentId,genNo)}
+document.addEventListener('DOMContentLoaded', async()=>{const r=await fetch('/api/user/card');const d=await r.json();for(const [id,val] of Object.entries({'c-name':d.full_name,'c-id':d.student_id,'c-lbc':d.lbc_no,'c-course':d.course||'N/A','c-year':d.year_level||'N/A','c-verified':d.verified_at||'—','c-issued':d.issued_at||'—'})){const el=document.getElementById(id);if(el)el.textContent=val||'—'};renderBinary(d.student_id,d.account_gen_no||0);});

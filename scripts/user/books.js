@@ -1,38 +1,12 @@
-/* User Books Page Scripts */
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Initialize books page
-  console.log('Books page loaded');
-  
-  // Handle reserve button clicks
-  const reserveButtons = document.querySelectorAll('.btn-primary');
-  reserveButtons.forEach(btn => {
-    if (btn.textContent.includes('Reserve')) {
-      btn.addEventListener('click', (e) => {
-        if (!btn.hasAttribute('disabled')) {
-          showNotification('Success', 'Book reserved successfully!', 'success');
-        }
-      });
-    }
-  });
-
-  // Handle search
-  const searchInput = document.getElementById('book-search');
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase();
-      const bookCards = document.querySelectorAll('.book-card');
-      bookCards.forEach(card => {
-        const title = card.querySelector('.book-title').textContent.toLowerCase();
-        const author = card.querySelector('.book-author').textContent.toLowerCase();
-        const isbn = card.querySelector('.book-isbn').textContent.toLowerCase();
-        
-        if (title.includes(query) || author.includes(query) || isbn.includes(query)) {
-          card.style.display = '';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    });
-  }
-});
+const PAGE_SIZE=15;let currentPage=0,allLoaded=false,isLoading=false;
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function createBookCard(book){const s={'Available':'green','Reserved':'orange','Borrowed':'red','Due':'red'}[book.computed_status]||'green'; const can=book.computed_status==='Available';
+return `<div class="book-card" data-id="${book.id}"><div class="book-count-badge left">${book.borrow_count||0}</div><div class="book-count-badge right">${book.reserve_count||0}</div><div class="book-vertical-text left-text">${esc(book.accession_no||'—')}</div><div class="book-card-body"><div class="book-title">${esc(book.title)}</div><div class="book-category">${esc(book.category_name||'—')}</div><div class="status-bar ${s}"></div></div><div class="book-vertical-text right-text">${esc(book.book_no||'—')}</div><button class="reserve-btn ${can?'':'disabled'}" ${can?'':'disabled'} onclick="${can?`reserveBook(${book.id})`:'void(0)'}">Reserve</button></div>`}
+async function loadBooks(reset=false){if(isLoading||allLoaded&&!reset)return;isLoading=true; if(reset){currentPage=0;allLoaded=false;bookGrid.innerHTML='';}
+const search=bookSearch.value||''; const category=categoryFilter.value||'all';
+const res=await fetch(`/api/books?page=${currentPage+1}&per_page=${PAGE_SIZE}&search=${encodeURIComponent(search)}&category=${encodeURIComponent(category)}`); const books=await res.json(); if(books.length<PAGE_SIZE)allLoaded=true; books.forEach(b=>bookGrid.insertAdjacentHTML('beforeend',createBookCard(b))); currentPage++; isLoading=false;}
+async function loadCategories(){const r=await fetch('/api/categories'); const cats=await r.json(); categoryFilter.innerHTML='<option value="all">Category</option>'+cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join(''); chips.innerHTML=cats.map(c=>`<button class="chip" data-id="${c.id}">${esc(c.name)}</button>`).join(''); chips.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{categoryFilter.value=ch.dataset.id;loadBooks(true)});}
+const bookGrid=document.getElementById('book-grid'),bookSearch=document.getElementById('book-search'),categoryFilter=document.getElementById('category-filter'),chips=document.getElementById('category-chips');
+document.getElementById('book-search-clear')?.addEventListener('click',()=>{bookSearch.value='';loadBooks(true)});bookSearch?.addEventListener('input',()=>loadBooks(true));categoryFilter?.addEventListener('change',()=>loadBooks(true));
+new IntersectionObserver(e=>{if(e[0].isIntersecting)loadBooks()},{threshold:.1}).observe(document.getElementById('scroll-sentinel'));
+document.addEventListener('DOMContentLoaded',async()=>{await loadCategories();loadBooks(true)});

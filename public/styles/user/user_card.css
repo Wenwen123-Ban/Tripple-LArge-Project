@@ -1,0 +1,2 @@
+.card-layout{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}.library-card,.card-transactions{background:#fff;border-radius:12px;padding:12px;position:relative}.binary-left{position:absolute;left:4px;top:12px;white-space:pre-line;font-size:9px;color:#4B0082}.binary-top{font-size:10px;color:#1A1A6E;margin-left:20px}.transaction-header{display:grid;grid-template-columns:repeat(4,1fr);font-weight:700}
+@media(max-width:900px){.card-layout{grid-template-columns:1fr}}

@@ -1,0 +1,1 @@
+.notif-page{background:#fff;border-radius:12px;padding:12px}.notif-page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.notif-page-list{min-height:340px;background:#eee;border-radius:8px;padding:8px;overflow:auto}.notif-item{background:#fff;margin-bottom:8px;padding:8px;border-radius:8px}.notif-item.unread{border-left:4px solid #0288D1}
