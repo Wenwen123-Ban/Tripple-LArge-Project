@@ -824,11 +824,9 @@ def register_student():
     password_hash = hash_password(password)
 
     try:
-        print('[register_student] database insert attempt:', {
-            'student_id': student_id,
+        print('[register_admin] database insert attempt:', {
+            'admin_id': student_id,
             'gmail': gmail,
-            'course': course,
-            'year_level': year_level,
             'has_lbc_no': bool(lbc_no),
         })
         cursor.execute(
@@ -1703,11 +1701,9 @@ def register_admin():
     password_hash = hash_password(password)
 
     try:
-        print('[register_student] database insert attempt:', {
-            'student_id': student_id,
+        print('[register_admin] database insert attempt:', {
+            'admin_id': student_id,
             'gmail': gmail,
-            'course': course,
-            'year_level': year_level,
             'has_lbc_no': bool(lbc_no),
         })
         cursor.execute(
@@ -1806,11 +1802,9 @@ def admin_send_confirmation():
     expires_at = datetime.now() + timedelta(seconds=TOKEN_TTL_SECONDS)
 
     try:
-        print('[register_student] database insert attempt:', {
-            'student_id': student_id,
+        print('[admin_send_confirmation] database insert attempt:', {
+            'admin_id': admin_id,
             'gmail': gmail,
-            'course': course,
-            'year_level': year_level,
             'has_lbc_no': bool(lbc_no),
         })
         cursor.execute(
