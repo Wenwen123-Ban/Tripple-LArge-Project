@@ -1,0 +1,2 @@
+.manage-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px}.manage-panel{background:#fff;padding:10px;border-radius:10px}.panel-header,.panel-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;font-size:12px}.panel-row{padding:6px 0;border-top:1px solid #eee}.cancel-btn{background:#ef4444;color:#fff}
+@media(max-width:900px){.manage-panels{grid-template-columns:1fr}}

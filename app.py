@@ -205,10 +205,22 @@ def user_books():
     return send_from_directory(os.path.join(PAGES_DIR, 'user'), 'userBookdisplay.html')
 
 
-@app.route('/user/account')
-def user_account():
-    """Serve the user account management page."""
+@app.route('/user/manage')
+def user_manage():
+    """Serve the user manage page."""
     return send_from_directory(os.path.join(PAGES_DIR, 'user'), 'userManagement.html')
+
+
+@app.route('/user/card')
+def user_card():
+    """Serve the user digital card page."""
+    return send_from_directory(os.path.join(PAGES_DIR, 'user'), 'userLibraryCard.html')
+
+
+@app.route('/user/notifications')
+def user_notifications():
+    """Serve the user notifications page."""
+    return send_from_directory(os.path.join(PAGES_DIR, 'user'), 'userNotification.html')
 
 
 # ─── Admin pages ──────────────────────────────────────────
@@ -335,3 +347,9 @@ if __name__ == '__main__':
     print("📖 Starting development server...")
     print("🔗 Open browser: http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+app.add_url_rule('/api/transactions/cancel','cancel_reservation',tx_api.cancel_reservation,methods=['POST'])
+app.add_url_rule('/api/transactions/manage','get_manage_transactions',tx_api.get_manage_transactions,methods=['GET'])
+app.add_url_rule('/api/user/card','get_user_card',users.get_user_card,methods=['GET'])
+app.add_url_rule('/api/user/notifications','get_user_notifications',users.get_user_notifications,methods=['GET'])
+app.add_url_rule('/api/user/notifications/clear','clear_user_notifications',users.clear_user_notifications,methods=['POST'])

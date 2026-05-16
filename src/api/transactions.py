@@ -140,3 +140,28 @@ def get_book_history():
 
 def notify_borrower():
     return jsonify({'status': 'sent'})
+
+def cancel_reservation():
+    data = request.get_json(silent=True) or {}
+    txid = data.get('transaction_id')
+    db = get_db(); c = db.cursor(dictionary=True); _ensure_tables(c)
+    c.execute("UPDATE transactions SET action='cancelled', notes='cancelled', returned_at=NOW() WHERE id=%s AND action='reserved' AND returned_at IS NULL", (txid,))
+    db.commit(); c.close();
+    return jsonify({'status':'cancelled' if c.rowcount else 'failed'})
+
+
+def get_manage_transactions():
+    sid = session.get('student_id') or request.args.get('student_id')
+    if not sid: return jsonify({'reserved':[], 'borrowed':[], 'cancelled':[], 'history':[]})
+    db = get_db(); c = db.cursor(dictionary=True); _ensure_tables(c)
+    c.execute("SELECT id, book_no, action, reserved_at, borrowed_at, due_at, notes FROM transactions WHERE student_id=%s ORDER BY created_at DESC", (sid,)); rows = c.fetchall(); c.close()
+    out={'reserved':[],'borrowed':[],'cancelled':[],'history':[]}
+    for r in rows:
+        if r.get('reserved_at'): r['reserved_at']=r['reserved_at'].strftime('%m/%d/%Y')
+        if r.get('borrowed_at'): r['borrowed_at']=r['borrowed_at'].strftime('%m/%d/%Y')
+        if r.get('due_at'): r['due_at']=r['due_at'].strftime('%m/%d/%Y')
+        if r['action']=='reserved': out['reserved'].append({'id':r['id'],'book_no':r['book_no'],'title':'—','reserved_at':r.get('reserved_at'),'pickup_date':'Pending'})
+        elif r['action']=='borrowed': out['borrowed'].append({'book_no':r['book_no'],'title':'—','accession_no':'—','borrowed_at':r.get('borrowed_at'),'due_at':r.get('due_at')})
+        elif r['action']=='cancelled': out['cancelled'].append({'book_no':r['book_no'],'title':'—','reserved_at':r.get('reserved_at'),'pickup_date':'—','cancel_reason':'cancelled'})
+        out['history'].append({'time':r.get('reserved_at') or r.get('borrowed_at') or '—','day':'—','action':r['action'].title()})
+    return jsonify(out)

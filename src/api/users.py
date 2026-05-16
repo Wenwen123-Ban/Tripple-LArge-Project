@@ -228,3 +228,41 @@ def delete_user(student_id):
     )
 
     return jsonify({'status': 'deleted'})
+
+def get_user_card():
+    student_id = session.get('student_id') or request.args.get('student_id')
+    if not student_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+    db = get_db(); c = db.cursor(dictionary=True)
+    c.execute("SELECT full_name, student_id, lbc_no, course, year_level, created_at, account_gen_no FROM students WHERE student_id=%s LIMIT 1", (student_id,))
+    row = c.fetchone() or {}
+    c.close()
+    if row.get('created_at'): row['issued_at'] = row['created_at'].strftime('%m/%d/%Y')
+    row['verified_at'] = row.get('issued_at', '—')
+    return jsonify(row)
+
+
+def get_user_notifications():
+    student_id = session.get('student_id') or request.args.get('student_id')
+    if not student_id:
+        return jsonify({'items': [], 'unread': 0, 'total': 0})
+    flt = request.args.get('filter', 'unread')
+    db = get_db(); c = db.cursor(dictionary=True)
+    where = "recipient_id=%s"
+    params = [student_id]
+    if flt == 'unread': where += " AND is_read=0"
+    c.execute(f"SELECT id,title,message,is_read,created_at FROM notifications WHERE {where} ORDER BY created_at DESC LIMIT 100", params)
+    items = c.fetchall()
+    c.execute("SELECT SUM(CASE WHEN is_read=0 THEN 1 ELSE 0 END) unread, COUNT(*) total FROM notifications WHERE recipient_id=%s", (student_id,))
+    stats = c.fetchone() or {'unread':0,'total':0}
+    c.close()
+    for it in items:
+        if it.get('created_at'): it['created_at'] = it['created_at'].strftime('%m/%d/%Y %I:%M %p')
+    return jsonify({'items': items, 'unread': int(stats.get('unread') or 0), 'total': int(stats.get('total') or 0)})
+
+
+def clear_user_notifications():
+    student_id = session.get('student_id') or request.get_json(silent=True) or {}
+    sid = student_id if isinstance(student_id, str) else student_id.get('student_id')
+    if not sid: return jsonify({'status': 'ok'})
+    db = get_db(); c = db.cursor(); c.execute("UPDATE notifications SET is_read=1 WHERE recipient_id=%s", (sid,)); db.commit(); c.close(); return jsonify({'status':'cleared'})
