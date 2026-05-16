@@ -663,6 +663,11 @@ def validate_registration_fields(data, is_admin=False):
     if len(data.get('password') or '') < 8:
         errors.append('Password must be at least 8 characters')
 
+    # Validate address
+    address = _clean(data.get('address'))
+    if not address or len(address.strip()) < 3:
+        errors.append('Address must be at least 3 characters long')
+
     if not is_admin:
         course = _clean(data.get('course'), 'N/A') or 'N/A'
         year_level = str(_clean(data.get('year_level')))

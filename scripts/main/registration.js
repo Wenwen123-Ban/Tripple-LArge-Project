@@ -113,8 +113,30 @@ let confirmationToken = null;
 function getAddressValue() {
   const sel = document.getElementById('address-select');
   if (!sel) return '';
-  if (sel.value === 'other') return (document.getElementById('address-other')?.value || '').trim();
+  
+  if (sel.value === 'other') {
+    const otherInput = document.getElementById('address-other');
+    if (!otherInput || !otherInput.value.trim()) {
+      return '';
+    }
+    return otherInput.value.trim();
+  }
+  
   return sel.value;
+}
+
+function validateAddress() {
+  const sel = document.getElementById('address-select');
+  if (!sel || !sel.value) {
+    return false;
+  }
+  
+  if (sel.value === 'other') {
+    const otherInput = document.getElementById('address-other');
+    return otherInput && otherInput.value.trim().length >= 5;
+  }
+  
+  return true;
 }
 
 let pollInterval = null;
@@ -279,8 +301,18 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('address-select')?.addEventListener('change', (e) => {
     const other = document.getElementById('address-other');
     if (!other) return;
-    other.style.display = e.target.value === 'other' ? 'block' : 'none';
-    if (e.target.value !== 'other') other.value = '';
+    
+    if (e.target.value === 'other') {
+      // Show the "other" input field
+      other.style.display = 'block';
+      other.focus();
+      other.setAttribute('required', 'required');
+    } else {
+      // Hide the "other" input field and clear it
+      other.style.display = 'none';
+      other.value = '';
+      other.removeAttribute('required');
+    }
   });
 
   if (confirmGmailButton && gmailInput && nameInput && confirmationCheckbox) {
@@ -302,16 +334,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (registrationForm) {
     registrationForm.addEventListener('submit', (event) => {
+      // Validate ID
       if (idInput && !validateId(idInput.value)) {
         idInput.setCustomValidity('Enter a complete ID No. in YYYY-NNNNN format.');
       } else if (idInput) {
         idInput.setCustomValidity('');
       }
 
+      // Validate LBC
       if (lbcInput && !validateLbc(lbcInput.value)) {
         lbcInput.setCustomValidity('Enter a complete LBC No. in YYYY-NNNNN format.');
       } else if (lbcInput) {
         lbcInput.setCustomValidity('');
+      }
+
+      // Validate Address
+      const addressSelect = document.getElementById('address-select');
+      if (addressSelect) {
+        if (!validateAddress()) {
+          if (addressSelect.value === 'other') {
+            const otherInput = document.getElementById('address-other');
+            if (otherInput) {
+              otherInput.setCustomValidity('Please enter a complete address (at least 5 characters).');
+            }
+          } else {
+            addressSelect.setCustomValidity('Please select a barangay or area.');
+          }
+        } else {
+          addressSelect.setCustomValidity('');
+          const otherInput = document.getElementById('address-other');
+          if (otherInput) {
+            otherInput.setCustomValidity('');
+          }
+        }
       }
 
       if (!registrationForm.checkValidity()) {
