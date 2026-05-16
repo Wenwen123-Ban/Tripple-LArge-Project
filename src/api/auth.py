@@ -640,7 +640,10 @@ def build_admin_confirm_success_html():
 
 
 def _json_payload():
-    return request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if isinstance(payload, dict):
+        return payload
+    return {}
 
 
 def _clean(value, default=''):
