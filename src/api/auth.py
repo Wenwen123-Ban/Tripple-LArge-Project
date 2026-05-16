@@ -667,9 +667,10 @@ def check_duplicates(cursor, user_id, lbc_no, gmail, contact_no, is_admin=False)
     if cursor.fetchone():
         errors.append('This Gmail is already registered as an admin account')
 
-    cursor.execute(f"SELECT id FROM {table} WHERE lbc_no = %s", (lbc_no,))
-    if cursor.fetchone():
-        errors.append('This LBC number is already in use')
+    if lbc_no:
+        cursor.execute(f"SELECT id FROM {table} WHERE lbc_no = %s", (lbc_no,))
+        if cursor.fetchone():
+            errors.append('This LBC number is already in use')
 
     cursor.execute(f"SELECT id FROM {table} WHERE contact_no = %s", (contact_no,))
     if cursor.fetchone():
@@ -687,10 +688,11 @@ def validate_registration_fields(data, is_admin=False):
             errors.append('ID year part must be between 2000 and 2099')
 
     lbc = _clean(data.get('lbc_no'))
-    if not re.match(r'^\d{4}-\d{5}$', lbc):
-        errors.append('LBC No must be in format XXXX-XXXXX (4 digits, hyphen, 5 digits)')
-    elif lbc.replace('-', '') == '0' * 9:
-        errors.append('LBC No cannot be all zeros')
+    if lbc:
+        if not re.match(r'^\d{4}-\d{5}$', lbc):
+            errors.append('LBC No must be in format XXXX-XXXXX (4 digits, hyphen, 5 digits)')
+        elif lbc.replace('-', '') == '0' * 9:
+            errors.append('LBC No cannot be all zeros')
 
     if not re.match(r'^09\d{9}$', _clean(data.get('contact_no'))):
         errors.append('Contact No must be 11 digits starting with 09 (e.g. 09XXXXXXXXX)')
