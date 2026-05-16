@@ -1,20 +1,26 @@
 """MySQL connection helper for Flask request contexts."""
 
+import os
+
 import mysql.connector
 from flask import g
 
-DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': '',
-    'database': 'click_and_collect',
-}
+
+def _load_db_config():
+    """Build DB config from environment with sensible local defaults."""
+    return {
+        'host': os.getenv('DB_HOST', 'localhost'),
+        'user': os.getenv('DB_USER', 'root'),
+        'password': os.getenv('DB_PASSWORD', ''),
+        'database': os.getenv('DB_NAME', 'click_and_collect'),
+        'port': int(os.getenv('DB_PORT', '3306')),
+    }
 
 
 def get_db():
     """Return a per-request MySQL connection."""
     if 'db' not in g:
-        g.db = mysql.connector.connect(**DB_CONFIG)
+        g.db = mysql.connector.connect(**_load_db_config())
     return g.db
 
 
