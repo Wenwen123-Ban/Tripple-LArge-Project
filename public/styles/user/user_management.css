@@ -1,151 +1,74 @@
-/* ===============================================
-   MANAGE PANELS LAYOUT
-   =============================================== */
-.manage-panels {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
+.manage-panels { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:18px; }
+.manage-panels + .manage-panels { margin-top: 18px; }
 .manage-panel {
-  background: #fff;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
+  background:#fff;
+  padding:16px;
+  border-radius:14px;
+  border:1px solid #dfe7ef;
+  box-shadow:0 8px 22px rgba(15,23,42,.06);
+  min-height: 360px;
+  display:flex;
+  flex-direction:column;
 }
-
-/* ===============================================
-   PANEL TITLE
-   =============================================== */
 .panel-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--dark-navy);
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--user-primary);
+  font-size:15px;
+  font-weight:800;
+  color:var(--dark-navy);
+  margin-bottom:12px;
+  padding-bottom:10px;
+  border-bottom:2px solid rgba(2,136,209,.2);
 }
-
-/* ===============================================
-   PANEL TABLE
-   =============================================== */
-.panel-table {
-  width: 100%;
-}
-
+.panel-table { width:100%; display:flex; flex-direction:column; min-height:0; flex:1; }
 .panel-header {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 10px;
-  background: #f5f5f5;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  color: #333;
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:10px;
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  padding:12px 10px;
+  background:#f4f8fc;
+  border:1px solid #e3ebf4;
+  border-radius:8px;
+  margin-bottom:10px;
+  color:#475569;
 }
-
-.panel-body {
-  max-height: 300px;
-  overflow-y: auto;
+.panel-body { max-height: 320px; overflow-y:auto; border:1px solid #edf2f7; border-radius:10px; background:#fff; }
+.panel-body:empty::before {
+  content: "No records to display";
+  display:block;
+  text-align:center;
+  color:#94a3b8;
+  font-size:13px;
+  padding:44px 12px;
 }
-
 .panel-row {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
-  font-size: 12px;
-  padding: 8px 10px;
-  border-top: 1px solid #eee;
-  align-items: center;
-  transition: 0.15s;
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:10px;
+  font-size:12px;
+  padding:12px 10px;
+  border-bottom:1px solid #eef2f7;
+  align-items:center;
+  transition: background .18s ease;
 }
+.panel-row:hover { background:#f8fbff; }
+.panel-row span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#1f2937; }
+.panel-row button,.panel-row a { padding:6px 10px; border:none; border-radius:8px; cursor:pointer; font-size:11px; font-weight:700; text-decoration:none; transition:.15s; text-align:center; }
+.reserve-action-btn { background:var(--user-primary); color:#fff; }
+.reserve-action-btn:hover { background:var(--user-dark); }
+.cancel-btn { background:var(--status-red); color:#fff; }
+.cancel-btn:hover { background:#dc2626; }
+.return-btn { background:var(--status-green); color:#fff; }
+.return-btn:hover { background:#16a34a; }
 
-.panel-row:hover {
-  background: #f9f9f9;
+@media (max-width: 1100px) {
+  .manage-panels { grid-template-columns: 1fr; }
+  .manage-panel { min-height: 320px; }
 }
-
-.panel-row:last-child {
-  border-bottom: none;
-}
-
-.panel-row span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ===============================================
-   ACTION BUTTONS IN PANEL ROWS
-   =============================================== */
-.panel-row button,
-.panel-row a {
-  padding: 4px 8px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: 0.15s;
-}
-
-.reserve-action-btn {
-  background: var(--user-primary);
-  color: #fff;
-}
-
-.reserve-action-btn:hover {
-  background: var(--user-dark);
-}
-
-.cancel-btn {
-  background: var(--status-red);
-  color: #fff;
-}
-
-.cancel-btn:hover {
-  background: #d32f2f;
-}
-
-.return-btn {
-  background: var(--status-green);
-  color: #fff;
-}
-
-.return-btn:hover {
-  background: #1e7e34;
-}
-
-/* ===============================================
-   RESPONSIVE MEDIA QUERIES
-   =============================================== */
-@media (max-width: 900px) {
-  .manage-panels {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 600px) {
-  .panel-header,
-  .panel-row {
-    font-size: 10px;
-    padding: 6px 8px;
-    gap: 6px;
-  }
-
-  .panel-row button,
-  .panel-row a {
-    padding: 3px 6px;
-    font-size: 10px;
-  }
-
-  .manage-panels {
-    gap: 10px;
-  }
-
-  .manage-panel {
-    padding: 10px;
-  }
+@media (max-width: 700px) {
+  .manage-panel { padding: 12px; }
+  .panel-header, .panel-row { gap:8px; font-size:10px; padding:10px 8px; }
+  .panel-row button,.panel-row a { padding:5px 8px; font-size:10px; }
 }
