@@ -746,10 +746,7 @@ def validate_registration_fields(data, is_admin=False):
 
 def register_student():
     data = _json_payload()
-    logged_payload = dict(data)
-    if 'password' in logged_payload:
-        logged_payload['password'] = '<redacted>'
-    print('[register_student] request.json:', logged_payload)
+    print('[register_student] request.json:', data)
     errors = validate_registration_fields(data, is_admin=False)
     if errors:
         print('[register_student] validation failed:', errors)
