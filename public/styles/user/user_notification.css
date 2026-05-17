@@ -2,7 +2,7 @@
    NOTIFICATION PAGE CONTAINER
    =============================================== */
 .notif-page {
-  background: #e0e0e0;
+  background: radial-gradient(125% 125% at 50% 90%, #ffffff 40%, #14b8a6 100%);
   border-radius: 10px;
   padding: 12px;
   border: 2px solid var(--dark-navy);
@@ -72,7 +72,7 @@
    =============================================== */
 .notif-page-list {
   min-height: 340px;
-  background: #d0d0d0;
+  background: rgba(255,255,255,0.7);
   border-radius: 8px;
   padding: 8px;
   overflow-y: auto;
