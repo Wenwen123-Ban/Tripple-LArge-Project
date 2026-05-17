@@ -84,7 +84,7 @@ body {
 }
 
 .page-label-bar {
-  background: linear-gradient(100deg, #26C6DA 0%, #0288D1 100%);
+  background: var(--user-gradient);
   color: #fff;
   font-size: 13px;
   font-weight: 700;
