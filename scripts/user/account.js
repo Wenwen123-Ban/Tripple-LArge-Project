@@ -21,7 +21,7 @@ function computeStudentFingerprint(studentId = '', registrationDate = '') {
   return generateDynamicBinary(normalized);
 }
 
-function renderBinary(studentId, registrationDate) {
+function renderBinary(studentId, registrationDate, generationNumber = '1') {
   const binaryLeft = document.getElementById('binary-left');
   const binaryRight = document.getElementById('binary-right');
   const printBinaryTop = document.getElementById('print-binary-top');
@@ -31,13 +31,14 @@ function renderBinary(studentId, registrationDate) {
   const studentDigits = String(studentId || '').replace(/\D/g, '');
   const year = studentDigits.slice(0, 4) || '2026';
   const entry = studentDigits.slice(-5) || '00000';
-  const generation = String((registrationDate || '').replace(/\D/g, '').slice(-1) || '1');
+  const generation = String(generationNumber || (registrationDate || '').replace(/\D/g, '').slice(-1) || '1').replace(/\D/g, '') || '1';
   const identitySeed = `${year}${entry}${generation}`;
-  const identityBinary = identitySeed.split('').map((d) => Number(d).toString(2).padStart(4, '0')).join(' ');
+  const identityBinary = toBinaryString(identitySeed);
+  const repeatedIdentityBinary = Array(12).fill(identityBinary).join(' ');
 
   if (binaryLeft) binaryLeft.textContent = toBinaryString('NMSCST');
   if (binaryRight) binaryRight.textContent = computeStudentFingerprint(studentId, registrationDate);
-  if (printBinaryTop) printBinaryTop.textContent = `${identityBinary} ${identityBinary} ${identityBinary}`;
+  if (printBinaryTop) printBinaryTop.textContent = repeatedIdentityBinary;
   if (printBinaryLeft) printBinaryLeft.textContent = institutionBinary;
 }
 
@@ -84,9 +85,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ll = document.getElementById('last-login');
     if (ll) ll.textContent = lastLogin;
 
-    renderBinary(data.student_id || '', data.issued_at || '');
+    renderBinary(data.student_id || '', data.issued_at || '', data.account_gen_no || '1');
 
     const statusText = (data.account_status || 'Good Standing').toLowerCase();
+    const printableStatus = statusText.includes('due') ? 'With Due' : (statusText.includes('restrict') ? 'Restricted' : 'Good Standing');
+    const printStatusText = document.getElementById('p-status');
+    if (printStatusText) printStatusText.textContent = printableStatus;
     const statusEl = document.getElementById('c-status');
     const printStatusDot = document.getElementById('p-status-dot');
     if (statusEl) {
