@@ -35,30 +35,188 @@
     </aside>
 
     <main class="user-main">
-      <div class="card-layout">
-        <div class="library-card">
-          <div class="binary-top" id="binary-top"></div>
-          <div class="binary-left" id="binary-left"></div>
-          <div class="card-content">
-            <p class="card-title-label"><em>Digital Library Card</em></p>
-            <div id="c-name"></div>
-            <div id="c-id"></div>
-            <div id="c-lbc"></div>
-            <div id="c-course"></div>
-            <div id="c-year"></div>
-            <div id="c-verified"></div>
-            <div id="c-issued"></div>
+      <!-- Top Stats Section -->
+      <div class="account-stats">
+        <div class="stat-card">
+          <div class="stat-icon">📖</div>
+          <div class="stat-content">
+            <div class="stat-label">Books Borrowed</div>
+            <div class="stat-value" id="stat-borrowed">0</div>
           </div>
         </div>
-
-        <div class="card-transactions">
-          <div class="transaction-header">
-            <span>Date Borrowed</span>
-            <span>Book No.</span>
-            <span>Accession No.</span>
-            <span>Date Returned</span>
+        <div class="stat-card">
+          <div class="stat-icon">🔖</div>
+          <div class="stat-content">
+            <div class="stat-label">Reserved</div>
+            <div class="stat-value" id="stat-reserved">0</div>
           </div>
-          <div id="transaction-list"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏰</div>
+          <div class="stat-content">
+            <div class="stat-label">Due Soon</div>
+            <div class="stat-value" id="stat-due">0</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-content">
+            <div class="stat-label">Overdue</div>
+            <div class="stat-value" id="stat-overdue">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content Grid -->
+      <div class="account-grid">
+        <!-- Left Column: Library Card & Account Info -->
+        <div class="account-left">
+          <!-- Digital Library Card -->
+          <section class="account-section">
+            <div class="section-header">
+              <h2>Digital Library Card</h2>
+            </div>
+            <div class="library-card">
+              <!-- Top Binary Security Strip -->
+              <div class="binary-top" id="binary-top"></div>
+              <!-- Left Binary Security Strip (NMSCST) -->
+              <div class="binary-left" id="binary-left"></div>
+              
+              <div class="card-content">
+                <!-- NMSC Logo -->
+                <div class="card-logo-section">
+                  <img src="/assets/logo/NMSC LOGO.jpg" alt="NMSC Logo" class="card-logo" />
+                </div>
+
+                <!-- Institution Name -->
+                <div class="card-institution">
+                  <div class="institution-name">North Western Mindanao</div>
+                  <div class="institution-name">State College of Science and Technology</div>
+                </div>
+
+                <!-- Card Title -->
+                <p class="card-title-label"><em>Digital Library Card</em></p>
+
+                <!-- Student Information -->
+                <div class="card-info-group">
+                  <div class="card-field">
+                    <span class="card-label">Name:</span>
+                    <span id="c-name" class="card-value"></span>
+                  </div>
+                  <div class="card-field">
+                    <span class="card-label">ID No.:</span>
+                    <span id="c-id" class="card-value"></span>
+                  </div>
+                  <div class="card-field">
+                    <span class="card-label">LBC No.:</span>
+                    <span id="c-lbc" class="card-value"></span>
+                  </div>
+                  <div class="card-field">
+                    <span class="card-label">Course:</span>
+                    <span id="c-course" class="card-value"></span>
+                  </div>
+                  <div class="card-field">
+                    <span class="card-label">Year:</span>
+                    <span id="c-year" class="card-value"></span>
+                  </div>
+                  <div class="card-field">
+                    <span class="card-label">Status:</span>
+                    <span id="c-verified" class="card-value"></span>
+                  </div>
+                  <div class="card-field">
+                    <span class="card-label">Issued:</span>
+                    <span id="c-issued" class="card-value"></span>
+                  </div>
+                </div>
+
+                <!-- Security Info -->
+                <div class="card-security-info">
+                  <div class="security-badge">🔒 Secure Card</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Account Information Section -->
+          <section class="account-section">
+            <div class="section-header">
+              <h2>Account Information</h2>
+              <button class="edit-btn" id="edit-account-btn" title="Edit Account">✏️</button>
+            </div>
+            <div class="account-info-fields">
+              <div class="info-row">
+                <div class="info-field">
+                  <label>Email Address</label>
+                  <input type="email" id="email-field" placeholder="user@email.com" disabled />
+                </div>
+                <div class="info-field">
+                  <label>Phone Number</label>
+                  <input type="tel" id="phone-field" placeholder="+63 XXX XXX XXXX" disabled />
+                </div>
+              </div>
+              <div class="info-row">
+                <div class="info-field">
+                  <label>Department</label>
+                  <input type="text" id="department-field" placeholder="Department" disabled />
+                </div>
+                <div class="info-field">
+                  <label>Year Level</label>
+                  <input type="text" id="year-level-field" placeholder="Year Level" disabled />
+                </div>
+              </div>
+              <div class="info-row">
+                <div class="info-field full-width">
+                  <label>Address</label>
+                  <textarea id="address-field" placeholder="Your address" disabled></textarea>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right Column: Transactions & Activity -->
+        <div class="account-right">
+          <!-- Recent Transactions -->
+          <section class="account-section">
+            <div class="section-header">
+              <h2>Transaction History</h2>
+              <a href="/user/manage" class="view-all-btn">View All →</a>
+            </div>
+            <div class="card-transactions">
+              <div class="transaction-header">
+                <span>Date Borrowed</span>
+                <span>Book No.</span>
+                <span>Accession No.</span>
+                <span>Date Returned</span>
+              </div>
+              <div id="transaction-list"></div>
+            </div>
+          </section>
+
+          <!-- Account Status -->
+          <section class="account-section">
+            <div class="section-header">
+              <h2>Account Status</h2>
+            </div>
+            <div class="status-info">
+              <div class="status-item">
+                <div class="status-label">Account Status:</div>
+                <div class="status-value active-status">✓ Active</div>
+              </div>
+              <div class="status-item">
+                <div class="status-label">Member Since:</div>
+                <div class="status-value" id="member-since">—</div>
+              </div>
+              <div class="status-item">
+                <div class="status-label">Last Login:</div>
+                <div class="status-value" id="last-login">—</div>
+              </div>
+              <div class="status-item">
+                <div class="status-label">Fines/Penalties:</div>
+                <div class="status-value" id="fines-status">₱0.00</div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </main>
