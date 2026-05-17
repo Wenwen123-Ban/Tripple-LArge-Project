@@ -1,15 +1,24 @@
+body {
+  background-color: #f1f5f9;
+  background-image: none;
+}
+
 .manage-panels {
+  --manage-col-id: 20%;
+  --manage-col-title: 45%;
+  --manage-col-date: 20%;
+  --manage-col-status: 15%;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   align-items: stretch;
 }
 
 .manage-panel {
-  background: #fff;
-  border: 1px solid #eaedf2;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
   border-radius: 10px;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
   display: flex;
   flex-direction: column;
   min-height: 328px;
@@ -17,11 +26,12 @@
 }
 
 .panel-title {
-  color: #0f2747;
-  font-size: 16px;
+  color: #0f172a;
+  font-size: 18px;
   font-weight: 800;
   line-height: 1.3;
   margin: 0;
+  letter-spacing: -0.01em;
   padding: 20px 22px 14px;
 }
 
@@ -36,20 +46,19 @@
 .panel-header,
 .panel-row {
   display: grid;
-  grid-template-columns: 20% 45% 20% 15%;
+  grid-template-columns: var(--manage-col-id) var(--manage-col-title) var(--manage-col-date) var(--manage-col-status);
   min-width: 0;
 }
 
 .panel-header {
   align-items: center;
-  background: #f8fafc;
-  border-bottom: 1px solid #eef2f7;
-  border-top: 1px solid #eef2f7;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
   color: #64748b;
-  font-size: 11px;
-  font-weight: 800;
-  height: 36px;
-  letter-spacing: 0.045em;
+  font-size: 12px;
+  font-weight: 600;
+  height: 40px;
+  letter-spacing: 0.05em;
   padding: 0 22px;
   text-transform: uppercase;
 }
@@ -139,7 +148,7 @@
 
 .empty-state {
   align-items: center;
-  color: #94a3b8;
+  color: #64748b;
   display: flex;
   flex-direction: column;
   font-size: 14px;
@@ -151,10 +160,10 @@
 }
 
 .empty-state__icon {
-  color: #cbd5e1;
-  height: 34px;
+  color: #64748b;
+  height: 40px;
   margin-bottom: 12px;
-  width: 34px;
+  width: 40px;
 }
 
 .empty-state__icon svg {
@@ -188,7 +197,7 @@
 
   .panel-header,
   .panel-row {
-    grid-template-columns: minmax(84px, 20%) minmax(120px, 45%) minmax(92px, 20%) minmax(72px, 15%);
+    grid-template-columns: minmax(84px, var(--manage-col-id)) minmax(120px, var(--manage-col-title)) minmax(92px, var(--manage-col-date)) minmax(72px, var(--manage-col-status));
     padding-left: 16px;
     padding-right: 16px;
   }
