@@ -6,9 +6,7 @@
   --user-gradient: radial-gradient(125% 125% at 50% 90%, #ffffff 40%, #14b8a6 100%);
   --user-dark: #01579B;
   --user-teal: #26C6DA;
-  --gold-accent: #FFD700;
   --dark-navy: #1A1A6E;
-  --deep-purple: #4B0082;
   --status-green: #22C55E;
   --status-orange: #F59E0B;
   --status-red: #EF4444;
@@ -155,12 +153,18 @@ body {
   transition: all 0.2s ease;
 }
 
-.sidebar-icon-btn:hover,
+.sidebar-icon-btn:hover {
+  transform: translateY(-1px);
+  background: #fff;
+  color: var(--dark-navy);
+  border-color: var(--dark-navy);
+}
+
 .sidebar-icon-btn.active {
   transform: translateY(-1px);
-  background: var(--user-primary);
+  background: #0288D1;
   color: #fff;
-  border-color: var(--user-primary);
+  border-color: #0288D1;
   box-shadow: 0 8px 18px rgba(2, 136, 209, 0.25);
 }
 
