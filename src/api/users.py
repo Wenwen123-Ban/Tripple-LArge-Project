@@ -21,6 +21,79 @@ def _payload():
     return request.get_json(silent=True) or {}
 
 
+def _add_column_if_missing(cursor, table, column, definition):
+    try:
+        cursor.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+    except mysql.connector.Error as exc:
+        if exc.errno != 1060:
+            raise
+
+
+def _ensure_card_columns(cursor):
+    _add_column_if_missing(cursor, 'students', 'account_gen_no', 'INT DEFAULT 1')
+    _add_column_if_missing(cursor, 'students', 'last_login_time', 'DATETIME NULL')
+    _add_column_if_missing(cursor, 'students', 'last_login_ip', 'VARCHAR(80) DEFAULT NULL')
+    _add_column_if_missing(cursor, 'students', 'last_active', 'DATETIME DEFAULT CURRENT_TIMESTAMP')
+    _add_column_if_missing(cursor, 'students', 'deleted_at', 'DATETIME DEFAULT NULL')
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS books (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            book_no VARCHAR(60) NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            category_id INT NULL,
+            status VARCHAR(40) DEFAULT 'Available',
+            reserved_count INT DEFAULT 0,
+            borrowed_count INT DEFAULT 0,
+            borrow_count INT DEFAULT 0,
+            reserve_count INT DEFAULT 0,
+            availability_hint VARCHAR(20) DEFAULT 'Available',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS transactions (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            book_id INT NOT NULL,
+            book_no VARCHAR(20) NOT NULL,
+            student_id VARCHAR(40) NOT NULL,
+            action VARCHAR(20) NOT NULL,
+            actor_admin_id VARCHAR(40) DEFAULT NULL,
+            reserved_at DATETIME DEFAULT NULL,
+            borrowed_at DATETIME DEFAULT NULL,
+            due_at DATETIME DEFAULT NULL,
+            returned_at DATETIME DEFAULT NULL,
+            notes TEXT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+
+def _format_datetime(value, include_time=False):
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value.strftime('%m/%d/%Y %I:%M %p' if include_time else '%m/%d/%Y')
+    return str(value)
+
+
+def _active_action(action, returned_at):
+    action_text = str(action or '').lower()
+    return returned_at is None and action_text in ('reserved', 'borrowed')
+
+
+def _transaction_status(action, due_at, returned_at):
+    action_text = str(action or '').lower()
+    if returned_at:
+        return 'returned' if action_text in ('borrowed', 'returned') else action_text
+    if action_text == 'borrowed' and due_at and datetime.now() > due_at:
+        return 'overdue'
+    return action_text or 'recorded'
+
+
 def _ensure_course_table(cursor):
     cursor.execute(
         """
@@ -233,13 +306,88 @@ def get_user_card():
     student_id = session.get('student_id') or request.args.get('student_id')
     if not student_id:
         return jsonify({'error': 'Not authenticated'}), 401
-    db = get_db(); c = db.cursor(dictionary=True)
-    c.execute("SELECT full_name, student_id, lbc_no, course, year_level, created_at, account_gen_no FROM students WHERE student_id=%s LIMIT 1", (student_id,))
+
+    db = get_db()
+    c = db.cursor(dictionary=True)
+    _ensure_card_columns(c)
+    c.execute(
+        """
+        SELECT full_name, student_id, lbc_no, course, year_level, gmail,
+               contact_no, address, is_verified, created_at, account_gen_no,
+               last_login_time
+        FROM students
+        WHERE student_id=%s AND deleted_at IS NULL
+        LIMIT 1
+        """,
+        (student_id,),
+    )
     row = c.fetchone() or {}
+    if not row:
+        c.close()
+        return jsonify({'error': 'Account not found'}), 404
+
+    c.execute(
+        """
+        SELECT t.id, t.book_no, t.action, t.reserved_at, t.borrowed_at,
+               t.due_at, t.returned_at, t.created_at, b.title
+        FROM transactions t
+        LEFT JOIN books b ON b.id = t.book_id
+        WHERE t.student_id=%s
+        ORDER BY COALESCE(t.borrowed_at, t.reserved_at, t.created_at) DESC
+        LIMIT 100
+        """,
+        (student_id,),
+    )
+    tx_rows = c.fetchall()
     c.close()
-    if row.get('created_at'): row['issued_at'] = row['created_at'].strftime('%m/%d/%Y')
-    row['verified_at'] = row.get('issued_at', '—')
-    return jsonify(row)
+
+    transactions = []
+    counters = {'borrowed': 0, 'reserved': 0, 'due_soon': 0, 'overdue': 0, 'records': len(tx_rows)}
+    now = datetime.now()
+    for tx in tx_rows:
+        action = tx.get('action')
+        due_at = tx.get('due_at')
+        returned_at = tx.get('returned_at')
+        status = _transaction_status(action, due_at, returned_at)
+        if _active_action(action, returned_at):
+            action_text = str(action or '').lower()
+            if status == 'overdue':
+                counters['overdue'] += 1
+            elif action_text == 'borrowed':
+                counters['borrowed'] += 1
+                if due_at and 0 <= (due_at - now).total_seconds() <= (3 * 24 * 60 * 60):
+                    counters['due_soon'] += 1
+            elif action_text == 'reserved':
+                counters['reserved'] += 1
+
+        transactions.append({
+            'id': tx.get('id'),
+            'date_borrowed': _format_datetime(tx.get('borrowed_at') or tx.get('reserved_at'), True) or '—',
+            'book_no': tx.get('book_no') or '—',
+            'title': tx.get('title') or '—',
+            'accession_no': tx.get('book_no') or '—',
+            'date_returned': _format_datetime(returned_at, True) or ('Pending' if _active_action(action, returned_at) else '—'),
+            'due_at': _format_datetime(due_at, True) or '—',
+            'status': status,
+        })
+
+    issued_at = _format_datetime(row.get('created_at')) or '—'
+    is_verified = bool(row.get('is_verified'))
+    has_overdue = counters['overdue'] > 0
+    account_status = 'Overdue' if has_overdue else ('Good Standing' if is_verified else 'Pending Verification')
+    payload = {
+        **row,
+        'issued_at': issued_at,
+        'verified_at': issued_at if is_verified else 'Pending',
+        'last_login': _format_datetime(row.get('last_login_time'), True) or '—',
+        'account_status': account_status,
+        'fines': 0,
+        'transactions': transactions,
+        'counters': counters,
+    }
+    for key in ('created_at', 'last_login_time'):
+        payload.pop(key, None)
+    return jsonify(payload)
 
 
 def get_user_notifications():

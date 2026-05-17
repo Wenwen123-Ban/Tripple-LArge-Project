@@ -356,6 +356,12 @@ app.add_url_rule('/api/books/import/analyze','import_analyze',books.import_analy
 app.add_url_rule('/api/books/import/commit','import_commit',books.import_commit,methods=['POST'])
 app.add_url_rule('/api/admin/dashboard-stats','get_dashboard_stats',admin.get_dashboard_stats,methods=['GET'])
 
+app.add_url_rule('/api/transactions/cancel','cancel_reservation',tx_api.cancel_reservation,methods=['POST'])
+app.add_url_rule('/api/transactions/manage','get_manage_transactions',tx_api.get_manage_transactions,methods=['GET'])
+app.add_url_rule('/api/user/card','get_user_card',users.get_user_card,methods=['GET'])
+app.add_url_rule('/api/user/notifications','get_user_notifications',users.get_user_notifications,methods=['GET'])
+app.add_url_rule('/api/user/notifications/clear','clear_user_notifications',users.clear_user_notifications,methods=['POST'])
+
 with app.app_context():
     start_scheduler(app)
 
@@ -365,8 +371,3 @@ if __name__ == '__main__':
     print("🔗 Open browser: http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)
 
-app.add_url_rule('/api/transactions/cancel','cancel_reservation',tx_api.cancel_reservation,methods=['POST'])
-app.add_url_rule('/api/transactions/manage','get_manage_transactions',tx_api.get_manage_transactions,methods=['GET'])
-app.add_url_rule('/api/user/card','get_user_card',users.get_user_card,methods=['GET'])
-app.add_url_rule('/api/user/notifications','get_user_notifications',users.get_user_notifications,methods=['GET'])
-app.add_url_rule('/api/user/notifications/clear','clear_user_notifications',users.clear_user_notifications,methods=['POST'])
