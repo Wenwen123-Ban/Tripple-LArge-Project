@@ -3,7 +3,7 @@
    =============================================== */
 :root {
   --user-primary: #0288D1;
-  --user-gradient: linear-gradient(135deg, #0288D1, #26C6DA);
+  --user-gradient: linear-gradient(100deg, #26C6DA 0%, #0288D1 100%);
   --user-dark: #01579B;
   --user-teal: #26C6DA;
   --gold-accent: #FFD700;
@@ -13,7 +13,7 @@
   --status-orange: #F59E0B;
   --status-red: #EF4444;
   --card-white: #fff;
-  --font-body: "Inter", "Segoe UI", Arial, sans-serif;
+  --font-body: "Poppins", "Segoe UI", Arial, sans-serif;
 }
 
 * {
@@ -33,8 +33,8 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: radial-gradient(circle at top, #f7fbff 0%, #eef4f8 60%, #ebf2f7 100%);
-  color: #1f2937;
+  background: var(--user-gradient);
+  color: #111111;
 }
 
 /* ===============================================
@@ -44,16 +44,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 24px;
+  padding: 0 16px;
   background: var(--user-gradient);
   flex-shrink: 0;
-  min-height: 72px;
+  height: 52px;
   position: relative;
-  box-shadow: 0 8px 20px rgba(2, 136, 209, 0.2);
+  box-shadow: none;
 }
 
 .portal-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.9);
   letter-spacing: 0.08em;
@@ -70,25 +70,26 @@ body {
 }
 
 .brand-name {
-  font-size: 30px;
+  font-size: 24px;
   line-height: 1;
-  font-weight: 800;
+  font-weight: 400;
+  font-family: "Pacifico", cursive;
   color: #fff;
   letter-spacing: 0.01em;
 }
 
 .brand-book {
-  height: 32px;
+  height: 24px;
   width: auto;
 }
 
 .page-label-bar {
-  background: linear-gradient(90deg, #0179bd, #0288d1);
+  background: linear-gradient(100deg, #1aaabd, #0279be);
   color: #fff;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  padding: 9px 24px 9px 88px;
+  padding: 7px 24px 7px 70px;
   flex-shrink: 0;
 }
 
@@ -105,7 +106,7 @@ body {
 .user-main {
   flex: 1;
   overflow-y: auto;
-  padding: 22px;
+  padding: 12px 14px;
   position: relative;
 }
 
@@ -122,32 +123,35 @@ body {
    SIDEBAR STYLES
    =============================================== */
 .user-sidebar {
-  width: 60px;
+  width: 52px;
   background: #fff;
-  border-right: 1px solid #dbe5ee;
+  border: 1.5px solid var(--dark-navy);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 14px 0;
+  padding: 8px 4px;
   gap: 10px;
   flex-shrink: 0;
   z-index: 2;
+  border-radius: 12px;
+  height: fit-content;
+  margin: 10px 0 10px 8px;
 }
 
 .sidebar-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
-  border: 1.5px solid #b7c9d8;
+  border: 1.5px solid var(--dark-navy);
   background: #fff;
   color: var(--dark-navy);
   cursor: pointer;
   text-decoration: none;
   font-weight: 700;
-  box-shadow: 0 4px 10px rgba(26, 26, 110, 0.06);
+  box-shadow: none;
   transition: all 0.2s ease;
 }
 
@@ -165,7 +169,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 46px;
+  height: 52px;
   background: var(--user-gradient);
   padding: 0 20px;
   flex-shrink: 0;
@@ -173,16 +177,16 @@ body {
 
 .footer-left { display:flex; align-items:center; gap:10px; }
 .footer-seal { width:32px; height:32px; border-radius:50%; object-fit:cover; }
-.footer-school { font-size:9px; color:#fff; line-height:1.3; opacity:.92; }
+.footer-school { font-size:10px; color:#fff; line-height:1.3; opacity:.92; }
 .footer-brand { display:flex; align-items:center; gap:6px; }
-.footer-brand .brand-name { font-size:15px; }
-.footer-right { font-size:10px; color:rgba(255,255,255,.9); text-align:right; white-space:nowrap; }
+.footer-brand .brand-name { font-size:16px; }
+.footer-right { font-size:11px; color:rgba(255,255,255,.9); text-align:right; white-space:nowrap; }
 
 .user-hamburger-wrap { position: relative; }
-.hamburger-btn { background:none; border:none; cursor:pointer; color:#fff; width:38px; height:38px; font-size:20px; }
+.hamburger-btn { background:none; border:none; cursor:pointer; color:#fff; width:22px; height:22px; font-size:22px; line-height:1; }
 .user-hamburger-menu { display:none; position:absolute; top:calc(100% + 6px); right:0; background:#fff; border:1.5px solid var(--dark-navy); border-radius:10px; min-width:160px; z-index:999; box-shadow:0 6px 18px rgba(0,0,0,.15); overflow:hidden; }
 .user-hamburger-menu.open { display:block; }
-.hamburger-menu-item { display:flex; padding:12px 16px; font-size:14px; font-weight:700; color:var(--dark-navy); text-decoration:none; border-bottom:1px solid #f0f0f0; transition:0.15s; }
+.hamburger-menu-item { display:flex; padding:12px 16px; font-size:14px; font-weight:700; color:var(--dark-navy); text-decoration:none; border-bottom:1px solid #e5e7eb; transition:0.15s; }
 .hamburger-menu-item:hover { background:#f4f0ff; }
 .hamburger-menu-item.logout { color:#EF4444; }
 .hamburger-menu-item.logout:hover { background:#fff5f5; }
@@ -200,5 +204,6 @@ body {
   .user-main { padding: 12px; }
   .user-main > * + * { margin-top: 14px; }
   .footer-school, .footer-brand { display:none; }
-  .user-sidebar { width: 52px; }
+  .user-sidebar { width: 52px; margin-left: 4px; }
 }
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
