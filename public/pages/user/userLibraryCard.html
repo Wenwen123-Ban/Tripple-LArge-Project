@@ -49,30 +49,34 @@
         </div>
 
         <div class="card-layout">
+          <div id="printable-card-area">
           <div class="library-card">
-            <div class="binary-top" id="binary-top"></div>
             <div class="binary-left" id="binary-left"></div>
+            <div class="binary-right" id="binary-right"></div>
             <div class="card-content">
               <div class="card-header">
                 <img src="/assets/logo/NMSC LOGO.jpg" class="card-logo" alt="NMSCST Logo">
                 <div class="school-name">North Western Mindanao State College of Science and Technology</div>
+                <div class="school-address">Labuyo, Tangub City</div>
+                <div class="card-title">Digital Library Card</div>
               </div>
-              <p>Name: <span id="c-name">—</span></p>
-              <p>ID No: <span id="c-id">—</span></p>
-              <p>LBC No: <span id="c-lbc">—</span></p>
-              <p>Course: <span id="c-course">N/A</span></p>
-              <p>Year: <span id="c-year">N/A</span></p>
-              <p>Status:
-                <span class="status-legend"><span class="dot green"></span>Good Standing</span> /
-                <span class="status-legend"><span class="dot orange"></span>With Due</span> /
-                <span class="status-legend"><span class="dot red"></span>Restricted</span>
-              </p>
-              <p>Verified: <span id="c-verified">—</span></p>
-              <p>Issued: <span id="c-issued">—</span></p>
+              <p class="meta-row"><span class="meta-label">Name:</span> <span id="c-name">—</span></p>
+              <p class="meta-row"><span class="meta-label">ID No:</span> <span id="c-id">—</span></p>
+              <p class="meta-row"><span class="meta-label">LBC No:</span> <span id="c-lbc">—</span></p>
+              <p class="meta-row"><span class="meta-label">Course:</span> <span id="c-course">N/A</span></p>
+              <p class="meta-row"><span class="meta-label">Year:</span> <span id="c-year">N/A</span></p>
+              <p class="meta-row"><span class="meta-label">Status:</span> <span class="status-pill" id="c-status">Good Standing</span></p>
+              <p class="meta-row"><span class="meta-label">Verified:</span> <span id="c-verified">—</span></p>
+              <p class="meta-row"><span class="meta-label">Issued:</span> <span id="c-issued">—</span></p>
+              <div class="signature-pad">
+                <div class="signature-line"></div>
+                <div class="signature-label">Authorized Librarian Signature</div>
+              </div>
               <p class="legalese">This digital library card is non-transferable and is bound exclusively to the verified account of the registered student. It is valid only upon Gmail verification and remains active only while the account holder is in good standing. Present this card to the librarian when borrowing or returning library materials. Each transaction is digitally stamped and secured — return confirmations are verified and traceable to the librarian who processed them.</p>
               <p class="cyber-warning">Do Not Share Sensitive Data, We will not be responsible in any potential cyber damage.</p>
-              <div class="card-footer"><span>🔒 SECURE CARD</span></div>
+              <div class="card-footer"><span>🔒 SECURE CARD</span><button type="button" class="print-btn" id="print-card-btn">Print Physical Copy</button></div>
             </div>
+          </div>
           </div>
 
           <div class="right-column">
