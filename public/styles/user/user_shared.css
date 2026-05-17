@@ -3,7 +3,7 @@
    =============================================== */
 :root {
   --user-primary: #0288D1;
-  --user-gradient: linear-gradient(100deg, #26C6DA 0%, #0288D1 100%);
+  --user-gradient: radial-gradient(125% 125% at 50% 90%, #ffffff 40%, #14b8a6 100%);
   --user-dark: #01579B;
   --user-teal: #26C6DA;
   --gold-accent: #FFD700;
@@ -84,7 +84,7 @@ body {
 }
 
 .page-label-bar {
-  background: linear-gradient(100deg, #1aaabd, #0279be);
+  background: var(--user-gradient);
   color: #fff;
   font-size: 13px;
   font-weight: 700;
