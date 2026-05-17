@@ -41,47 +41,57 @@
 
     <main class="user-main">
       <div class="manage-panels">
-        <div class="manage-panel">
-          <div class="panel-title">Reserved</div>
+        <section class="manage-panel" aria-labelledby="reserved-title">
+          <h2 class="panel-title" id="reserved-title">Reserved</h2>
           <div class="panel-table">
-            <div class="panel-header">
-              Book No. / Book Title / Date Reserved / Pick-up Date / Action
+            <div class="panel-header" role="row">
+              <span>Book No.</span>
+              <span>Book Title</span>
+              <span>Date Reserved</span>
+              <span>Action</span>
             </div>
             <div class="panel-body" id="reserved-list"></div>
           </div>
-        </div>
+        </section>
 
-        <div class="manage-panel">
-          <div class="panel-title">Borrowed</div>
+        <section class="manage-panel" aria-labelledby="borrowed-title">
+          <h2 class="panel-title" id="borrowed-title">Borrowed</h2>
           <div class="panel-table">
-            <div class="panel-header">
-              Book No. / Book Title / Accession No. / Borrowed Date / Return Date
+            <div class="panel-header" role="row">
+              <span>Book No.</span>
+              <span>Book Title</span>
+              <span>Borrowed Date</span>
+              <span>Status</span>
             </div>
             <div class="panel-body" id="borrowed-list"></div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <div class="manage-panels">
-        <div class="manage-panel">
-          <div class="panel-title">Cancelled or Failed to Pick-up on Time</div>
+        <section class="manage-panel" aria-labelledby="cancelled-title">
+          <h2 class="panel-title" id="cancelled-title">Cancelled or Failed to Pick-up on Time</h2>
           <div class="panel-table">
-            <div class="panel-header">
-              Book No. / Book Title / Date Reserved / Pick-up Date / Cancelled or Failed
+            <div class="panel-header" role="row">
+              <span>Book No.</span>
+              <span>Book Title</span>
+              <span>Timestamp</span>
+              <span>Status</span>
             </div>
             <div class="panel-body" id="cancelled-list"></div>
           </div>
-        </div>
+        </section>
 
-        <div class="manage-panel">
-          <div class="panel-title">History</div>
+        <section class="manage-panel" aria-labelledby="history-title">
+          <h2 class="panel-title" id="history-title">History</h2>
           <div class="panel-table">
-            <div class="panel-header">
-              Time Stamp / Day / Action
+            <div class="panel-header" role="row">
+              <span>ID</span>
+              <span>Transaction</span>
+              <span>Day</span>
+              <span>Timestamp</span>
             </div>
             <div class="panel-body" id="history-list"></div>
           </div>
-        </div>
+        </section>
       </div>
     </main>
   </div>

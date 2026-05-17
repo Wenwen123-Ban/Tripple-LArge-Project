@@ -20,34 +20,82 @@ function escapeHtml(value) {
   return text.replace(/[&<>"']/g, char => map[char]);
 }
 
+function normalizeDate(value, fallback = '—') {
+  return value || fallback;
+}
+
 /**
- * Creates a generic table row with given columns
+ * Creates a generic dashboard table row with four normalized columns.
  * @param {Array} columns - Array of column values
  * @returns {string} HTML string for table row
  */
 function createTableRow(columns) {
-  const cells = columns.map(col => `<span>${escapeHtml(col)}</span>`).join('');
-  return `<div class="panel-row">${cells}</div>`;
+  const [id, title, date, status] = columns;
+  return `
+    <div class="panel-row">
+      <span class="panel-cell panel-cell--id">${escapeHtml(id || '—')}</span>
+      <span class="panel-cell panel-cell--title">${escapeHtml(title || '—')}</span>
+      <span class="panel-cell panel-cell--date">${escapeHtml(date || '—')}</span>
+      <span class="panel-cell panel-cell--status">${escapeHtml(status || '—')}</span>
+    </div>
+  `;
 }
 
 /**
- * Creates a row for a reserved book with cancel action
+ * Creates a row for a reserved book with cancel action.
  * @param {Object} reservation - Reservation object
  * @returns {string} HTML string for reserved row
  */
 function createReservedRow(reservation) {
   return `
     <div class="panel-row">
-      <span>${escapeHtml(reservation.book_no || '—')}</span>
-      <span>${escapeHtml(reservation.title || '—')}</span>
-      <span>${escapeHtml(reservation.reserved_at || '—')}</span>
-      <span>${escapeHtml(reservation.pickup_date || 'Pending')}</span>
-      <button 
-        class="cancel-btn" 
-        onclick="cancelReservation('${escapeHtml(reservation.id)}')"
-        title="Cancel this reservation">
-        Cancel
-      </button>
+      <span class="panel-cell panel-cell--id">${escapeHtml(reservation.book_no || '—')}</span>
+      <span class="panel-cell panel-cell--title">${escapeHtml(reservation.title || '—')}</span>
+      <span class="panel-cell panel-cell--date">${escapeHtml(normalizeDate(reservation.reserved_at))}</span>
+      <span class="panel-cell panel-cell--action">
+        <button
+          class="cancel-btn"
+          type="button"
+          data-transaction-id="${escapeHtml(reservation.id)}"
+          title="Cancel this reservation">
+          Cancel
+        </button>
+      </span>
+    </div>
+  `;
+}
+
+function createEmptyState(message, iconName) {
+  const icons = {
+    calendar: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="4.5" width="18" height="16" rx="3"></rect>
+        <path d="M8 3v4M16 3v4M3 9h18M8 14h.01M12 14h.01M16 14h.01"></path>
+      </svg>
+    `,
+    book: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"></path>
+        <path d="M4 5.5v16M8 7h8M8 11h6"></path>
+      </svg>
+    `,
+    alert: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3.75 21 19.5H3z"></path>
+        <path d="M12 9v4M12 17h.01"></path>
+      </svg>
+    `,
+    folder: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3.5 7.5A2.5 2.5 0 0 1 6 5h4l2 2.5h6A2.5 2.5 0 0 1 20.5 10v6.5A2.5 2.5 0 0 1 18 19H6a2.5 2.5 0 0 1-2.5-2.5z"></path>
+      </svg>
+    `
+  };
+
+  return `
+    <div class="empty-state">
+      <div class="empty-state__icon">${icons[iconName] || icons.folder}</div>
+      <p>${escapeHtml(message)}</p>
     </div>
   `;
 }
@@ -60,19 +108,19 @@ async function cancelReservation(transactionId) {
   if (!confirm('Cancel this reservation? This action cannot be undone.')) {
     return;
   }
-  
+
   try {
     const response = await fetch('/api/transactions/cancel', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ transaction_id: transactionId })
     });
-    
+
     const result = await response.json();
-    
+
     if (response.ok && result.status === 'cancelled') {
       alert('Reservation cancelled successfully.');
-      loadManageData(); // Refresh the data
+      loadManageData();
     } else {
       alert(result.error || 'Failed to cancel reservation.');
     }
@@ -89,67 +137,62 @@ async function loadManageData() {
   try {
     const response = await fetch('/api/transactions/manage');
     const data = await response.json();
-    
+
     const reservedList = document.getElementById('reserved-list');
     const borrowedList = document.getElementById('borrowed-list');
     const cancelledList = document.getElementById('cancelled-list');
     const historyList = document.getElementById('history-list');
-    
-    // Load reserved books
+
     if (reservedList) {
       if (data.reserved && data.reserved.length > 0) {
         reservedList.innerHTML = data.reserved.map(createReservedRow).join('');
       } else {
-        reservedList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No reservations.</div>';
+        reservedList.innerHTML = createEmptyState('No reservations.', 'calendar');
       }
     }
-    
-    // Load borrowed books
+
     if (borrowedList) {
       if (data.borrowed && data.borrowed.length > 0) {
         borrowedList.innerHTML = data.borrowed.map(book =>
           createTableRow([
-            book.book_no || '—',
+            book.book_no || book.accession_no || '—',
             book.title || '—',
-            book.accession_no || '—',
-            book.borrowed_at || '—',
-            book.due_at || '—'
+            normalizeDate(book.borrowed_at),
+            book.due_at ? `Due ${book.due_at}` : 'Active'
           ])
         ).join('');
       } else {
-        borrowedList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No borrowed books.</div>';
+        borrowedList.innerHTML = createEmptyState('No borrowed books.', 'book');
       }
     }
-    
-    // Load cancelled/failed pickups
+
     if (cancelledList) {
       if (data.cancelled && data.cancelled.length > 0) {
         cancelledList.innerHTML = data.cancelled.map(item =>
           createTableRow([
             item.book_no || '—',
             item.title || '—',
-            item.reserved_at || '—',
-            item.pickup_date || '—',
+            normalizeDate(item.reserved_at || item.pickup_date),
             item.cancel_reason || 'Cancelled'
           ])
         ).join('');
       } else {
-        cancelledList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No cancelled reservations.</div>';
+        cancelledList.innerHTML = createEmptyState('No cancelled reservations.', 'alert');
       }
     }
-    
-    // Load history
+
     if (historyList) {
       if (data.history && data.history.length > 0) {
         historyList.innerHTML = data.history.map(entry =>
           createTableRow([
-            entry.time || '—',
-            entry.day || '—',
-            entry.action || '—'
+            entry.book_no || entry.transaction_id || entry.id || 'LOG',
+            entry.title || entry.action || 'Library transaction',
+            entry.day || entry.date || '—',
+            entry.time || 'Recorded'
           ])
         ).join('');
       } else {
-        historyList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No history.</div>';
+        historyList.innerHTML = createEmptyState('No history.', 'folder');
       }
     }
   } catch (error) {
@@ -160,4 +203,15 @@ async function loadManageData() {
 /**
  * Initialize the page when DOM is ready
  */
-document.addEventListener('DOMContentLoaded', loadManageData);
+document.addEventListener('DOMContentLoaded', () => {
+  loadManageData();
+
+  document.addEventListener('click', event => {
+    const cancelButton = event.target.closest('.cancel-btn');
+    if (!cancelButton) {
+      return;
+    }
+
+    cancelReservation(cancelButton.dataset.transactionId);
+  });
+});

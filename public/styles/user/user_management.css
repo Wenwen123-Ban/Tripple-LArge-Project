@@ -1,74 +1,204 @@
-.manage-panels { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:18px; }
-.manage-panels + .manage-panels { margin-top: 18px; }
-.manage-panel {
-  background:#fff;
-  padding:16px;
-  border-radius:10px;
-  border:1.5px solid var(--dark-navy);
-  box-shadow:none;
-  min-height: 360px;
-  display:flex;
-  flex-direction:column;
+.manage-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+  gap: 24px;
+  align-items: stretch;
 }
-.panel-title {
-  font-size:14px;
-  font-weight:800;
-  color:var(--dark-navy);
-  margin-bottom:12px;
-  padding-bottom:10px;
-  border-bottom:1.5px solid var(--dark-navy);
-}
-.panel-table { width:100%; display:flex; flex-direction:column; min-height:0; flex:1; }
-.panel-header {
-  display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:10px;
-  font-size:11px;
-  font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.03em;
-  padding:12px 10px;
-  background:#f4f4f4;
-  border:1.5px solid var(--dark-navy);
-  border-radius:8px;
-  margin-bottom:10px;
-  color:var(--dark-navy);
-}
-.panel-body { max-height: 320px; overflow-y:auto; border:1.5px solid var(--dark-navy); border-radius:10px; background:#fff; }
-.panel-body:empty::before {
-  content: "No records to display";
-  display:block;
-  text-align:center;
-  color:#94a3b8;
-  font-size:13px;
-  padding:44px 12px;
-}
-.panel-row {
-  display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:10px;
-  font-size:12px;
-  padding:12px 10px;
-  border-bottom:1px solid #eef2f7;
-  align-items:center;
-  transition: background .18s ease;
-}
-.panel-row:hover { background:#f8fbff; }
-.panel-row span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#111; }
-.panel-row button,.panel-row a { padding:6px 10px; border:none; border-radius:8px; cursor:pointer; font-size:11px; font-weight:700; text-decoration:none; transition:.15s; text-align:center; }
-.reserve-action-btn { background:var(--user-primary); color:#fff; }
-.reserve-action-btn:hover { background:var(--user-dark); }
-.cancel-btn { background:#fff; color:var(--status-red); border:1.5px solid var(--status-red) !important; }
-.cancel-btn:hover { background:#dc2626; }
-.return-btn { background:var(--status-green); color:#fff; }
-.return-btn:hover { background:#16a34a; }
 
-@media (max-width: 1100px) {
-  .manage-panels { grid-template-columns: 1fr; }
-  .manage-panel { min-height: 320px; }
+.manage-panel {
+  background: #fff;
+  border: 1px solid #eaedf2;
+  border-radius: 10px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  min-height: 328px;
+  overflow: hidden;
 }
+
+.panel-title {
+  color: #0f2747;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.3;
+  margin: 0;
+  padding: 20px 22px 14px;
+}
+
+.panel-table {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.panel-header,
+.panel-row {
+  display: grid;
+  grid-template-columns: 20% 45% 20% 15%;
+  min-width: 0;
+}
+
+.panel-header {
+  align-items: center;
+  background: #f8fafc;
+  border-bottom: 1px solid #eef2f7;
+  border-top: 1px solid #eef2f7;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  height: 36px;
+  letter-spacing: 0.045em;
+  padding: 0 22px;
+  text-transform: uppercase;
+}
+
+.panel-header span,
+.panel-cell {
+  min-width: 0;
+  overflow: hidden;
+  padding-right: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-header span:last-child,
+.panel-cell:last-child {
+  padding-right: 0;
+}
+
+.panel-body {
+  background: #fff;
+  flex: 1;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.panel-row {
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-size: 13px;
+  min-height: 48px;
+  padding: 0 22px;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.panel-row:hover {
+  background: #fbfdff;
+}
+
+.panel-row:last-child {
+  border-bottom: 0;
+}
+
+.panel-cell--id {
+  color: #0f172a;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.panel-cell--title {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.panel-cell--date,
+.panel-cell--status,
+.panel-cell--action {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cancel-btn {
+  background: #fff;
+  border: 1px solid #ef4444;
+  border-radius: 999px;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 7px 12px;
+  transition: background 0.16s ease, box-shadow 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.cancel-btn:hover,
+.cancel-btn:focus-visible {
+  background: #fef2f2;
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.14);
+  color: #b91c1c;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.empty-state {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  font-weight: 600;
+  justify-content: center;
+  min-height: 188px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.empty-state__icon {
+  color: #cbd5e1;
+  height: 34px;
+  margin-bottom: 12px;
+  width: 34px;
+}
+
+.empty-state__icon svg {
+  display: block;
+  fill: none;
+  height: 100%;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+  width: 100%;
+}
+
+.empty-state p {
+  margin: 0;
+}
+
 @media (max-width: 700px) {
-  .manage-panel { padding: 12px; }
-  .panel-header, .panel-row { gap:8px; font-size:10px; padding:10px 8px; }
-  .panel-row button,.panel-row a { padding:5px 8px; font-size:10px; }
+  .manage-panels {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .manage-panel {
+    min-height: 300px;
+  }
+
+  .panel-title {
+    padding: 18px 16px 12px;
+  }
+
+  .panel-header,
+  .panel-row {
+    grid-template-columns: minmax(84px, 20%) minmax(120px, 45%) minmax(92px, 20%) minmax(72px, 15%);
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .panel-table {
+    overflow-x: auto;
+  }
+
+  .panel-header,
+  .panel-body {
+    min-width: 520px;
+  }
 }
