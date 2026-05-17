@@ -3,20 +3,20 @@
 .manage-panel {
   background:#fff;
   padding:16px;
-  border-radius:14px;
-  border:1px solid #dfe7ef;
-  box-shadow:0 8px 22px rgba(15,23,42,.06);
+  border-radius:10px;
+  border:1.5px solid var(--dark-navy);
+  box-shadow:none;
   min-height: 360px;
   display:flex;
   flex-direction:column;
 }
 .panel-title {
-  font-size:15px;
+  font-size:14px;
   font-weight:800;
   color:var(--dark-navy);
   margin-bottom:12px;
   padding-bottom:10px;
-  border-bottom:2px solid rgba(2,136,209,.2);
+  border-bottom:1.5px solid var(--dark-navy);
 }
 .panel-table { width:100%; display:flex; flex-direction:column; min-height:0; flex:1; }
 .panel-header {
@@ -28,13 +28,13 @@
   text-transform:uppercase;
   letter-spacing:.03em;
   padding:12px 10px;
-  background:#f4f8fc;
-  border:1px solid #e3ebf4;
+  background:#f4f4f4;
+  border:1.5px solid var(--dark-navy);
   border-radius:8px;
   margin-bottom:10px;
-  color:#475569;
+  color:var(--dark-navy);
 }
-.panel-body { max-height: 320px; overflow-y:auto; border:1px solid #edf2f7; border-radius:10px; background:#fff; }
+.panel-body { max-height: 320px; overflow-y:auto; border:1.5px solid var(--dark-navy); border-radius:10px; background:#fff; }
 .panel-body:empty::before {
   content: "No records to display";
   display:block;
@@ -54,11 +54,11 @@
   transition: background .18s ease;
 }
 .panel-row:hover { background:#f8fbff; }
-.panel-row span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#1f2937; }
+.panel-row span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#111; }
 .panel-row button,.panel-row a { padding:6px 10px; border:none; border-radius:8px; cursor:pointer; font-size:11px; font-weight:700; text-decoration:none; transition:.15s; text-align:center; }
 .reserve-action-btn { background:var(--user-primary); color:#fff; }
 .reserve-action-btn:hover { background:var(--user-dark); }
-.cancel-btn { background:var(--status-red); color:#fff; }
+.cancel-btn { background:#fff; color:var(--status-red); border:1.5px solid var(--status-red) !important; }
 .cancel-btn:hover { background:#dc2626; }
 .return-btn { background:var(--status-green); color:#fff; }
 .return-btn:hover { background:#16a34a; }
