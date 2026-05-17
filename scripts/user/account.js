@@ -9,6 +9,12 @@ function generateDynamicBinary(seed = '') {
   return out.slice(0, 360);
 }
 
+function formatVerticalBinary(binary = '') {
+  const digits = String(binary).replace(/\D/g, '');
+  const chunks = digits.match(/.{1,8}/g) || ['01011001'];
+  return chunks.slice(0, 28).join('\n');
+}
+
 function toBinaryString(input = '') {
   return Array.from(String(input)).map((char) => char.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
 }
@@ -24,22 +30,17 @@ function computeStudentFingerprint(studentId = '', registrationDate = '') {
 function renderBinary(studentId, registrationDate, generationNumber = '1') {
   const binaryLeft = document.getElementById('binary-left');
   const binaryRight = document.getElementById('binary-right');
-  const printBinaryTop = document.getElementById('print-binary-top');
-  const printBinaryLeft = document.getElementById('print-binary-left');
 
-  const institutionBinary = toBinaryString('NMSCST').replaceAll(' ', '\n');
   const studentDigits = String(studentId || '').replace(/\D/g, '');
   const year = studentDigits.slice(0, 4) || '2026';
   const entry = studentDigits.slice(-5) || '00000';
   const generation = String(generationNumber || (registrationDate || '').replace(/\D/g, '').slice(-1) || '1').replace(/\D/g, '') || '1';
   const identitySeed = `${year}${entry}${generation}`;
   const identityBinary = toBinaryString(identitySeed);
-  const repeatedIdentityBinary = Array(12).fill(identityBinary).join(' ');
+  const repeatedIdentityBinary = Array(10).fill(identityBinary).join('');
 
-  if (binaryLeft) binaryLeft.textContent = toBinaryString('NMSCST');
-  if (binaryRight) binaryRight.textContent = computeStudentFingerprint(studentId, registrationDate);
-  if (printBinaryTop) printBinaryTop.textContent = repeatedIdentityBinary;
-  if (printBinaryLeft) printBinaryLeft.textContent = institutionBinary;
+  if (binaryLeft) binaryLeft.textContent = formatVerticalBinary(`${toBinaryString('NMSCST')}${repeatedIdentityBinary}`);
+  if (binaryRight) binaryRight.textContent = formatVerticalBinary(computeStudentFingerprint(studentId, registrationDate));
 }
 
 function escapeHtml(value) {
@@ -63,14 +64,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       'c-issued': data.issued_at || '—',
       'member-since': data.issued_at || '—',
       'c-status': data.account_status || 'Good Standing',
-      'p-name': data.full_name || '—',
-      'p-id': data.student_id || '—',
-      'p-lbc': data.lbc_no || '—',
-      'p-course': data.course || 'N/A',
-      'p-year': data.year_level || 'N/A',
-      'p-verified': data.verified_at || '—',
-      'p-issued': data.issued_at || '—',
-      'p-status': data.account_status || 'Good Standing'
     };
 
     Object.entries(fieldMapping).forEach(([id, val]) => {
@@ -88,18 +81,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderBinary(data.student_id || '', data.issued_at || '', data.account_gen_no || '1');
 
     const statusText = (data.account_status || 'Good Standing').toLowerCase();
-    const printableStatus = statusText.includes('due') ? 'With Due' : (statusText.includes('restrict') ? 'Restricted' : 'Good Standing');
-    const printStatusText = document.getElementById('p-status');
-    if (printStatusText) printStatusText.textContent = printableStatus;
     const statusEl = document.getElementById('c-status');
-    const printStatusDot = document.getElementById('p-status-dot');
     if (statusEl) {
       if (statusText.includes('due')) statusEl.style.background = '#b45309';
       else if (statusText.includes('restrict')) statusEl.style.background = '#b91c1c';
       else statusEl.style.background = '#166534';
-    }
-    if (printStatusDot) {
-      printStatusDot.style.background = statusText.includes('due') ? '#f59e0b' : (statusText.includes('restrict') ? '#ef4444' : '#22c55e');
     }
 
     const tx = Array.isArray(data.transactions) ? data.transactions : [];
@@ -123,8 +109,7 @@ function loadTransactionHistory(transactions) {
   const transactionList = document.getElementById('transaction-list');
   if (!transactionList) return;
   if (!transactions.length) {
-    transactionList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No transactions.</div>';
-    renderPrintTransactions([]);
+    transactionList.innerHTML = '<div class="transaction-empty">No transactions.</div>';
     return;
   }
   transactionList.innerHTML = transactions.map(tx => `
@@ -135,28 +120,4 @@ function loadTransactionHistory(transactions) {
       <span>${escapeHtml(tx.date_returned || '—')}</span>
     </div>
   `).join('');
-
-  renderPrintTransactions(transactions);
 }
-
-function renderPrintTransactions(transactions) {
-  const tbody = document.getElementById('print-transaction-body');
-  if (!tbody) return;
-  if (!transactions.length) {
-    tbody.innerHTML = '<tr><td class="print-tx-empty" colspan="4">No transaction records yet.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = transactions.map((tx) => `
-    <tr>
-      <td>${escapeHtml(tx.date_borrowed || '—')}</td>
-      <td>${escapeHtml(tx.book_no || '—')}</td>
-      <td>${escapeHtml(tx.accession_no || '—')}</td>
-      <td>${escapeHtml(tx.date_returned || '-')}</td>
-    </tr>
-  `).join('');
-}
-
-
-document.addEventListener('click', (event) => {
-  if (event.target && event.target.id === 'print-card-btn') window.print();
-});
