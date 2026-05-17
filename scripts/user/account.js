@@ -9,11 +9,23 @@ function generateDynamicBinary(seed = '') {
   return out.slice(0, 360);
 }
 
-function renderBinary(studentId) {
+function toBinaryString(input = '') {
+  return Array.from(String(input)).map((char) => char.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
+}
+
+function computeStudentFingerprint(studentId = '', registrationDate = '') {
+  const seed = `${studentId}|${registrationDate}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+  const normalized = Math.abs(hash).toString(2);
+  return generateDynamicBinary(normalized);
+}
+
+function renderBinary(studentId, registrationDate) {
   const binaryLeft = document.getElementById('binary-left');
-  const binaryTop = document.getElementById('binary-top');
-  if (binaryLeft) binaryLeft.textContent = '01001110 01001101 01010011 01000011 01010011 01010100';
-  if (binaryTop) binaryTop.textContent = generateDynamicBinary(studentId);
+  const binaryRight = document.getElementById('binary-right');
+  if (binaryLeft) binaryLeft.textContent = toBinaryString('NMSCST');
+  if (binaryRight) binaryRight.textContent = computeStudentFingerprint(studentId, registrationDate);
 }
 
 function escapeHtml(value) {
@@ -35,7 +47,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       'c-year': data.year_level || 'N/A',
       'c-verified': data.verified_at || '—',
       'c-issued': data.issued_at || '—',
-      'member-since': data.issued_at || '—'
+      'member-since': data.issued_at || '—',
+      'c-status': data.account_status || 'Good Standing'
     };
 
     Object.entries(fieldMapping).forEach(([id, val]) => {
@@ -50,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ll = document.getElementById('last-login');
     if (ll) ll.textContent = lastLogin;
 
-    renderBinary(data.student_id || '');
+    renderBinary(data.student_id || '', data.issued_at || '');
 
     const tx = Array.isArray(data.transactions) ? data.transactions : [];
     loadTransactionHistory(tx);
@@ -85,3 +98,8 @@ function loadTransactionHistory(transactions) {
     </div>
   `).join('');
 }
+
+
+document.addEventListener('click', (event) => {
+  if (event.target && event.target.id === 'print-card-btn') window.print();
+});
