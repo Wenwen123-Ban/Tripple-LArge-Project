@@ -4,6 +4,7 @@
 :root {
   --user-primary: #0288D1;
   --user-gradient: radial-gradient(125% 125% at 50% 90%, #ffffff 40%, #14b8a6 100%);
+  --user-header-gradient: linear-gradient(100deg, #26C6DA 0%, #0288D1 100%);
   --user-dark: #01579B;
   --user-teal: #26C6DA;
   --dark-navy: #1A1A6E;
@@ -43,7 +44,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  background: linear-gradient(100deg, #26C6DA 0%, #0288D1 100%);
+  background: var(--user-header-gradient);
   flex-shrink: 0;
   height: 52px;
   position: relative;
@@ -82,8 +83,9 @@ body {
 }
 
 .page-label-bar {
-  background: var(--user-gradient);
+  background: var(--user-header-gradient);
   color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.16);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -153,6 +155,44 @@ body {
   transition: all 0.2s ease;
 }
 
+
+.sidebar-icon {
+  display: block;
+  width: 21px;
+  height: 21px;
+  background: currentColor;
+  -webkit-mask: var(--sidebar-icon-mask) center / contain no-repeat;
+  mask: var(--sidebar-icon-mask) center / contain no-repeat;
+}
+
+.sidebar-icon--home {
+  --sidebar-icon-mask: url("/assets/icons/user-nav-home.svg");
+}
+
+.sidebar-icon--manage {
+  --sidebar-icon-mask: url("/assets/icons/user-nav-manage.svg");
+}
+
+.sidebar-icon--card {
+  --sidebar-icon-mask: url("/assets/icons/user-nav-card.svg");
+}
+
+.sidebar-icon--notifications {
+  --sidebar-icon-mask: url("/assets/icons/user-nav-notifications.svg");
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .sidebar-icon-btn:hover {
   transform: translateY(-1px);
   background: #fff;
@@ -174,7 +214,7 @@ body {
   align-items: center;
   justify-content: space-between;
   height: 52px;
-  background: linear-gradient(100deg, #26C6DA 0%, #0288D1 100%);
+  background: var(--user-header-gradient);
   padding: 0 20px;
   flex-shrink: 0;
 }
