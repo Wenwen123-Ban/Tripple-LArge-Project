@@ -2034,6 +2034,32 @@ def login():
     session['student_id'] = student_id
     session['student_name'] = user['full_name']
     session['account_type'] = 'student'
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN last_login_time DATETIME NULL")
+    except mysql.connector.Error as exc:
+        if exc.errno != 1060:
+            raise
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN last_login_ip VARCHAR(80) DEFAULT NULL")
+    except mysql.connector.Error as exc:
+        if exc.errno != 1060:
+            raise
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN last_active DATETIME DEFAULT CURRENT_TIMESTAMP")
+    except mysql.connector.Error as exc:
+        if exc.errno != 1060:
+            raise
+    cursor.execute(
+        """
+        UPDATE students
+        SET last_login_ip = %s,
+            last_login_time = NOW(),
+            last_active = NOW()
+        WHERE student_id = %s
+        """,
+        (_client_ip(), student_id),
+    )
+    db.commit()
     log_security_event(student_id, 'USER_LOGIN_SUCCESS', _client_ip(), 'User logged in successfully', 'student')
     cursor.close()
     return jsonify({'status': 'ok', 'redirect': '/user/books', 'type': 'student', 'account_type': 'student'})

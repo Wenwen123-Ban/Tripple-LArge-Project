@@ -63,6 +63,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       'c-verified': data.verified_at || '—',
       'c-issued': data.issued_at || '—',
       'member-since': data.issued_at || '—',
+      'last-login': data.last_login || '—',
+      'fines': formatCurrency(data.fines || 0),
       'c-status': data.account_status || 'Good Standing',
     };
 
@@ -70,13 +72,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const el = document.getElementById(id);
       if (el) el.textContent = val;
     });
-
-    const now = new Date();
-    const lastLogin = now.toLocaleString('en-US', {
-      month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
-    });
-    const ll = document.getElementById('last-login');
-    if (ll) ll.textContent = lastLogin;
 
     renderBinary(data.student_id || '', data.issued_at || '', data.account_gen_no || '1');
 
@@ -90,19 +85,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const tx = Array.isArray(data.transactions) ? data.transactions : [];
     loadTransactionHistory(tx);
-    updateKpis(tx);
+    updateKpis(tx, data.counters || {});
   } catch (error) {
     console.error('Error loading card data:', error);
   }
 });
 
-function updateKpis(transactions) {
-  const borrowed = transactions.filter(t => (t.status || '').toLowerCase() === 'borrowed').length;
-  const reserved = transactions.filter(t => (t.status || '').toLowerCase() === 'reserved').length;
-  const dueSoon = 0;
-  const overdue = transactions.filter(t => (t.status || '').toLowerCase() === 'overdue').length;
-  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('kpi-borrowed', borrowed || 0); set('kpi-reserved', reserved || 0); set('kpi-due', dueSoon); set('kpi-overdue', overdue || 0);
+function formatCurrency(amount) {
+  const numericAmount = Number(amount) || 0;
+  return `₱${numericAmount.toFixed(2)}`;
+}
+
+function updateKpis(transactions, counters = {}) {
+  const borrowed = counters.borrowed ?? transactions.filter(t => (t.status || '').toLowerCase() === 'borrowed').length;
+  const reserved = counters.reserved ?? transactions.filter(t => (t.status || '').toLowerCase() === 'reserved').length;
+  const dueSoon = counters.due_soon ?? 0;
+  const overdue = counters.overdue ?? transactions.filter(t => (t.status || '').toLowerCase() === 'overdue').length;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = Number(v) || 0; };
+  set('kpi-borrowed', borrowed);
+  set('kpi-reserved', reserved);
+  set('kpi-due', dueSoon);
+  set('kpi-overdue', overdue);
 }
 
 function loadTransactionHistory(transactions) {
