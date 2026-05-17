@@ -35,32 +35,62 @@
     </aside>
 
     <main class="user-main">
-      <div class="card-layout">
-        <div class="library-card">
-          <div class="binary-top" id="binary-top"></div>
-          <div class="binary-left" id="binary-left"></div>
-          <div class="card-content">
-            <p class="card-title-label"><em>Digital Library Card</em></p>
-            <div id="c-name"></div>
-            <div id="c-id"></div>
-            <div id="c-lbc"></div>
-            <div id="c-course"></div>
-            <div id="c-year"></div>
-            <div id="c-verified"></div>
-            <div id="c-issued"></div>
-          </div>
+      <section class="browser-scene">
+        <div class="chrome-topbar">
+          <div class="chrome-dots"><span></span><span></span><span></span></div>
+          <div class="chrome-url">localhost:5000/user/card</div>
         </div>
 
-        <div class="card-transactions">
-          <div class="transaction-header">
-            <span>Date Borrowed</span>
-            <span>Book No.</span>
-            <span>Accession No.</span>
-            <span>Date Returned</span>
-          </div>
-          <div id="transaction-list"></div>
+        <div class="stats-row">
+          <article class="kpi-card"><div class="kpi-title">📚 Books Borrowed</div><div class="kpi-value" id="kpi-borrowed">0</div></article>
+          <article class="kpi-card"><div class="kpi-title">🔖 Reserved</div><div class="kpi-value" id="kpi-reserved">0</div></article>
+          <article class="kpi-card"><div class="kpi-title">🕒 Due Soon</div><div class="kpi-value" id="kpi-due">0</div></article>
+          <article class="kpi-card"><div class="kpi-title">⚠️ Overdue</div><div class="kpi-value" id="kpi-overdue">0</div></article>
         </div>
-      </div>
+
+        <div class="card-layout">
+          <div class="library-card">
+            <div class="binary-top" id="binary-top"></div>
+            <div class="binary-left" id="binary-left"></div>
+            <div class="card-content">
+              <div class="card-header">
+                <img src="/assets/logo/NMSC LOGO.jpg" class="card-logo" alt="NMSCST Logo">
+                <div class="school-name">North Western Mindanao State College of Science and Technology</div>
+              </div>
+              <p>Name: <span id="c-name">—</span></p>
+              <p>ID No: <span id="c-id">—</span></p>
+              <p>LBC No: <span id="c-lbc">—</span></p>
+              <p>Course: <span id="c-course">N/A</span></p>
+              <p>Year: <span id="c-year">N/A</span></p>
+              <p>Status:
+                <span class="status-legend"><span class="dot green"></span>Good Standing</span> /
+                <span class="status-legend"><span class="dot orange"></span>With Due</span> /
+                <span class="status-legend"><span class="dot red"></span>Restricted</span>
+              </p>
+              <p>Verified: <span id="c-verified">—</span></p>
+              <p>Issued: <span id="c-issued">—</span></p>
+              <p class="legalese">This digital library card is non-transferable and is bound exclusively to the verified account of the registered student. It is valid only upon Gmail verification and remains active only while the account holder is in good standing. Present this card to the librarian when borrowing or returning library materials. Each transaction is digitally stamped and secured — return confirmations are verified and traceable to the librarian who processed them.</p>
+              <p class="cyber-warning">Do Not Share Sensitive Data, We will not be responsible in any potential cyber damage.</p>
+              <div class="card-footer"><span>🔒 SECURE CARD</span></div>
+            </div>
+          </div>
+
+          <div class="right-column">
+            <section class="card-transactions">
+              <h3>Transaction History</h3>
+              <div class="transaction-header"><span>Date Borrowed</span><span>Book No.</span><span>Accession No.</span><span>Date Returned</span></div>
+              <div id="transaction-list"></div>
+            </section>
+            <section class="account-status">
+              <h3>Account Status</h3>
+              <p><strong>Status:</strong> <span class="active-pill">✔ Active</span></p>
+              <p><strong>Member Since:</strong> <span id="member-since">—</span></p>
+              <p><strong>Last Login:</strong> <span id="last-login">—</span></p>
+              <p><strong>Fines:</strong> <span id="fines">₱0.00</span></p>
+            </section>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -72,11 +102,8 @@
         College of Science and Technology
       </span>
     </div>
-    <div class="footer-brand">
-      <span class="brand-name">Click &amp; Collect</span>
-      <img src="/assets/logo/Book_logo.png" class="brand-book" alt="Book Logo">
-    </div>
-    <div class="footer-right" id="footer-clock"></div>
+    <div class="footer-brand"><span class="brand-name">Click &amp; Collect</span> <img src="/assets/logo/Book_logo.png" class="brand-book" alt="Book Logo"></div>
+    <div class="footer-right">Sun, 05/17/2026, 10:23:08 AM</div>
   </footer>
 
   <script src="/scripts/user/main.js"></script>
