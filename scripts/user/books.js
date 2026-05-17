@@ -31,37 +31,39 @@ function escapeHtml(value) {
  * @returns {string} HTML string for book card
  */
 function createBookCard(book) {
-  const statusColorMap = {
-    'Available': 'green',
-    'Reserved': 'orange',
-    'Borrowed': 'red',
-    'Due': 'red'
+  const statusMap = {
+    'Available': { className: 'available', label: 'Available' },
+    'Reserved': { className: 'reserved', label: 'Reserved' },
+    'Borrowed': { className: 'borrowed', label: 'Borrowed' },
+    'Due': { className: 'borrowed', label: 'Borrowed' }
   };
-  
-  const statusColor = statusColorMap[book.computed_status] || 'green';
+
+  const status = statusMap[book.computed_status] || statusMap.Available;
   const canReserve = book.computed_status === 'Available';
   const reserveAction = canReserve ? `reserveBook(${book.id})` : 'void(0)';
-  
+
   return `
-    <div class="book-card" data-id="${book.id}">
-      <div class="book-count-badge left">${book.borrow_count || 0}</div>
-      <div class="book-count-badge right">${book.reserve_count || 0}</div>
-      <div class="book-vertical-text left-text">${escapeHtml(book.accession_no || '—')}</div>
-      
-      <div class="book-card-body">
-        <div class="book-title">${escapeHtml(book.title)}</div>
-        <div class="book-category">${escapeHtml(book.category_name || '—')}</div>
-        <div class="status-bar ${statusColor}"></div>
+    <article class="book-card" data-id="${book.id}">
+      <div class="book-card-main">
+        <div class="availability-badge ${status.className}">${status.label}</div>
+
+        <div class="book-card-copy">
+          <h3 class="book-title" title="${escapeHtml(book.title)}">${escapeHtml(book.title)}</h3>
+          <span class="book-category-pill">${escapeHtml(book.category_name || 'Uncategorized')}</span>
+        </div>
+
+        <button
+          class="reserve-btn ${canReserve ? '' : 'disabled'}"
+          ${canReserve ? '' : 'disabled'}
+          onclick="${reserveAction}">
+          Reserve
+        </button>
       </div>
-      
-      <div class="book-vertical-text right-text">${escapeHtml(book.book_no || '—')}</div>
-      <button 
-        class="reserve-btn ${canReserve ? '' : 'disabled'}" 
-        ${canReserve ? '' : 'disabled'} 
-        onclick="${reserveAction}">
-        Reserve
-      </button>
-    </div>
+
+      <aside class="book-card-spine" aria-label="Book number ${escapeHtml(book.book_no || 'unavailable')}">
+        <span class="book-spine-number">${escapeHtml(book.book_no || '—')}</span>
+      </aside>
+    </article>
   `;
 }
 
