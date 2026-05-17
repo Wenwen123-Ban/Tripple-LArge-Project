@@ -24,8 +24,21 @@ function computeStudentFingerprint(studentId = '', registrationDate = '') {
 function renderBinary(studentId, registrationDate) {
   const binaryLeft = document.getElementById('binary-left');
   const binaryRight = document.getElementById('binary-right');
+  const printBinaryTop = document.getElementById('print-binary-top');
+  const printBinaryLeft = document.getElementById('print-binary-left');
+
+  const institutionBinary = toBinaryString('NMSCST').replaceAll(' ', '\n');
+  const studentDigits = String(studentId || '').replace(/\D/g, '');
+  const year = studentDigits.slice(0, 4) || '2026';
+  const entry = studentDigits.slice(-5) || '00000';
+  const generation = String((registrationDate || '').replace(/\D/g, '').slice(-1) || '1');
+  const identitySeed = `${year}${entry}${generation}`;
+  const identityBinary = identitySeed.split('').map((d) => Number(d).toString(2).padStart(4, '0')).join(' ');
+
   if (binaryLeft) binaryLeft.textContent = toBinaryString('NMSCST');
   if (binaryRight) binaryRight.textContent = computeStudentFingerprint(studentId, registrationDate);
+  if (printBinaryTop) printBinaryTop.textContent = `${identityBinary} ${identityBinary} ${identityBinary}`;
+  if (printBinaryLeft) printBinaryLeft.textContent = institutionBinary;
 }
 
 function escapeHtml(value) {
@@ -48,7 +61,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       'c-verified': data.verified_at || '—',
       'c-issued': data.issued_at || '—',
       'member-since': data.issued_at || '—',
-      'c-status': data.account_status || 'Good Standing'
+      'c-status': data.account_status || 'Good Standing',
+      'p-name': data.full_name || '—',
+      'p-id': data.student_id || '—',
+      'p-lbc': data.lbc_no || '—',
+      'p-course': data.course || 'N/A',
+      'p-year': data.year_level || 'N/A',
+      'p-verified': data.verified_at || '—',
+      'p-issued': data.issued_at || '—',
+      'p-status': data.account_status || 'Good Standing'
     };
 
     Object.entries(fieldMapping).forEach(([id, val]) => {
@@ -64,6 +85,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (ll) ll.textContent = lastLogin;
 
     renderBinary(data.student_id || '', data.issued_at || '');
+
+    const statusText = (data.account_status || 'Good Standing').toLowerCase();
+    const statusEl = document.getElementById('c-status');
+    const printStatusDot = document.getElementById('p-status-dot');
+    if (statusEl) {
+      if (statusText.includes('due')) statusEl.style.background = '#b45309';
+      else if (statusText.includes('restrict')) statusEl.style.background = '#b91c1c';
+      else statusEl.style.background = '#166534';
+    }
+    if (printStatusDot) {
+      printStatusDot.style.background = statusText.includes('due') ? '#f59e0b' : (statusText.includes('restrict') ? '#ef4444' : '#22c55e');
+    }
 
     const tx = Array.isArray(data.transactions) ? data.transactions : [];
     loadTransactionHistory(tx);
@@ -87,6 +120,7 @@ function loadTransactionHistory(transactions) {
   if (!transactionList) return;
   if (!transactions.length) {
     transactionList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No transactions.</div>';
+    renderPrintTransactions([]);
     return;
   }
   transactionList.innerHTML = transactions.map(tx => `
@@ -96,6 +130,25 @@ function loadTransactionHistory(transactions) {
       <span>${escapeHtml(tx.accession_no || '—')}</span>
       <span>${escapeHtml(tx.date_returned || '—')}</span>
     </div>
+  `).join('');
+
+  renderPrintTransactions(transactions);
+}
+
+function renderPrintTransactions(transactions) {
+  const tbody = document.getElementById('print-transaction-body');
+  if (!tbody) return;
+  if (!transactions.length) {
+    tbody.innerHTML = '<tr><td class="print-tx-empty" colspan="4">No transaction records yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = transactions.map((tx) => `
+    <tr>
+      <td>${escapeHtml(tx.date_borrowed || '—')}</td>
+      <td>${escapeHtml(tx.book_no || '—')}</td>
+      <td>${escapeHtml(tx.accession_no || '—')}</td>
+      <td>${escapeHtml(tx.date_returned || '-')}</td>
+    </tr>
   `).join('');
 }
 
