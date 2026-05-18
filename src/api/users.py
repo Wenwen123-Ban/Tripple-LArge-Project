@@ -62,14 +62,20 @@ def _ensure_card_columns(cursor):
             action VARCHAR(20) NOT NULL,
             actor_admin_id VARCHAR(40) DEFAULT NULL,
             reserved_at DATETIME DEFAULT NULL,
+            pickup_at DATETIME DEFAULT NULL,
             borrowed_at DATETIME DEFAULT NULL,
             due_at DATETIME DEFAULT NULL,
+            expected_return_at DATETIME DEFAULT NULL,
+            queue_position INT DEFAULT NULL,
             returned_at DATETIME DEFAULT NULL,
             notes TEXT DEFAULT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """
     )
+    _add_column_if_missing(cursor, 'transactions', 'pickup_at', 'DATETIME DEFAULT NULL')
+    _add_column_if_missing(cursor, 'transactions', 'expected_return_at', 'DATETIME DEFAULT NULL')
+    _add_column_if_missing(cursor, 'transactions', 'queue_position', 'INT DEFAULT NULL')
 
 
 def _format_datetime(value, include_time=False):
@@ -420,8 +426,8 @@ def get_user_card():
 
     c.execute(
         """
-        SELECT t.id, t.book_no, t.action, t.reserved_at, t.borrowed_at,
-               t.due_at, t.returned_at, t.created_at, b.title
+        SELECT t.id, t.book_no, t.action, t.reserved_at, t.pickup_at, t.borrowed_at,
+               t.due_at, t.expected_return_at, t.queue_position, t.returned_at, t.created_at, b.title
         FROM transactions t
         LEFT JOIN books b ON b.id = t.book_id
         WHERE t.student_id=%s
@@ -455,11 +461,17 @@ def get_user_card():
         transactions.append({
             'id': tx.get('id'),
             'date_borrowed': _format_datetime(tx.get('borrowed_at') or tx.get('reserved_at'), True) or '—',
+            'reserved_at': _format_datetime(tx.get('reserved_at'), True) or '—',
+            'pickup_date': _format_datetime(tx.get('pickup_at')) or '—',
+            'borrowed_at': _format_datetime(tx.get('borrowed_at'), True) or '—',
             'book_no': tx.get('book_no') or '—',
             'title': tx.get('title') or '—',
             'accession_no': tx.get('book_no') or '—',
             'date_returned': _format_datetime(returned_at, True) or ('Pending' if _active_action(action, returned_at) else '—'),
+            'returned_at': _format_datetime(returned_at, True) or '—',
             'due_at': _format_datetime(due_at, True) or '—',
+            'expected_return_at': _format_datetime(tx.get('expected_return_at'), True) or '—',
+            'queue_position': tx.get('queue_position'),
             'status': status,
         })
 
@@ -467,19 +479,31 @@ def get_user_card():
     is_verified = bool(row.get('is_verified'))
     has_overdue = counters['overdue'] > 0
     account_status = 'Overdue' if has_overdue else ('Good Standing' if is_verified else 'Pending Verification')
+    active_borrows = [tx for tx in transactions if tx.get('status') in ('borrowed', 'overdue')]
+    active_reservations = [tx for tx in transactions if tx.get('status') == 'reserved']
+    borrow_history = [tx for tx in transactions if tx.get('status') not in ('reserved',)]
     payload = {
         **row,
         'issued_at': issued_at,
+        'member_since': issued_at,
         'verified_at': issued_at if is_verified else 'Pending',
         'last_login': _format_datetime(row.get('last_login_time'), True) or '—',
         'account_status': account_status,
         'fines': 0,
+        'active_borrows': active_borrows,
+        'active_reservations': active_reservations,
+        'borrow_history': borrow_history,
         'transactions': transactions,
         'counters': counters,
     }
     for key in ('created_at', 'last_login_time'):
         payload.pop(key, None)
     return jsonify(payload)
+
+
+
+def get_user_profile():
+    return get_user_card()
 
 
 def get_user_notifications():

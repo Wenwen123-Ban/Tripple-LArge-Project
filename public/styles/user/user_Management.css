@@ -1,0 +1,251 @@
+body {
+  background: #f1f5f9;
+}
+
+.account-page {
+  display: grid;
+  gap: 22px;
+}
+
+.profile-hero,
+.profile-card,
+.account-section {
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+}
+
+.profile-hero {
+  align-items: center;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  padding: 28px;
+}
+
+.section-eyebrow {
+  color: #0288d1;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.profile-hero h1,
+.account-section h2,
+.profile-card h2 {
+  color: #0f172a;
+  margin: 0;
+}
+
+.profile-hero h1 {
+  font-size: clamp(28px, 4vw, 40px);
+  letter-spacing: -0.04em;
+}
+
+.profile-subtitle {
+  color: #64748b;
+  font-weight: 600;
+  margin: 10px 0 0;
+  max-width: 680px;
+}
+
+.profile-status {
+  background: #e0f2fe;
+  border: 1px solid #7dd3fc;
+  border-radius: 999px;
+  color: #075985;
+  font-size: 13px;
+  font-weight: 900;
+  padding: 10px 16px;
+  white-space: nowrap;
+}
+
+.profile-status.overdue {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+.profile-grid {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+}
+
+.profile-card {
+  padding: 24px;
+}
+
+.profile-fields {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 20px 0 0;
+}
+
+.profile-fields div {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.profile-fields dt {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profile-fields dd {
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 800;
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.profile-kpis {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.profile-kpis div {
+  background: linear-gradient(135deg, #eff6ff, #ecfeff);
+  border: 1px solid #bfdbfe;
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.profile-kpis strong {
+  color: #0369a1;
+  display: block;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.profile-kpis span {
+  color: #475569;
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  margin-top: 6px;
+  text-transform: uppercase;
+}
+
+.account-section {
+  overflow: hidden;
+}
+
+.section-heading {
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  padding: 22px 24px;
+}
+
+.account-table {
+  overflow-x: auto;
+}
+
+.account-table__head,
+.account-row {
+  display: grid;
+  grid-template-columns: 16% 34% 25% 25%;
+  min-width: 720px;
+}
+
+.account-table__head {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 12px 24px;
+  text-transform: uppercase;
+}
+
+.account-row {
+  align-items: center;
+  border-top: 1px solid #f1f5f9;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 16px 24px;
+}
+
+.account-row span {
+  min-width: 0;
+  overflow: hidden;
+  padding-right: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-row__title {
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.status-pill {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 7px 10px;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.status-pill.borrowed,
+.status-pill.reserved {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-pill.overdue {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-pill.returned {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.empty-state {
+  color: #64748b;
+  font-weight: 700;
+  padding: 28px 24px;
+  text-align: center;
+}
+
+@media (max-width: 850px) {
+  .profile-hero,
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .profile-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-card,
+  .profile-hero,
+  .section-heading {
+    padding: 18px;
+  }
+}

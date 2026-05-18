@@ -49,48 +49,135 @@ function escapeHtml(value) {
   return text.replace(/[&<>"']/g, char => map[char]);
 }
 
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value ?? '—';
+}
+
+async function fetchAccountProfile() {
+  const response = await fetch('/api/users/profile', { credentials: 'same-origin' });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Unable to load account profile.');
+  return data;
+}
+
+function statusClass(status) {
+  const text = String(status || '').toLowerCase();
+  if (text.includes('overdue')) return 'overdue';
+  if (text.includes('return')) return 'returned';
+  if (text.includes('reserv')) return 'reserved';
+  return 'borrowed';
+}
+
+function renderRows(targetId, rows, emptyText, columns) {
+  const target = document.getElementById(targetId);
+  if (!target) return;
+  if (!rows.length) {
+    target.innerHTML = `<div class="empty-state">${escapeHtml(emptyText)}</div>`;
+    return;
+  }
+  target.innerHTML = rows.map(row => `
+    <div class="account-row">
+      ${columns.map(column => column(row)).join('')}
+    </div>
+  `).join('');
+}
+
+function renderProfilePage(data) {
+  setText('profile-student-id', data.student_id);
+  setText('profile-name', data.full_name);
+  setText('profile-lbc', data.lbc_no || '—');
+  setText('profile-course-year', [data.course, data.year_level].filter(Boolean).join(' / ') || '—');
+  setText('profile-email', data.gmail || '—');
+  setText('profile-member-since', data.issued_at || data.member_since || '—');
+
+  const status = data.account_status || 'Good Standing';
+  const statusEl = document.getElementById('profile-status');
+  if (statusEl) {
+    statusEl.textContent = status;
+    statusEl.classList.toggle('overdue', /overdue|restrict/i.test(status));
+  }
+
+  const activeBorrows = data.active_borrows || [];
+  const activeReservations = data.active_reservations || [];
+  const history = data.borrow_history || [];
+  const counters = data.counters || {};
+
+  setText('profile-active-borrows-count', counters.borrowed ?? activeBorrows.length);
+  setText('profile-reserved-count', counters.reserved ?? activeReservations.length);
+  setText('profile-history-count', counters.records ?? history.length);
+
+  renderRows('active-borrows-list', activeBorrows, 'No active borrowed books.', [
+    row => `<span>${escapeHtml(row.book_no || '—')}</span>`,
+    row => `<span class="account-row__title">${escapeHtml(row.title || '—')}</span>`,
+    row => `<span>${escapeHtml(row.borrowed_at || row.date_borrowed || '—')}</span>`,
+    row => `<span><span class="status-pill ${statusClass(row.status)}">${escapeHtml(row.due_at || row.status || 'borrowed')}</span></span>`,
+  ]);
+
+  renderRows('reservations-list', activeReservations, 'No active reservations.', [
+    row => `<span>${escapeHtml(row.book_no || '—')}</span>`,
+    row => `<span class="account-row__title">${escapeHtml(row.title || '—')}</span>`,
+    row => `<span>${escapeHtml(row.pickup_date || row.reserved_at || row.date_borrowed || '—')}</span>`,
+    row => `<span><span class="status-pill reserved">${escapeHtml(row.queue_position ? `Queue #${row.queue_position}` : (row.status || 'reserved'))}</span></span>`,
+  ]);
+
+  renderRows('borrow-history-list', history, 'No borrow history yet.', [
+    row => `<span>${escapeHtml(row.date_borrowed || row.reserved_at || '—')}</span>`,
+    row => `<span class="account-row__title">${escapeHtml(row.title || row.book_no || '—')}</span>`,
+    row => `<span>${escapeHtml(row.date_returned || row.returned_at || '—')}</span>`,
+    row => `<span><span class="status-pill ${statusClass(row.status)}">${escapeHtml(row.status || 'recorded')}</span></span>`,
+  ]);
+}
+
+function renderCardPage(data) {
+  const fieldMapping = {
+    'c-name': data.full_name || '—',
+    'c-id': data.student_id || '—',
+    'c-lbc': data.lbc_no || '—',
+    'c-course': data.course || 'N/A',
+    'c-year': data.year_level || 'N/A',
+    'c-verified': data.verified_at || '—',
+    'c-issued': data.issued_at || '—',
+    'member-since': data.issued_at || '—',
+    'last-login': data.last_login || '—',
+    'fines': formatCurrency(data.fines || 0),
+    'c-status': data.account_status || 'Good Standing',
+  };
+
+  Object.entries(fieldMapping).forEach(([id, val]) => setText(id, val));
+  renderBinary(data.student_id || '', data.issued_at || '', data.account_gen_no || '1');
+
+  const statusText = (data.account_status || 'Good Standing').toLowerCase();
+  const statusEl = document.getElementById('c-status');
+  if (statusEl) {
+    if (statusText.includes('due')) statusEl.style.background = '#b45309';
+    else if (statusText.includes('restrict')) statusEl.style.background = '#b91c1c';
+    else statusEl.style.background = '#166534';
+  }
+
+  const tx = Array.isArray(data.transactions) ? data.transactions : [];
+  loadTransactionHistory(tx);
+  updateKpis(tx, data.counters || {});
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+  const isProfilePage = Boolean(document.querySelector('[data-account-page="profile"]'));
+  const isCardPage = Boolean(document.getElementById('c-id') || document.getElementById('transaction-list'));
+  if (!isProfilePage && !isCardPage) return;
+
   try {
-    const response = await fetch('/api/user/card');
-    const data = await response.json();
-
-    const fieldMapping = {
-      'c-name': data.full_name || '—',
-      'c-id': data.student_id || '—',
-      'c-lbc': data.lbc_no || '—',
-      'c-course': data.course || 'N/A',
-      'c-year': data.year_level || 'N/A',
-      'c-verified': data.verified_at || '—',
-      'c-issued': data.issued_at || '—',
-      'member-since': data.issued_at || '—',
-      'last-login': data.last_login || '—',
-      'fines': formatCurrency(data.fines || 0),
-      'c-status': data.account_status || 'Good Standing',
-    };
-
-    Object.entries(fieldMapping).forEach(([id, val]) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = val;
-    });
-
-    renderBinary(data.student_id || '', data.issued_at || '', data.account_gen_no || '1');
-
-    const statusText = (data.account_status || 'Good Standing').toLowerCase();
-    const statusEl = document.getElementById('c-status');
-    if (statusEl) {
-      if (statusText.includes('due')) statusEl.style.background = '#b45309';
-      else if (statusText.includes('restrict')) statusEl.style.background = '#b91c1c';
-      else statusEl.style.background = '#166534';
-    }
-
-    const tx = Array.isArray(data.transactions) ? data.transactions : [];
-    loadTransactionHistory(tx);
-    updateKpis(tx, data.counters || {});
+    const data = await fetchAccountProfile();
+    if (isProfilePage) renderProfilePage(data);
+    if (isCardPage) renderCardPage(data);
   } catch (error) {
-    console.error('Error loading card data:', error);
+    console.error('Error loading account data:', error);
+    if (isProfilePage) {
+      const main = document.querySelector('[data-account-page="profile"]');
+      if (main) main.insertAdjacentHTML('afterbegin', `<div class="empty-state">${escapeHtml(error.message)}</div>`);
+    }
   }
 });
-
 function formatCurrency(amount) {
   const numericAmount = Number(amount) || 0;
   return `₱${numericAmount.toFixed(2)}`;
