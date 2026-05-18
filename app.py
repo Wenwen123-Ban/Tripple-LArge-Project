@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 # Load environment variables from external .env file for security
 load_dotenv('C:\\CC-Config\\.env')
 
-from src.api import admin, auth, books, users
-from src.api import transactions as tx_api
+from src.api import admin, auth, books, users, urls
+from src.api import transaction as tx_api
 from src.api.auth import (
     build_confirm_url,
     create_confirmation_token_with_cooldown,
@@ -32,10 +32,24 @@ app.config.update(
 
 app.teardown_appcontext(close_db)
 
+
+def register_api_blueprints(flask_app):
+    """Register API blueprints while preserving legacy direct route bindings."""
+    for blueprint in (
+        getattr(auth, 'auth_bp', None),
+        getattr(books, 'books_bp', None),
+        getattr(tx_api, 'transaction_bp', None),
+        getattr(urls, 'api_urls_bp', None),
+    ):
+        if blueprint and blueprint.name not in flask_app.blueprints:
+            flask_app.register_blueprint(blueprint)
+
+
 # Base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PUBLIC_DIR = os.path.join(BASE_DIR, 'public')
 PAGES_DIR = os.path.join(PUBLIC_DIR, 'pages')
+register_api_blueprints(app)
 
 
 @app.before_request

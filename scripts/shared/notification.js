@@ -1,9 +1,10 @@
 /**
- * showNotification(message, type)
- * type: 'success' | 'error' | 'info'
- * Displays a toast that auto-dismisses after 4 seconds.
+ * Shared notification helpers.
+ *
+ * showNotification(message, type) accepts type: 'success' | 'error' | 'info'.
+ * It displays a toast that auto-dismisses after 4 seconds.
  */
-export function showNotification(message, type = 'info') {
+function showNotification(message, type = 'info') {
   const existing = document.getElementById('lbas-toast');
   if (existing) existing.remove();
 
@@ -41,9 +42,15 @@ export function showNotification(message, type = 'info') {
   setTimeout(() => toast.remove(), 4000);
 }
 
-window.showNotification = (titleOrMessage, messageOrType, maybeType) => {
+function showLegacyNotification(titleOrMessage, messageOrType, maybeType) {
   const isLegacyCall = typeof maybeType === 'string';
   const message = isLegacyCall ? messageOrType : titleOrMessage;
   const type = isLegacyCall ? maybeType : messageOrType;
   showNotification(message, type || 'info');
-};
+}
+
+if (typeof window !== 'undefined') {
+  window.showNotification = showLegacyNotification;
+}
+
+export { showLegacyNotification, showNotification };

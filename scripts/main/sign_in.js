@@ -1,3 +1,6 @@
+import { saveSession } from '../../services/state/session.js';
+import { setCurrentUser } from '../../services/state/store.js';
+
 document.addEventListener('DOMContentLoaded', () => {
   const idInputs = document.querySelectorAll('.js-id-no');
   const passwordInput = document.getElementById('signinPassword');
@@ -52,6 +55,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const studentId = document.getElementById('signinIdNo').value.trim();
       const password = passwordInput.value;
 
+      if (!/^\d{4}-\d{5}$/.test(studentId)) {
+        errorMessage.textContent = 'Enter a complete ID No. in 0000-00000 format.';
+        errorMessage.style.display = 'block';
+        errorMessage.classList.add('show');
+        return;
+      }
+
+      if (!password) {
+        errorMessage.textContent = 'Password is required.';
+        errorMessage.style.display = 'block';
+        errorMessage.classList.add('show');
+        return;
+      }
+
       // Show loading state with animation
       loadingMessage.classList.add('show');
       errorMessage.classList.remove('show');
@@ -86,6 +103,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.status === 'ok') {
           const accountType = data.type || data.account_type;
+          const currentUser = data.user || {
+            id: studentId,
+            student_id: studentId,
+            role: accountType,
+            account_type: accountType,
+          };
+
+          saveSession({ token: data.token || data.session_token, user: currentUser });
+          setCurrentUser(currentUser);
           if (accountType === 'admin') {
             // Fade out animation before redirect
             document.body.style.animation = 'fadeOut 0.4s ease-out forwards';

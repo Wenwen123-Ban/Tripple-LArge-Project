@@ -16,7 +16,7 @@ from html import escape
 from urllib.parse import quote
 
 import mysql.connector
-from flask import jsonify, request, session
+from flask import Blueprint, jsonify, request, session
 
 from src.core.db import get_db
 from src.core.security import generate_setup_code, hash_password, verify_password
@@ -2011,6 +2011,10 @@ def login():
     session.pop('admin_name', None)
     session.pop('student_id', None)
     session.pop('student_name', None)
+    session.pop('auth_token', None)
+
+    auth_token = secrets.token_urlsafe(32)
+    session['auth_token'] = auth_token
 
     if user['account_type'] == 'admin':
         session['admin_id'] = student_id
@@ -2029,7 +2033,21 @@ def login():
         db.commit()
         log_security_event(student_id, 'ADMIN_LOGIN_SUCCESS', _client_ip(), 'Admin logged in successfully', 'admin')
         cursor.close()
-        return jsonify({'status': 'ok', 'redirect': '/admin/dashboard', 'type': 'admin', 'account_type': 'admin'})
+        return jsonify({
+            'status': 'ok',
+            'redirect': '/admin/dashboard',
+            'type': 'admin',
+            'account_type': 'admin',
+            'token': auth_token,
+            'session_token': auth_token,
+            'user': {
+                'id': student_id,
+                'admin_id': student_id,
+                'name': user['full_name'],
+                'role': 'admin',
+                'account_type': 'admin',
+            },
+        })
 
     session['student_id'] = student_id
     session['student_name'] = user['full_name']
@@ -2062,7 +2080,21 @@ def login():
     db.commit()
     log_security_event(student_id, 'USER_LOGIN_SUCCESS', _client_ip(), 'User logged in successfully', 'student')
     cursor.close()
-    return jsonify({'status': 'ok', 'redirect': '/user/books', 'type': 'student', 'account_type': 'student'})
+    return jsonify({
+        'status': 'ok',
+        'redirect': '/user/books',
+        'type': 'student',
+        'account_type': 'student',
+        'token': auth_token,
+        'session_token': auth_token,
+        'user': {
+            'id': student_id,
+            'student_id': student_id,
+            'name': user['full_name'],
+            'role': 'student',
+            'account_type': 'student',
+        },
+    })
 
 
 def logout():
@@ -2071,3 +2103,19 @@ def logout():
     log_security_event(actor_id, f"{str(actor_type).upper()}_LOGOUT", _client_ip(), f"{actor_type.title()} logged out", actor_type)
     session.clear()
     return jsonify({'status': 'logged_out', 'redirect': '/main/sign_in'})
+
+
+auth_bp = Blueprint('auth_api', __name__, url_prefix='/api/auth')
+auth_bp.add_url_rule('/register', 'register_student', register_student, methods=['POST'])
+auth_bp.add_url_rule('/prevalidate-registration', 'prevalidate_student_registration', prevalidate_student_registration, methods=['POST'])
+auth_bp.add_url_rule('/check-registration-conflicts', 'check_registration_conflicts', check_registration_conflicts, methods=['POST'])
+auth_bp.add_url_rule('/recovery/request', 'recovery_request', recovery_request, methods=['POST'])
+auth_bp.add_url_rule('/recovery/verify', 'recovery_verify', recovery_verify, methods=['POST'])
+auth_bp.add_url_rule('/login', 'login', login, methods=['POST'])
+auth_bp.add_url_rule('/logout', 'logout', logout, methods=['POST'])
+auth_bp.add_url_rule('/verify-admin-setup', 'verify_admin_setup_code', verify_admin_setup_code, methods=['POST'])
+auth_bp.add_url_rule('/admin/setup-verify', 'verify_admin_setup_code_alias', verify_admin_setup_code, methods=['POST'])
+auth_bp.add_url_rule('/admin-send-confirmation', 'admin_send_confirmation', admin_send_confirmation, methods=['POST'])
+auth_bp.add_url_rule('/check-type', 'check_account_type', check_account_type, methods=['POST'])
+auth_bp.add_url_rule('/admin-recovery/request', 'admin_recovery_request', admin_recovery_request, methods=['POST'])
+auth_bp.add_url_rule('/admin-recovery/verify', 'admin_recovery_verify', admin_recovery_verify, methods=['POST'])
