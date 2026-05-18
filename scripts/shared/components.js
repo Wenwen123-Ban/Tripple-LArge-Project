@@ -1,3 +1,7 @@
+if (window.location.pathname.startsWith('/admin/')) {
+  import('/scripts/admin/auth.js');
+}
+
 async function loadComponent(selector, url, callback) {
   const el = document.querySelector(selector);
   if (!el) return;

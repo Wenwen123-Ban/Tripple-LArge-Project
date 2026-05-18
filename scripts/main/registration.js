@@ -294,25 +294,20 @@ async function saveRegistration() {
   persistRegistrationDraft();
 
   try {
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const result = await res.json();
+    const result = await saveStudentRegistration(payload);
 
-    if (result.status === 'registered') {
-      showNotification('Registration complete! Redirecting...', 'success');
+    if (['registered', 'pending_approval'].includes(result.status)) {
+      showNotification('Registration submitted. Please wait for librarian approval before signing in.', 'success');
       clearRegistrationDraft();
       localStorage.removeItem(REGISTRATION_TOKEN_KEY);
       setTimeout(() => {
         window.location.href = '/main/sign_in';
-      }, 2000);
+      }, 2500);
     } else {
       showNotification(result.error || 'Registration failed.', 'error');
     }
   } catch (err) {
-    showNotification('Could not save registration. Try again.', 'error');
+    showNotification(err.message || 'Could not save registration. Try again.', 'error');
   }
 }
 
@@ -519,7 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Validate LBC
-      if (lbcInput && !validateLbc(lbcInput.value)) {
+      if (lbcInput && lbcInput.value.trim() && !validateLbc(lbcInput.value)) {
         lbcInput.setCustomValidity('Enter a complete LBC No. in YYYY-NNNNN format.');
       } else if (lbcInput) {
         lbcInput.setCustomValidity('');
@@ -546,10 +541,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
+      event.preventDefault();
+
       if (!registrationForm.checkValidity()) {
-        event.preventDefault();
         registrationForm.reportValidity();
+        return;
       }
+
+      if (!confirmationCheckbox?.checked) {
+        showNotification('Please confirm your Gmail before submitting registration.', 'info');
+        return;
+      }
+
+      saveRegistration();
     });
   }
 });

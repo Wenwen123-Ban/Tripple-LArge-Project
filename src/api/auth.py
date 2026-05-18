@@ -1015,8 +1015,8 @@ def send_recovery_email(gmail, name, code, expires_minutes=15):
         smtp.send_message(message)
 
 
-def recovery_request():
-    data = _json_payload()
+def recovery_request(payload=None):
+    data = payload or _json_payload()
     student_id = _clean(data.get('admin_id') or data.get('student_id'))
     lbc_no = _clean(data.get('lbc_no'))
     gmail = _clean(data.get('gmail'))
@@ -1068,8 +1068,8 @@ def recovery_request():
     return jsonify({'status': 'sent'})
 
 
-def recovery_verify():
-    data = _json_payload()
+def recovery_verify(payload=None):
+    data = payload or _json_payload()
     student_id = _clean(data.get('student_id'))
     code = _clean(data.get('code'))
     new_pass = data.get('new_password') or ''
@@ -2097,6 +2097,65 @@ def login():
     })
 
 
+
+def current_session():
+    """Return the active browser session and role for client-side route guards."""
+    account_type = session.get('account_type')
+    auth_token = session.get('auth_token')
+    header = request.headers.get('Authorization', '')
+    supplied_token = header.removeprefix('Bearer ').strip() if header.startswith('Bearer ') else ''
+
+    if not account_type or not auth_token:
+        return jsonify({'authenticated': False, 'error': 'Not authenticated'}), 401
+
+    if supplied_token and supplied_token != auth_token:
+        return jsonify({'authenticated': False, 'error': 'Session token mismatch'}), 401
+
+    if account_type == 'admin' and session.get('admin_id'):
+        return jsonify({
+            'authenticated': True,
+            'account_type': 'admin',
+            'type': 'admin',
+            'user': {
+                'id': session.get('admin_id'),
+                'admin_id': session.get('admin_id'),
+                'name': session.get('admin_name'),
+                'role': 'admin',
+                'account_type': 'admin',
+            },
+        })
+
+    if account_type == 'student' and session.get('student_id'):
+        return jsonify({
+            'authenticated': True,
+            'account_type': 'student',
+            'type': 'student',
+            'user': {
+                'id': session.get('student_id'),
+                'student_id': session.get('student_id'),
+                'name': session.get('student_name'),
+                'role': 'student',
+                'account_type': 'student',
+            },
+        })
+
+    return jsonify({'authenticated': False, 'error': 'Not authenticated'}), 401
+
+
+def recover_account():
+    """Compatibility recovery endpoint for student code request and reset flows."""
+    data = _json_payload()
+    action = _clean(data.get('action') or data.get('step') or '')
+    has_reset_fields = bool(data.get('code') or data.get('recovery_code')) or bool(data.get('new_password'))
+
+    if action in {'verify', 'reset'} or has_reset_fields:
+        normalized = dict(data)
+        if normalized.get('recovery_code') and not normalized.get('code'):
+            normalized['code'] = normalized.get('recovery_code')
+        return recovery_verify(normalized)
+
+    return recovery_request(data)
+
 def logout():
     actor_id = session.get('admin_id') or session.get('student_id') or 'UNKNOWN'
     actor_type = session.get('account_type') or 'unknown'
@@ -2110,6 +2169,8 @@ auth_bp.add_url_rule('/register', 'register_student', register_student, methods=
 auth_bp.add_url_rule('/prevalidate-registration', 'prevalidate_student_registration', prevalidate_student_registration, methods=['POST'])
 auth_bp.add_url_rule('/check-registration-conflicts', 'check_registration_conflicts', check_registration_conflicts, methods=['POST'])
 auth_bp.add_url_rule('/recovery/request', 'recovery_request', recovery_request, methods=['POST'])
+auth_bp.add_url_rule('/recover', 'recover_account', recover_account, methods=['POST'])
+auth_bp.add_url_rule('/session', 'current_session', current_session, methods=['GET'])
 auth_bp.add_url_rule('/recovery/verify', 'recovery_verify', recovery_verify, methods=['POST'])
 auth_bp.add_url_rule('/login', 'login', login, methods=['POST'])
 auth_bp.add_url_rule('/logout', 'logout', logout, methods=['POST'])
