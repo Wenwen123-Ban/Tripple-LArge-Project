@@ -461,3 +461,66 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadCourses();
   await loadUsers();
 });
+
+async function loadPendingRegistrations() {
+  const tbody = document.getElementById('pending-users-tbody');
+  if (!tbody) return;
+  try {
+    const res = await fetch('/api/users/pending');
+    const rows = res.ok ? await res.json() : [];
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No pending registration requests.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map((u) => `<tr>
+      <td>${escapeHtml(u.student_id)}</td>
+      <td>${escapeHtml(u.full_name)}<br><span class="badge-pending">Pending</span></td>
+      <td>${escapeHtml(u.gmail)}</td>
+      <td>${escapeHtml(u.course || 'N/A')} / ${escapeHtml(u.year_level || '—')}</td>
+      <td><button class="btn-approve" onclick="approveRegistration('${escapeHtml(u.student_id)}')">Approve</button><button class="btn-reject" onclick="rejectRegistration('${escapeHtml(u.student_id)}')">Reject</button></td>
+    </tr>`).join('');
+  } catch (err) {
+    console.error('Pending registrations failed:', err);
+  }
+}
+
+async function approveRegistration(studentId) {
+  const res = await fetch(`/api/users/${studentId}/approve`, { method: 'POST' });
+  const data = await res.json().catch(() => ({}));
+  showNotification(res.ok ? 'Registration approved.' : (data.error || 'Approval failed.'), res.ok ? 'success' : 'error');
+  await loadPendingRegistrations();
+  await loadUsers();
+}
+
+async function rejectRegistration(studentId) {
+  if (!confirm('Reject this registration request?')) return;
+  const res = await fetch(`/api/users/${studentId}/reject`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  const data = await res.json().catch(() => ({}));
+  showNotification(res.ok ? 'Registration rejected.' : (data.error || 'Reject failed.'), res.ok ? 'success' : 'error');
+  await loadPendingRegistrations();
+}
+
+async function suspendManagedStudent() {
+  const studentId = document.getElementById('manage-student-id')?.value.trim();
+  if (!studentId) return showNotification('Enter a student ID first.', 'error');
+  if (!confirm(`Suspend ${studentId}?`)) return;
+  const res = await fetch(`/api/users/${studentId}/suspend`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  const data = await res.json().catch(() => ({}));
+  showNotification(res.ok ? 'Student suspended.' : (data.error || 'Suspend failed.'), res.ok ? 'success' : 'error');
+  await loadUsers();
+}
+
+async function resetManagedBorrow() {
+  const studentId = document.getElementById('manage-student-id')?.value.trim();
+  if (!studentId) return showNotification('Enter a student ID first.', 'error');
+  const notes = prompt('Reset note:', 'Manual admin reset') || 'Manual admin reset';
+  const res = await fetch(`/api/users/${studentId}/reset-borrow`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ notes }) });
+  const data = await res.json().catch(() => ({}));
+  showNotification(res.ok ? `Borrow records reset: ${data.records_reset || 0}` : (data.error || 'Reset failed.'), res.ok ? 'success' : 'error');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('suspend-student-btn')?.addEventListener('click', suspendManagedStudent);
+  document.getElementById('reset-borrow-btn')?.addEventListener('click', resetManagedBorrow);
+  loadPendingRegistrations();
+});

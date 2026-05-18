@@ -41,6 +41,37 @@ async function loadLogs() {
   }
 }
 
+
+function renderCompactList(id, rows, renderer, emptyText) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    el.innerHTML = `<p class="empty-report">${emptyText}</p>`;
+    return;
+  }
+  el.innerHTML = rows.map(renderer).join('');
+}
+
+async function loadSecurityReports() {
+  try {
+    const res = await fetch('/api/admin/reports');
+    if (!res.ok) throw new Error('Unable to load reports');
+    const data = await res.json();
+    renderCompactList('login-history-list', data.login_history, (row) => `
+      <div class="compact-report-item"><strong>${row.account_id || 'Unknown'} • ${formatEventType(row.event_type)}</strong><small>${row.created_at || ''} • ${row.ip_address || 'No IP'}</small></div>
+    `, 'No successful logins yet.');
+    renderCompactList('failed-attempts-list', data.failed_attempts, (row) => `
+      <div class="compact-report-item"><strong class="danger-text">${formatEventType(row.event_type)}</strong><small>${row.account_id || 'Unknown'} • ${row.ip_address || 'No IP'} • ${row.created_at || ''}</small><div>${row.description || ''}</div></div>
+    `, 'No failed attempts.');
+    renderCompactList('flagged-books-list', data.flagged_unreturned, (row) => `
+      <div class="compact-report-item"><strong>${row.book_no || '—'} — ${row.title || 'Untitled'}</strong><small>${row.student_id || 'Unknown'} ${row.student_name ? `(${row.student_name})` : ''} • Due ${row.due_at || '—'}</small><div class="danger-text">${row.days_overdue || 0} day(s) overdue</div></div>
+    `, 'No overdue unreturned books.');
+  } catch (err) {
+    console.error('Failed to load reports:', err);
+    showInlineNotification('Unable to load security reports right now.', 'error');
+  }
+}
+
 async function clearLogs() {
   const ok = window.confirm('Clear all web security logs from the list?');
   if (!ok) return;
@@ -127,5 +158,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('#nearest-day-rule, #return-days, #return-hours, #expire-days, #expire-hours, #expire-mins, #expiry-enabled, #expiry-years, #inactive-enabled, #inactive-days, #warn-enabled, #warn-days, #book-delete-grace-mins')
     .forEach((el) => el.addEventListener('change', saveRules));
   loadLogs();
+  loadSecurityReports();
   loadRules();
 });

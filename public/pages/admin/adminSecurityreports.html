@@ -61,6 +61,21 @@
               <div class="log-entries-box" id="logs-list"></div>
             </div>
 
+            <div class="gold-panel report-split-panel">
+              <div class="gold-panel-title">Login History</div>
+              <div class="compact-report-list" id="login-history-list"></div>
+            </div>
+
+            <div class="gold-panel report-split-panel">
+              <div class="gold-panel-title">Failed Attempts</div>
+              <div class="compact-report-list" id="failed-attempts-list"></div>
+            </div>
+
+            <div class="gold-panel report-split-panel">
+              <div class="gold-panel-title">Flagged Unreturned Books</div>
+              <div class="compact-report-list" id="flagged-books-list"></div>
+            </div>
+
             <div class="gold-panel security-health-panel">
               <div class="gold-panel-title panel-title-row">
                 <span>Server Health</span>
@@ -217,6 +232,7 @@
     </footer>
   </div>
 
+  <script type="module" src="/scripts/shared/notification.js"></script>
   <script src="/scripts/admin/shared_init.js"></script>
   <script src="/scripts/admin/reports.js"></script>
 </body>
