@@ -1,11 +1,23 @@
-"""API routes for the Click & Collect backend."""
+"""Central API blueprint registrations and route index helpers."""
 
-from django.urls import path
+from flask import Blueprint, current_app, jsonify
 
-from src.api import auth
+api_urls_bp = Blueprint('api_urls', __name__)
 
-urlpatterns = [
-    path('api/auth/send-confirmation', auth.send_confirmation),
-    path('api/auth/confirm-email', auth.confirm_email),
-    path('api/auth/check-token', auth.check_token),
-]
+
+@api_urls_bp.get('/api/health')
+def health_check():
+    return jsonify({'status': 'ok'})
+
+
+@api_urls_bp.get('/api/routes')
+def route_index():
+    routes = []
+    for rule in current_app.url_map.iter_rules():
+        if str(rule.rule).startswith('/api/'):
+            routes.append({
+                'rule': str(rule.rule),
+                'endpoint': rule.endpoint,
+                'methods': sorted(method for method in rule.methods if method not in {'HEAD', 'OPTIONS'}),
+            })
+    return jsonify(sorted(routes, key=lambda item: (item['rule'], item['endpoint'])))

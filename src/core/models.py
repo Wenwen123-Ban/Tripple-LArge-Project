@@ -1,6 +1,59 @@
-"""Database bootstrap helpers for local testing."""
+"""Core data models and database bootstrap helpers."""
+
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional
 
 from src.core.db import get_db
+
+
+@dataclass(frozen=True)
+class User:
+    id: Optional[int] = None
+    student_id: str = ''
+    full_name: str = ''
+    gmail: str = ''
+    role: str = 'student'
+    lbc_no: Optional[str] = None
+    contact_no: Optional[str] = None
+    course: Optional[str] = None
+    year_level: Optional[str] = None
+    is_verified: bool = False
+
+
+@dataclass(frozen=True)
+class Book:
+    id: Optional[int] = None
+    book_no: str = ''
+    title: str = ''
+    category_id: Optional[int] = None
+    status: str = 'Available'
+    availability_hint: str = 'Available'
+    borrow_count: int = 0
+    reserve_count: int = 0
+
+
+@dataclass(frozen=True)
+class Reservation:
+    id: Optional[int] = None
+    book_id: Optional[int] = None
+    book_no: str = ''
+    student_id: str = ''
+    reserved_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    status: str = 'reserved'
+
+
+@dataclass(frozen=True)
+class BorrowRecord:
+    id: Optional[int] = None
+    book_id: Optional[int] = None
+    book_no: str = ''
+    student_id: str = ''
+    borrowed_at: Optional[datetime] = None
+    due_at: Optional[datetime] = None
+    returned_at: Optional[datetime] = None
+    status: str = 'borrowed'
 
 
 def initialize_schema():
@@ -23,6 +76,8 @@ def initialize_schema():
             gmail VARCHAR(255) NOT NULL UNIQUE,
             is_verified TINYINT(1) DEFAULT 0,
             account_type VARCHAR(20) DEFAULT 'student',
+            last_login_ip VARCHAR(80) DEFAULT NULL,
+            last_login_time DATETIME NULL,
             deleted_at DATETIME DEFAULT NULL,
             deleted_by VARCHAR(40) DEFAULT NULL,
             last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -30,22 +85,6 @@ def initialize_schema():
         )
         """
     )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS pending_confirmations (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            token VARCHAR(255) NOT NULL UNIQUE,
-            gmail VARCHAR(255) NOT NULL,
-            confirmed TINYINT(1) DEFAULT 0,
-            type VARCHAR(20) DEFAULT 'student',
-            setup_code_temp VARCHAR(50) DEFAULT NULL,
-            expires_at DATETIME NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-        """
-    )
-
 
     cursor.execute(
         """
@@ -72,6 +111,78 @@ def initialize_schema():
 
     cursor.execute(
         """
+        CREATE TABLE IF NOT EXISTS categories (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(120) NOT NULL UNIQUE,
+            deleted_at DATETIME DEFAULT NULL,
+            delete_expires_at DATETIME DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS books (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            book_no VARCHAR(60) NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            category_id INT NULL,
+            status VARCHAR(40) DEFAULT 'Available',
+            reserved_count INT DEFAULT 0,
+            borrowed_count INT DEFAULT 0,
+            borrow_count INT DEFAULT 0,
+            reserve_count INT DEFAULT 0,
+            availability_hint VARCHAR(20) DEFAULT 'Available',
+            deleted_at DATETIME DEFAULT NULL,
+            delete_expires_at DATETIME DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_books_category (category_id),
+            UNIQUE KEY uniq_books_no_category (book_no, category_id),
+            CONSTRAINT fk_books_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS transactions (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            book_id INT NOT NULL,
+            book_no VARCHAR(60) NOT NULL,
+            student_id VARCHAR(40) NOT NULL,
+            action VARCHAR(20) NOT NULL,
+            actor_admin_id VARCHAR(40) DEFAULT NULL,
+            reserved_at DATETIME DEFAULT NULL,
+            borrowed_at DATETIME DEFAULT NULL,
+            due_at DATETIME DEFAULT NULL,
+            returned_at DATETIME DEFAULT NULL,
+            notes TEXT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_transactions_student (student_id),
+            INDEX idx_transactions_book (book_id),
+            CONSTRAINT fk_transactions_book FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pending_confirmations (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            token VARCHAR(255) NOT NULL UNIQUE,
+            gmail VARCHAR(255) NOT NULL,
+            confirmed TINYINT(1) DEFAULT 0,
+            type VARCHAR(20) DEFAULT 'student',
+            setup_code_temp VARCHAR(50) DEFAULT NULL,
+            expires_at DATETIME NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS recovery_codes (
             id INT AUTO_INCREMENT PRIMARY KEY,
             student_id VARCHAR(40) NOT NULL,
@@ -88,6 +199,7 @@ def initialize_schema():
         CREATE TABLE IF NOT EXISTS security_logs (
             id INT AUTO_INCREMENT PRIMARY KEY,
             student_id VARCHAR(40) NOT NULL,
+            account_type VARCHAR(20) DEFAULT 'unknown',
             event_type VARCHAR(80) NOT NULL,
             ip_address VARCHAR(80),
             description VARCHAR(255),
@@ -111,6 +223,22 @@ def initialize_schema():
         )
         """
     )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS admin_rules (
+            id INT PRIMARY KEY DEFAULT 1,
+            return_days INT DEFAULT 0,
+            return_hours INT DEFAULT 0,
+            expire_days INT DEFAULT 0,
+            expire_hours INT DEFAULT 0,
+            expire_mins INT DEFAULT 30,
+            book_delete_grace_mins INT DEFAULT 20,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+        """
+    )
+    cursor.execute("INSERT IGNORE INTO admin_rules (id) VALUES (1)")
 
     cursor.execute(
         """

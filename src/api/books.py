@@ -6,7 +6,7 @@ from datetime import datetime
 
 import mysql.connector
 import openpyxl
-from flask import jsonify, request
+from flask import Blueprint, jsonify, request
 
 from src.core.db import get_db
 
@@ -284,3 +284,18 @@ def import_commit():
         elif mode=='upsert' and ex['availability_hint']=='Available': c.execute('UPDATE books SET title=%s, category_id=%s WHERE book_no=%s',(title,cat_id,book_no)); upd+=1
         else: sk+=1
     db.commit(); c.close(); return jsonify({'status':'done','inserted':ins,'updated':upd,'skipped':sk})
+
+
+books_bp = Blueprint('books_api', __name__)
+books_bp.add_url_rule('/api/books', 'get_books', get_books, methods=['GET'])
+books_bp.add_url_rule('/api/books', 'add_book', add_book, methods=['POST'])
+books_bp.add_url_rule('/api/books/<int:id>', 'delete_book', delete_book, methods=['DELETE'])
+books_bp.add_url_rule('/api/books/deleted/recent', 'get_recently_deleted_books', get_recently_deleted_books, methods=['GET'])
+books_bp.add_url_rule('/api/books/<int:id>/restore', 'restore_deleted_book', restore_deleted_book, methods=['POST'])
+books_bp.add_url_rule('/api/books/import/analyze', 'import_analyze', import_analyze, methods=['POST'])
+books_bp.add_url_rule('/api/books/import/commit', 'import_commit', import_commit, methods=['POST'])
+books_bp.add_url_rule('/api/categories', 'get_categories', get_categories, methods=['GET'])
+books_bp.add_url_rule('/api/categories', 'add_category', add_category, methods=['POST'])
+books_bp.add_url_rule('/api/categories/<int:id>', 'delete_category', delete_category, methods=['DELETE'])
+books_bp.add_url_rule('/api/categories/deleted/recent', 'get_recently_deleted_categories', get_recently_deleted_categories, methods=['GET'])
+books_bp.add_url_rule('/api/categories/<int:id>/restore', 'restore_deleted_category', restore_deleted_category, methods=['POST'])
