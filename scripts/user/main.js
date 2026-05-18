@@ -1,3 +1,5 @@
+import('/scripts/user/auth.js');
+
 /**
  * Main.js - Shared User Portal Initialization
  * Handles common functionality like hamburger menu and clock

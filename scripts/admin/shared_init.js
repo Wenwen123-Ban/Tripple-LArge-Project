@@ -1,3 +1,5 @@
+import('/scripts/admin/auth.js');
+
 /* shared_init.js — loaded on every admin page */
 
 document.addEventListener('DOMContentLoaded', () => {

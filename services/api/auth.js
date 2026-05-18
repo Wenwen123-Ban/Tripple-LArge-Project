@@ -59,20 +59,20 @@ export async function checkRegistrationConflicts(payload) {
 }
 
 export async function requestRecoveryCode({ student_id, lbc_no, gmail }) {
-  const response = await fetch(`${AUTH_BASE_URL}/recovery/request`, {
+  const response = await fetch(`${AUTH_BASE_URL}/recover`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ student_id, lbc_no, gmail }),
+    body: JSON.stringify({ action: 'request', student_id, lbc_no, gmail }),
   });
 
   return parseJsonResponse(response);
 }
 
 export async function verifyRecoveryCode({ student_id, code, new_password }) {
-  const response = await fetch(`${AUTH_BASE_URL}/recovery/verify`, {
+  const response = await fetch(`${AUTH_BASE_URL}/recover`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ student_id, code, new_password }),
+    body: JSON.stringify({ action: 'verify', student_id, code, new_password }),
   });
 
   return parseJsonResponse(response);
