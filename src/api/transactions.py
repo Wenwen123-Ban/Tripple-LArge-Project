@@ -7,6 +7,12 @@ import mysql.connector
 from flask import jsonify, request, session
 
 from src.core.db import get_db
+from src.core.notifications import (
+    insert_student_notification,
+    overdue_message,
+    ready_message,
+    send_semaphore_sms,
+)
 
 
 def _add_column_if_missing(cursor, table, column, definition):
@@ -43,6 +49,8 @@ def _ensure_tables(cursor):
     _add_column_if_missing(cursor, 'transactions', 'pickup_at', 'DATETIME DEFAULT NULL')
     _add_column_if_missing(cursor, 'transactions', 'expected_return_at', 'DATETIME DEFAULT NULL')
     _add_column_if_missing(cursor, 'transactions', 'queue_position', 'INT DEFAULT NULL')
+    _add_column_if_missing(cursor, 'transactions', 'ready_sms_sent_at', 'DATETIME DEFAULT NULL')
+    _add_column_if_missing(cursor, 'transactions', 'overdue_sms_sent_at', 'DATETIME DEFAULT NULL')
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS notifications (
@@ -231,6 +239,36 @@ def reserve_book():
     })
 
 
+def _send_ready_alert(cursor, transaction_id):
+    cursor.execute(
+        """
+        SELECT t.id, t.student_id, t.book_no, t.ready_sms_sent_at, b.title, s.full_name, s.contact_no
+        FROM transactions t
+        LEFT JOIN books b ON b.id = t.book_id
+        LEFT JOIN students s ON s.student_id = t.student_id
+        WHERE t.id = %s
+        """,
+        (transaction_id,),
+    )
+    row = cursor.fetchone() or {}
+    if not row or row.get('ready_sms_sent_at'):
+        return {'sent': False, 'skipped': True, 'reason': 'Ready alert already sent or transaction not found'}
+
+    message = ready_message(row.get('full_name'), row.get('title'), row.get('book_no'))
+    insert_student_notification(
+        cursor,
+        row.get('student_id'),
+        'book_ready',
+        'Reserved Book Ready',
+        message,
+        {'transaction_id': transaction_id, 'book_no': row.get('book_no')},
+    )
+    sms_result = send_semaphore_sms(row.get('contact_no'), message)
+    if sms_result.get('sent') or sms_result.get('skipped'):
+        cursor.execute('UPDATE transactions SET ready_sms_sent_at=NOW() WHERE id=%s', (transaction_id,))
+    return sms_result
+
+
 def borrow_book():
     data = request.get_json(silent=True) or {}
     db = get_db(); cursor = db.cursor(dictionary=True); _ensure_tables(cursor)
@@ -238,10 +276,28 @@ def borrow_book():
     if get_book_effective_status(cursor, book_id) != 'Reserved':
         cursor.close(); return jsonify({'error': 'Book must be Reserved before it can be Borrowed.'}), 409
     due_at = calculate_due_at(get_admin_rules(cursor))
-    cursor.execute("""UPDATE transactions SET action='borrowed', borrowed_at=NOW(), due_at=%s WHERE book_id=%s AND student_id=%s AND action='reserved' AND returned_at IS NULL""", (due_at, book_id, student_id))
+    cursor.execute(
+        """
+        SELECT id FROM transactions
+        WHERE book_id=%s AND student_id=%s AND action='reserved' AND returned_at IS NULL
+        ORDER BY COALESCE(pickup_at, reserved_at, created_at) ASC, id ASC
+        LIMIT 1
+        """,
+        (book_id, student_id),
+    )
+    tx = cursor.fetchone()
+    if not tx:
+        cursor.close(); return jsonify({'error': 'Reservation not found.'}), 404
+    cursor.execute(
+        """UPDATE transactions
+        SET action='borrowed', borrowed_at=NOW(), due_at=%s
+        WHERE id=%s""",
+        (due_at, tx['id']),
+    )
     cursor.execute("UPDATE books SET availability_hint='Borrowed', borrow_count=borrow_count+1 WHERE id=%s", (book_id,))
+    sms_result = _send_ready_alert(cursor, tx['id'])
     db.commit(); cursor.close()
-    return jsonify({'status': 'borrowed'})
+    return jsonify({'status': 'borrowed', 'sms': sms_result})
 
 
 def return_book():
@@ -277,7 +333,64 @@ def get_book_history():
 
 
 def notify_borrower():
-    return jsonify({'status': 'sent'})
+    data = request.get_json(silent=True) or {}
+    db = get_db(); cursor = db.cursor(dictionary=True); _ensure_tables(cursor)
+    transaction_id = data.get('transaction_id')
+    if not transaction_id and data.get('book_id') and data.get('student_id'):
+        cursor.execute(
+            """
+            SELECT id FROM transactions
+            WHERE book_id=%s AND student_id=%s AND returned_at IS NULL AND action IN ('reserved', 'borrowed')
+            ORDER BY created_at DESC LIMIT 1
+            """,
+            (data.get('book_id'), data.get('student_id')),
+        )
+        row = cursor.fetchone() or {}
+        transaction_id = row.get('id')
+    if not transaction_id:
+        cursor.close(); return jsonify({'error': 'transaction_id or book/student pair is required'}), 400
+    result = _send_ready_alert(cursor, transaction_id)
+    db.commit(); cursor.close()
+    return jsonify({'status': 'sent' if result.get('sent') or result.get('skipped') else 'failed', 'sms': result})
+
+
+def send_due_overdue_alerts():
+    db = get_db(); cursor = db.cursor(dictionary=True); _ensure_tables(cursor)
+    cursor.execute(
+        """
+        SELECT t.id, t.student_id, t.book_no, t.due_at, b.title, s.full_name, s.contact_no
+        FROM transactions t
+        LEFT JOIN books b ON b.id = t.book_id
+        LEFT JOIN students s ON s.student_id = t.student_id
+        WHERE t.action='borrowed'
+          AND t.returned_at IS NULL
+          AND t.due_at IS NOT NULL
+          AND t.due_at < NOW()
+          AND t.overdue_sms_sent_at IS NULL
+        """
+    )
+    rows = cursor.fetchall()
+    results = []
+    for row in rows:
+        message = overdue_message(row.get('full_name'), row.get('title'), row.get('book_no'), row.get('due_at'))
+        insert_student_notification(
+            cursor,
+            row.get('student_id'),
+            'overdue_alert',
+            'Overdue Book Alert',
+            message,
+            {'transaction_id': row.get('id'), 'book_no': row.get('book_no')},
+        )
+        sms_result = send_semaphore_sms(row.get('contact_no'), message)
+        if sms_result.get('sent') or sms_result.get('skipped'):
+            cursor.execute('UPDATE transactions SET overdue_sms_sent_at=NOW() WHERE id=%s', (row.get('id'),))
+        results.append({'transaction_id': row.get('id'), 'sms': sms_result})
+    db.commit(); cursor.close()
+    return results
+
+
+def run_overdue_notifications():
+    return jsonify({'status': 'ok', 'results': send_due_overdue_alerts()})
 
 def cancel_reservation():
     data = request.get_json(silent=True) or {}

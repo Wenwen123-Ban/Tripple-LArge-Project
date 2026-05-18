@@ -12,6 +12,8 @@ from src.api.transactions import (
     notify_borrower,
     reserve_book,
     return_book,
+    run_overdue_notifications,
+    send_due_overdue_alerts,
 )
 
 transaction_bp = Blueprint('transaction_api', __name__)
@@ -23,6 +25,7 @@ transaction_bp.add_url_rule('/api/transactions/force-return', 'force_return', fo
 transaction_bp.add_url_rule('/api/transactions/cancel', 'cancel_reservation', cancel_reservation, methods=['POST'])
 transaction_bp.add_url_rule('/api/transactions/manage', 'get_manage_transactions', get_manage_transactions, methods=['GET'])
 transaction_bp.add_url_rule('/api/transactions/notify-borrower', 'notify_borrower', notify_borrower, methods=['POST'])
+transaction_bp.add_url_rule('/api/notifications/overdue/run', 'run_overdue_notifications', run_overdue_notifications, methods=['POST'])
 transaction_bp.add_url_rule('/api/books/history', 'get_book_history', get_book_history, methods=['GET'])
 
 __all__ = [
@@ -35,5 +38,7 @@ __all__ = [
     'notify_borrower',
     'reserve_book',
     'return_book',
+    'run_overdue_notifications',
+    'send_due_overdue_alerts',
     'transaction_bp',
 ]

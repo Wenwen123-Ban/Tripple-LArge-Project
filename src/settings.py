@@ -13,3 +13,6 @@ DEFAULT_FROM_EMAIL = os.getenv(
     f'Click & Collect <{EMAIL_HOST_USER}>',
 )
 SITE_URL = os.getenv('SITE_URL', 'http://127.0.0.1:8000')
+
+SEMAPHORE_API_KEY = os.getenv('SEMAPHORE_API_KEY', '')
+SEMAPHORE_SENDER_NAME = os.getenv('SEMAPHORE_SENDER_NAME', '')
