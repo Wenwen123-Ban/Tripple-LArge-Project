@@ -16,7 +16,9 @@ def start_scheduler(app):
 
 
 def check_due_books():
+    from src.api.transactions import send_due_overdue_alerts
     from src.core.db import get_db
+
     db = get_db(); cur = db.cursor(dictionary=True)
     cur.execute("""SELECT t.*, b.title, b.book_no, s.full_name FROM transactions t JOIN books b ON t.book_id=b.id JOIN students s ON t.student_id=s.student_id WHERE t.action='borrowed' AND t.returned_at IS NULL AND t.due_at IS NOT NULL AND t.due_at < NOW()""")
     overdue = cur.fetchall()
@@ -25,3 +27,4 @@ def check_due_books():
         for a in cur.fetchall():
             cur.execute("""INSERT INTO notifications (recipient_id,type,title,message) VALUES (%s,'due_alert',%s,%s)""", (a['admin_id'], f"Overdue: {row['title']}", f"{row['full_name']} — due {row['due_at']}"))
     db.commit(); cur.close()
+    send_due_overdue_alerts()

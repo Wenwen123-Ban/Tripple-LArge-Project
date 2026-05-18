@@ -28,6 +28,8 @@ app.secret_key = os.getenv('FLASK_SECRET') or 'dev-fallback-change-this'
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
+    SEMAPHORE_API_KEY=os.getenv('SEMAPHORE_API_KEY', ''),
+    SEMAPHORE_SENDER_NAME=os.getenv('SEMAPHORE_SENDER_NAME', ''),
 )
 
 app.teardown_appcontext(close_db)
@@ -374,6 +376,7 @@ app.add_url_rule('/api/transactions/return','return_book',tx_api.return_book,met
 app.add_url_rule('/api/transactions/force-return','force_return',tx_api.force_return,methods=['POST'])
 app.add_url_rule('/api/books/history','get_book_history',tx_api.get_book_history,methods=['GET'])
 app.add_url_rule('/api/transactions/notify-borrower','notify_borrower',tx_api.notify_borrower,methods=['POST'])
+app.add_url_rule('/api/notifications/overdue/run','run_overdue_notifications',tx_api.run_overdue_notifications,methods=['POST'])
 app.add_url_rule('/api/books/import/analyze','import_analyze',books.import_analyze,methods=['POST'])
 app.add_url_rule('/api/books/import/commit','import_commit',books.import_commit,methods=['POST'])
 app.add_url_rule('/api/admin/dashboard-stats','get_dashboard_stats',admin.get_dashboard_stats,methods=['GET'])

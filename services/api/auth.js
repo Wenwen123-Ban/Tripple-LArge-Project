@@ -108,3 +108,43 @@ export async function verifyAdminRecoveryCode({ student_id, gmail_code, recovery
 
   return parseJsonResponse(response);
 }
+
+export async function login(payload) {
+  const response = await fetch(`${AUTH_BASE_URL}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function logout() {
+  const response = await fetch(`${AUTH_BASE_URL}/logout`, {
+    method: 'POST',
+    credentials: 'same-origin',
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function getCurrentSession(headers = {}) {
+  const response = await fetch(`${AUTH_BASE_URL}/session`, {
+    method: 'GET',
+    headers,
+    credentials: 'same-origin',
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function verifyAdminSetup(payload) {
+  const response = await fetch(`${AUTH_BASE_URL}/verify-admin-setup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
+}
