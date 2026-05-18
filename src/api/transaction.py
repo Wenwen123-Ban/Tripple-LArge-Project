@@ -16,6 +16,7 @@ from src.api.transactions import (
 
 transaction_bp = Blueprint('transaction_api', __name__)
 transaction_bp.add_url_rule('/api/transactions/reserve', 'reserve_book', reserve_book, methods=['POST'])
+transaction_bp.add_url_rule('/api/transaction/reserve', 'reserve_book_singular', reserve_book, methods=['POST'])
 transaction_bp.add_url_rule('/api/transactions/borrow', 'borrow_book', borrow_book, methods=['POST'])
 transaction_bp.add_url_rule('/api/transactions/return', 'return_book', return_book, methods=['POST'])
 transaction_bp.add_url_rule('/api/transactions/force-return', 'force_return', force_return, methods=['POST'])

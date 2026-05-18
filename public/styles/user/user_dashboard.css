@@ -193,3 +193,148 @@
   .book-card { min-height: 220px; }
   .legend-strip { flex-wrap: wrap; gap: 10px; }
 }
+
+.book-author {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 6px 0 10px;
+}
+
+.book-grid-message {
+  background: #ffffff;
+  border: 1px dashed #94a3b8;
+  border-radius: 14px;
+  color: #475569;
+  font-weight: 700;
+  grid-column: 1 / -1;
+  padding: 32px;
+  text-align: center;
+}
+
+.book-grid-message.error {
+  border-color: #ef4444;
+  color: #b91c1c;
+}
+
+.category-chip.active {
+  background: var(--user-primary, #0288d1);
+  color: #ffffff;
+}
+
+.reserve-dialog {
+  border: 0;
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 0;
+}
+
+.reserve-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(2px);
+}
+
+.reserve-dialog__panel {
+  background: #ffffff;
+  color: #0f172a;
+  padding: 28px;
+  position: relative;
+}
+
+.reserve-dialog__close {
+  background: transparent;
+  border: 0;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 26px;
+  position: absolute;
+  right: 18px;
+  top: 14px;
+}
+
+.reserve-dialog__eyebrow {
+  color: var(--user-primary, #0288d1);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.reserve-dialog h2 {
+  font-size: 24px;
+  margin: 0 32px 8px 0;
+}
+
+.reserve-dialog__book {
+  color: #475569;
+  font-weight: 700;
+  margin: 0 0 18px;
+}
+
+.reserve-dialog__field {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.reserve-dialog__field input {
+  border: 1.5px solid #0f172a;
+  border-radius: 10px;
+  font: inherit;
+  padding: 11px 12px;
+}
+
+.reserve-dialog__hint {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 14px 0 0;
+}
+
+.reserve-dialog__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin: 22px 0 0;
+  padding: 0;
+}
+
+.reserve-dialog__primary,
+.reserve-dialog__secondary {
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 900;
+  padding: 10px 16px;
+}
+
+.reserve-dialog__primary {
+  background: var(--user-primary, #0288d1);
+  border: 1px solid var(--user-primary, #0288d1);
+  color: #ffffff;
+}
+
+.reserve-dialog__secondary {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+}
+
+.trend-card,
+.trend-empty {
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.trend-card span,
+.trend-empty {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}

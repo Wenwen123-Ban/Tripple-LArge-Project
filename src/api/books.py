@@ -36,6 +36,8 @@ def _ensure_tables(cursor):
         if field_name:
             cols.add(str(field_name).strip().lower())
 
+    if 'author' not in cols:
+        cursor.execute("ALTER TABLE books ADD COLUMN author VARCHAR(160) DEFAULT NULL")
     if 'availability_hint' not in cols:
         try:
             cursor.execute("ALTER TABLE books ADD COLUMN availability_hint VARCHAR(20) DEFAULT 'Available'")
@@ -157,7 +159,7 @@ def get_books():
     status=request.args.get('status','all'); category=request.args.get('category','all'); sort=request.args.get('sort','title_asc'); search=request.args.get('search','').strip(); page=int(request.args.get('page',1)); per_page=int(request.args.get('per_page',50)); off=(page-1)*per_page
     db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c)
     cond=['1=1']; p=[]
-    if search: cond.append('(b.book_no LIKE %s OR b.title LIKE %s OR c.name LIKE %s)'); lk=f'%{search}%'; p += [lk,lk,lk]
+    if search: cond.append('(b.book_no LIKE %s OR b.title LIKE %s OR b.author LIKE %s OR c.name LIKE %s)'); lk=f'%{search}%'; p += [lk,lk,lk,lk]
     if category!='all': cond.append('b.category_id=%s'); p.append(category)
     order={'title_asc':'b.title ASC','title_desc':'b.title DESC','status':'b.availability_hint ASC','most_borrowed':'b.borrow_count DESC','least_borrowed':'b.borrow_count ASC'}.get(sort,'b.title ASC')
     c.execute(f"""SELECT b.*, c.name AS category_name, b.availability_hint AS computed_status FROM books b LEFT JOIN categories c ON b.category_id=c.id WHERE b.deleted_at IS NULL AND {' AND '.join(cond)} ORDER BY {order} LIMIT %s OFFSET %s""", p+[per_page,off])
@@ -173,10 +175,10 @@ def get_books():
     c.close(); return jsonify(rows)
 
 def add_book():
-    d=_payload(); book_no=str(d.get('book_no') or '').strip(); title=str(d.get('title') or '').strip(); category_id=d.get('category_id') or None
+    d=_payload(); book_no=str(d.get('book_no') or '').strip(); title=str(d.get('title') or '').strip(); author=str(d.get('author') or '').strip() or None; category_id=d.get('category_id') or None
     if not book_no or not title: return jsonify({'error':'Book number and title are required'}),400
     db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c)
-    try: c.execute("INSERT INTO books (book_no,title,category_id,status,availability_hint) VALUES (%s,%s,%s,%s,%s)",(book_no,title,category_id,d.get('status') or 'Available',d.get('status') or 'Available')); db.commit(); return jsonify({'id':c.lastrowid,'book_no':book_no,'title':title}),201
+    try: c.execute("INSERT INTO books (book_no,title,author,category_id,status,availability_hint) VALUES (%s,%s,%s,%s,%s,%s)",(book_no,title,author,category_id,d.get('status') or 'Available',d.get('status') or 'Available')); db.commit(); return jsonify({'id':c.lastrowid,'book_no':book_no,'title':title,'author':author}),201
     except mysql.connector.IntegrityError: db.rollback(); return jsonify({'error':'Duplicate book number in the same category is not allowed'}),409
     finally: c.close()
 
@@ -185,6 +187,7 @@ def update_book(id):
     d = _payload()
     book_no = str(d.get('book_no') or '').strip()
     title = str(d.get('title') or '').strip()
+    author = str(d.get('author') or '').strip() or None
     category_id = d.get('category_id') or None
     status = str(d.get('status') or 'Available').strip()
     if not book_no or not title:
@@ -194,10 +197,10 @@ def update_book(id):
         c.execute(
             """
             UPDATE books
-            SET book_no=%s, title=%s, category_id=%s, status=%s, availability_hint=%s
+            SET book_no=%s, title=%s, author=%s, category_id=%s, status=%s, availability_hint=%s
             WHERE id=%s AND deleted_at IS NULL
             """,
-            (book_no, title, category_id, status, status, id),
+            (book_no, title, author, category_id, status, status, id),
         )
         if c.rowcount == 0:
             db.rollback(); return jsonify({'error': 'Book not found'}), 404
