@@ -368,6 +368,7 @@ app.add_url_rule('/api/admin/server-health', 'api_admin_server_health', admin.se
 from src.core.scheduler import start_scheduler
 
 app.add_url_rule('/api/transactions/reserve','reserve_book',tx_api.reserve_book,methods=['POST'])
+app.add_url_rule('/api/transaction/reserve','reserve_book_singular',tx_api.reserve_book,methods=['POST'])
 app.add_url_rule('/api/transactions/borrow','borrow_book',tx_api.borrow_book,methods=['POST'])
 app.add_url_rule('/api/transactions/return','return_book',tx_api.return_book,methods=['POST'])
 app.add_url_rule('/api/transactions/force-return','force_return',tx_api.force_return,methods=['POST'])
@@ -380,6 +381,7 @@ app.add_url_rule('/api/admin/dashboard-stats','get_dashboard_stats',admin.get_da
 app.add_url_rule('/api/transactions/cancel','cancel_reservation',tx_api.cancel_reservation,methods=['POST'])
 app.add_url_rule('/api/transactions/manage','get_manage_transactions',tx_api.get_manage_transactions,methods=['GET'])
 app.add_url_rule('/api/user/card','get_user_card',users.get_user_card,methods=['GET'])
+app.add_url_rule('/api/users/profile','get_user_profile',users.get_user_profile,methods=['GET'])
 app.add_url_rule('/api/user/notifications','get_user_notifications',users.get_user_notifications,methods=['GET'])
 app.add_url_rule('/api/user/notifications/clear','clear_user_notifications',users.clear_user_notifications,methods=['POST'])
 
