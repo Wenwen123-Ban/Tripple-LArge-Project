@@ -180,6 +180,33 @@ def add_book():
     except mysql.connector.IntegrityError: db.rollback(); return jsonify({'error':'Duplicate book number in the same category is not allowed'}),409
     finally: c.close()
 
+
+def update_book(id):
+    d = _payload()
+    book_no = str(d.get('book_no') or '').strip()
+    title = str(d.get('title') or '').strip()
+    category_id = d.get('category_id') or None
+    status = str(d.get('status') or 'Available').strip()
+    if not book_no or not title:
+        return jsonify({'error': 'Book number and title are required'}), 400
+    db = get_db(); c = db.cursor(dictionary=True); _ensure_tables(c)
+    try:
+        c.execute(
+            """
+            UPDATE books
+            SET book_no=%s, title=%s, category_id=%s, status=%s, availability_hint=%s
+            WHERE id=%s AND deleted_at IS NULL
+            """,
+            (book_no, title, category_id, status, status, id),
+        )
+        if c.rowcount == 0:
+            db.rollback(); return jsonify({'error': 'Book not found'}), 404
+        db.commit(); return jsonify({'status': 'updated', 'id': id})
+    except mysql.connector.IntegrityError:
+        db.rollback(); return jsonify({'error': 'Duplicate book number in the same category is not allowed'}), 409
+    finally:
+        c.close()
+
 def delete_book(id):
     db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); _purge_expired_deleted_books(c)
     mins = _get_delete_grace_minutes(c)
@@ -289,6 +316,7 @@ def import_commit():
 books_bp = Blueprint('books_api', __name__)
 books_bp.add_url_rule('/api/books', 'get_books', get_books, methods=['GET'])
 books_bp.add_url_rule('/api/books', 'add_book', add_book, methods=['POST'])
+books_bp.add_url_rule('/api/books/<int:id>', 'update_book', update_book, methods=['PATCH'])
 books_bp.add_url_rule('/api/books/<int:id>', 'delete_book', delete_book, methods=['DELETE'])
 books_bp.add_url_rule('/api/books/deleted/recent', 'get_recently_deleted_books', get_recently_deleted_books, methods=['GET'])
 books_bp.add_url_rule('/api/books/<int:id>/restore', 'restore_deleted_book', restore_deleted_book, methods=['POST'])

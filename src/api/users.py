@@ -302,6 +302,98 @@ def delete_user(student_id):
 
     return jsonify({'status': 'deleted'})
 
+def _ensure_student_state(cursor):
+    _ensure_account_type(cursor)
+    for ddl in (
+        "ALTER TABLE students ADD COLUMN account_state VARCHAR(20) DEFAULT 'active'",
+        "ALTER TABLE students ADD COLUMN suspended_at DATETIME NULL",
+        "ALTER TABLE students ADD COLUMN suspended_by VARCHAR(40) DEFAULT NULL",
+    ):
+        try:
+            cursor.execute(ddl)
+        except mysql.connector.Error as exc:
+            if exc.errno != 1060:
+                raise
+
+
+def get_pending_students():
+    db = get_db(); cursor = db.cursor(dictionary=True); _ensure_student_state(cursor); _ensure_deletion_columns(cursor)
+    cursor.execute(
+        """
+        SELECT student_id, full_name, lbc_no, gmail, course, year_level, address, contact_no, created_at
+        FROM students
+        WHERE deleted_at IS NULL
+          AND is_verified = 0
+          AND COALESCE(account_state, 'pending') NOT IN ('suspended', 'rejected')
+        ORDER BY created_at ASC
+        """
+    )
+    rows = cursor.fetchall(); cursor.close()
+    for row in rows:
+        if row.get('created_at'):
+            row['created_at'] = row['created_at'].strftime('%m/%d/%Y')
+    return jsonify(rows)
+
+
+def approve_student(student_id):
+    db = get_db(); cursor = db.cursor(dictionary=True); _ensure_student_state(cursor)
+    cursor.execute(
+        "UPDATE students SET is_verified=1, account_state='active' WHERE student_id=%s AND deleted_at IS NULL",
+        (student_id,),
+    )
+    db.commit(); ok = cursor.rowcount > 0; cursor.close()
+    return jsonify({'status': 'approved' if ok else 'not_found'}), (200 if ok else 404)
+
+
+def reject_student(student_id):
+    db = get_db(); cursor = db.cursor(dictionary=True); _ensure_student_state(cursor); _ensure_deletion_columns(cursor)
+    cursor.execute(
+        "UPDATE students SET account_state='rejected', deleted_at=NOW(), deleted_by=%s WHERE student_id=%s AND deleted_at IS NULL",
+        (request.get_json(silent=True) or {}).get('admin_id'), student_id,
+    )
+    db.commit(); ok = cursor.rowcount > 0; cursor.close()
+    return jsonify({'status': 'rejected' if ok else 'not_found'}), (200 if ok else 404)
+
+
+def suspend_student(student_id):
+    data = request.get_json(silent=True) or {}
+    db = get_db(); cursor = db.cursor(dictionary=True); _ensure_student_state(cursor)
+    cursor.execute(
+        """
+        UPDATE students
+        SET is_verified=0, account_state='suspended', suspended_at=NOW(), suspended_by=%s
+        WHERE student_id=%s AND deleted_at IS NULL
+        """,
+        (data.get('admin_id'), student_id),
+    )
+    db.commit(); ok = cursor.rowcount > 0; cursor.close()
+    return jsonify({'status': 'suspended' if ok else 'not_found'}), (200 if ok else 404)
+
+
+def reset_student_borrow(student_id):
+    data = request.get_json(silent=True) or {}
+    notes = data.get('notes') or 'Admin reset borrower record'
+    db = get_db(); cursor = db.cursor(dictionary=True); _ensure_card_columns(cursor)
+    cursor.execute(
+        "SELECT DISTINCT book_id FROM transactions WHERE student_id=%s AND returned_at IS NULL AND action IN ('reserved','borrowed')",
+        (student_id,),
+    )
+    book_ids = [row['book_id'] for row in cursor.fetchall()]
+    cursor.execute(
+        """
+        UPDATE transactions
+        SET action='force_returned', returned_at=NOW(), notes=%s
+        WHERE student_id=%s AND returned_at IS NULL AND action IN ('reserved','borrowed')
+        """,
+        (notes, student_id),
+    )
+    affected = cursor.rowcount
+    if book_ids:
+        placeholders = ','.join(['%s'] * len(book_ids))
+        cursor.execute(f"UPDATE books SET status='Available', availability_hint='Available' WHERE id IN ({placeholders})", book_ids)
+    db.commit(); cursor.close()
+    return jsonify({'status': 'reset', 'records_reset': affected})
+
 def get_user_card():
     student_id = session.get('student_id') or request.args.get('student_id')
     if not student_id:

@@ -9,3 +9,4 @@
 .reservation-tables-row{display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;min-height:0}
 .table-left-wrapper{padding-right:10px;border-right:2px solid #C8A800;overflow-y:auto}
 .table-right-wrapper{padding-left:10px;overflow-y:auto}
+.dashboard-status-row{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:10px;margin:10px 0}.mini-stat{background:#fff;border:2px solid #c8a800;border-radius:10px;padding:10px;text-align:center;color:#3d1f63}.mini-stat span{display:block;font-size:12px;font-weight:700}.mini-stat strong{display:block;font-size:26px;margin-top:4px}.mini-stat.overdue strong{color:#dc3545}.btn-row-action{border:1px solid #5b2d8e;background:#fff;color:#3d1f63;border-radius:4px;padding:3px 8px;cursor:pointer}.btn-force{background:#dc3545;color:#fff;border-color:#dc3545}@media(max-width:800px){.dashboard-status-row{grid-template-columns:repeat(2,1fr)}}

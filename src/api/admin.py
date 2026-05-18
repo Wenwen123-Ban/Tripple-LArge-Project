@@ -465,6 +465,80 @@ def finalize_admin_deletion():
     return jsonify({'status': 'deleted'})
 
 
+def _fmt_admin_dt(value):
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value.strftime('%m/%d/%Y %I:%M %p')
+    return str(value)
+
+
+def get_security_reports():
+    """Return grouped security data for the admin reports page."""
+    db = get_db()
+    cur = db.cursor(dictionary=True)
+    _ensure_tables(cur)
+
+    cur.execute(
+        """
+        SELECT COALESCE(account_id, student_id) AS account_id, COALESCE(account_type, 'unknown') AS account_type,
+               event_type, ip_address, description, created_at
+        FROM security_logs
+        WHERE event_type IN ('ADMIN_LOGIN_SUCCESS', 'USER_LOGIN_SUCCESS')
+           OR event_type LIKE '%LOGOUT%'
+        ORDER BY created_at DESC
+        LIMIT 50
+        """
+    )
+    login_history = cur.fetchall()
+
+    cur.execute(
+        """
+        SELECT COALESCE(account_id, student_id) AS account_id, COALESCE(account_type, 'unknown') AS account_type,
+               event_type, ip_address, description, created_at
+        FROM security_logs
+        WHERE event_type LIKE '%FAIL%'
+           OR event_type LIKE '%INVALID%'
+           OR event_type LIKE '%NOT_FOUND%'
+           OR event_type LIKE '%BRUTE%'
+        ORDER BY created_at DESC
+        LIMIT 50
+        """
+    )
+    failed_attempts = cur.fetchall()
+
+    try:
+        cur.execute(
+            """
+            SELECT t.id, t.book_id, t.book_no, b.title, t.student_id, s.full_name AS student_name, t.borrowed_at, t.due_at,
+                   TIMESTAMPDIFF(DAY, t.due_at, NOW()) AS days_overdue
+            FROM transactions t
+            LEFT JOIN books b ON b.id = t.book_id
+            LEFT JOIN students s ON s.student_id = t.student_id
+            WHERE t.action='borrowed' AND t.returned_at IS NULL AND t.due_at IS NOT NULL AND t.due_at < NOW()
+            ORDER BY t.due_at ASC
+            LIMIT 50
+            """
+        )
+        flagged_books = cur.fetchall()
+    except mysql.connector.Error:
+        flagged_books = []
+
+    cur.close()
+    for rows in (login_history, failed_attempts):
+        for row in rows:
+            row['created_at'] = _fmt_admin_dt(row.get('created_at'))
+    for row in flagged_books:
+        row['borrowed_at'] = _fmt_admin_dt(row.get('borrowed_at'))
+        row['due_at'] = _fmt_admin_dt(row.get('due_at'))
+        row['days_overdue'] = max(0, int(row.get('days_overdue') or 0))
+
+    return jsonify({
+        'login_history': login_history,
+        'failed_attempts': failed_attempts,
+        'flagged_unreturned': flagged_books,
+    })
+
 def get_notifications():
     admin_id = session.get('admin_id')
     if not admin_id:
@@ -603,8 +677,37 @@ def get_dashboard_stats():
     cur.execute('SELECT availability_hint, COUNT(*) AS cnt FROM books GROUP BY availability_hint')
     status_rows = {r['availability_hint']: r['cnt'] for r in cur.fetchall()}
 
+    cur.execute("""SELECT COUNT(*) AS cnt FROM transactions WHERE action='reserved' AND returned_at IS NULL""")
+    pending_count = (cur.fetchone() or {}).get('cnt', 0)
+    cur.execute("""SELECT COUNT(*) AS cnt FROM transactions WHERE action='borrowed' AND returned_at IS NULL""")
+    active_borrow_count = (cur.fetchone() or {}).get('cnt', 0)
     cur.execute("""SELECT COUNT(*) AS cnt FROM transactions WHERE action='borrowed' AND returned_at IS NULL AND due_at IS NOT NULL AND due_at < NOW()""")
     due_count = (cur.fetchone() or {}).get('cnt', 0)
+
+    cur.execute("""
+        SELECT t.id, t.book_id, t.book_no, b.title, t.student_id, s.full_name AS student_name, t.reserved_at
+        FROM transactions t
+        LEFT JOIN books b ON b.id = t.book_id
+        LEFT JOIN students s ON s.student_id = t.student_id
+        WHERE t.action='reserved' AND t.returned_at IS NULL
+        ORDER BY t.reserved_at ASC
+        LIMIT 8
+    """)
+    pending_reservations = cur.fetchall()
+
+    cur.execute("""
+        SELECT t.id, t.book_id, t.book_no, b.title, COALESCE(c.name, '—') AS category_name, t.student_id,
+               s.full_name AS student_name, t.borrowed_at, t.due_at,
+               CASE WHEN t.due_at IS NOT NULL AND t.due_at < NOW() THEN 1 ELSE 0 END AS is_overdue
+        FROM transactions t
+        LEFT JOIN books b ON b.id = t.book_id
+        LEFT JOIN categories c ON c.id = b.category_id
+        LEFT JOIN students s ON s.student_id = t.student_id
+        WHERE t.action='borrowed' AND t.returned_at IS NULL
+        ORDER BY is_overdue DESC, t.due_at ASC
+        LIMIT 8
+    """)
+    active_borrows = cur.fetchall()
 
     reserve_metric = _first_existing_book_metric(cur, ['reserve_count', 'reserved_count'], 'count')
     borrow_metric = _first_existing_book_metric(cur, ['borrow_count', 'borrowed_count'], 'count')
@@ -614,6 +717,13 @@ def get_dashboard_stats():
     cur.execute(f"SELECT title, {borrow_metric} FROM books ORDER BY count DESC, title ASC LIMIT 3")
     top_borrowed = cur.fetchall()
 
+    for row in pending_reservations:
+        row['reserved_at'] = _fmt_admin_dt(row.get('reserved_at'))
+    for row in active_borrows:
+        row['borrowed_at'] = _fmt_admin_dt(row.get('borrowed_at'))
+        row['due_at'] = _fmt_admin_dt(row.get('due_at'))
+        row['is_overdue'] = bool(row.get('is_overdue'))
+
     cur.close()
     return jsonify({
         'total_books': total_books,
@@ -622,6 +732,11 @@ def get_dashboard_stats():
         'reserved': status_rows.get('Reserved', 0),
         'borrowed': status_rows.get('Borrowed', 0),
         'due': due_count,
+        'pending_reservations_count': pending_count,
+        'active_borrows_count': active_borrow_count,
+        'overdue_count': due_count,
+        'pending_reservations': pending_reservations,
+        'active_borrows': active_borrows,
         'top_reserved': top_reserved,
         'top_borrowed': top_borrowed,
     })
