@@ -153,6 +153,15 @@ def _refresh_reservation_queue(cursor, book_id):
     return {row['id']: index for index, row in enumerate(rows, start=1)}
 
 
+
+
+def _first_existing_book_counter(cursor, candidates):
+    for column in candidates:
+        cursor.execute("SHOW COLUMNS FROM books LIKE %s", (column,))
+        if cursor.fetchone():
+            return column
+    return None
+
 def _notify_admins_of_reservation(cursor, reservation_id, student_id, book_no, title, pickup_at, queue_position):
     try:
         cursor.execute("SELECT admin_id FROM admins WHERE deleted_at IS NULL")
@@ -234,7 +243,14 @@ def reserve_book():
 
     queue_positions = _refresh_reservation_queue(cursor, book_id)
     queue_position = queue_positions.get(reservation_id, 1)
-    cursor.execute("UPDATE books SET availability_hint='Reserved', reserve_count=reserve_count+1 WHERE id=%s", (book_id,))
+    reserve_counter = _first_existing_book_counter(cursor, ['reserve_count', 'reserved_count'])
+    if reserve_counter:
+        cursor.execute(
+            f"UPDATE books SET availability_hint='Reserved', {reserve_counter}={reserve_counter}+1 WHERE id=%s",
+            (book_id,),
+        )
+    else:
+        cursor.execute("UPDATE books SET availability_hint='Reserved' WHERE id=%s", (book_id,))
     cursor.execute("SELECT book_no, title FROM books WHERE id=%s", (book_id,))
     book = cursor.fetchone() or {}
     _notify_admins_of_reservation(cursor, reservation_id, student_id, book.get('book_no'), book.get('title'), pickup_at, queue_position)
@@ -303,7 +319,14 @@ def borrow_book():
         WHERE id=%s""",
         (due_at, tx['id']),
     )
-    cursor.execute("UPDATE books SET availability_hint='Borrowed', borrow_count=borrow_count+1 WHERE id=%s", (book_id,))
+    borrow_counter = _first_existing_book_counter(cursor, ['borrow_count', 'borrowed_count'])
+    if borrow_counter:
+        cursor.execute(
+            f"UPDATE books SET availability_hint='Borrowed', {borrow_counter}={borrow_counter}+1 WHERE id=%s",
+            (book_id,),
+        )
+    else:
+        cursor.execute("UPDATE books SET availability_hint='Borrowed' WHERE id=%s", (book_id,))
     sms_result = _send_ready_alert(cursor, tx['id'])
     db.commit(); cursor.close()
     return jsonify({'status': 'borrowed', 'sms': sms_result})
