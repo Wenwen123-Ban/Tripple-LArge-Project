@@ -91,6 +91,12 @@
     .admin-body-no-sidebar { display:block; }
     .admin-body-no-sidebar .admin-main-content { width:100%; }
     .manual-page-shell { overflow-y:auto; height:calc(100vh - 138px); padding:18px 24px 24px; }
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation-duration: 0.25s;
+      animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+    }
   </style>
 </head>
 <body>
@@ -276,6 +282,29 @@
 
         <!-- SECTION 7 -->
         <div class="manual-section">
+          <h3>Enhancement Checklist (Flow-Aligned)</h3>
+          <p>
+            The flow diagram follows a two-lane journey: <strong>student on the left</strong> and
+            <strong>admin/system on the right</strong>. Work through this checklist stage-by-stage so
+            each transition follows the intended policy gates.
+          </p>
+          <p><strong>Most load-bearing fixes to complete first:</strong></p>
+          <ul>
+            <li><strong>#1.3 LBC-at-registration mismatch</strong> — if this remains inconsistent, students can be blocked from account recovery.</li>
+            <li><strong>#2.1 Missing session route</strong> — user pages can bounce back to sign-in when session checks fail.</li>
+            <li><strong>#3.1 Pickup date dialog mismatch</strong> — current behavior contradicts the stated system promise and panel feedback.</li>
+            <li><strong>#3.2 Expiry auto-cancel row state</strong> — auto-cancel events must visibly move the reservation row so students can see the result.</li>
+            <li><strong>#4.1 Return date always "Pending"</strong> — borrowed rows must show the actual deadline, not a placeholder.</li>
+            <li><strong>#7.1 Holiday-skip rule not applied</strong> — rule storage exists, but backend date selection must apply it to scheduling logic.</li>
+          </ul>
+          <p>
+            Close the six items above first. Remaining checklist entries are mostly
+            existing behaviors that need consistency and UX polish.
+          </p>
+        </div>
+
+        <!-- SECTION 8 -->
+        <div class="manual-section">
           <h3>Forgot Password (Admin Recovery)</h3>
           <p>If you forget your admin password:</p>
           <div class="step-row">
@@ -316,7 +345,7 @@
           </div>
         </div>
 
-        <!-- SECTION 8 -->
+        <!-- SECTION 9 -->
         <div class="manual-section">
           <h3>Notifications (Bell Icon)</h3>
           <ul>
