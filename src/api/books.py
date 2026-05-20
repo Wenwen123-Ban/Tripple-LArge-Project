@@ -38,6 +38,10 @@ def _ensure_tables(cursor):
 
     if 'author' not in cols:
         cursor.execute("ALTER TABLE books ADD COLUMN author VARCHAR(160) DEFAULT NULL")
+    if 'borrow_count' not in cols:
+        cursor.execute("ALTER TABLE books ADD COLUMN borrow_count INT DEFAULT 0")
+        if 'borrowed_count' in cols:
+            cursor.execute("UPDATE books SET borrow_count = COALESCE(borrowed_count, 0) WHERE borrow_count IS NULL OR borrow_count = 0")
     if 'availability_hint' not in cols:
         try:
             cursor.execute("ALTER TABLE books ADD COLUMN availability_hint VARCHAR(20) DEFAULT 'Available'")
