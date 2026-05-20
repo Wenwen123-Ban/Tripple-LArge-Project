@@ -2,6 +2,33 @@ let bookFilters = { status: 'all', category: 'all', sort: 'title_asc', search: '
 let importData = null;
 let currentBookRows = [];
 
+
+function setCheck(id, msg, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.remove('connection-ok','connection-warn','connection-err');
+  if (cls) el.classList.add(cls);
+}
+
+async function runConnectionChecks() {
+  setCheck('check-events', 'Inputs and controls are bound.', 'connection-ok');
+  try {
+    const [booksRes, categoryRes] = await Promise.all([fetch('/api/books?per_page=1'), fetch('/api/categories')]);
+    if (booksRes.ok && categoryRes.ok) {
+      setCheck('check-api', 'Books and category APIs responded successfully.', 'connection-ok');
+      document.getElementById('books-connection-badge').textContent = 'Connections Healthy';
+      document.getElementById('books-connection-badge').style.background = '#0f766e';
+    } else {
+      setCheck('check-api', 'One or more endpoints returned an error response.', 'connection-warn');
+      document.getElementById('books-connection-badge').textContent = 'Check API';
+    }
+  } catch (e) {
+    setCheck('check-api', 'Unable to reach API endpoints from this page.', 'connection-err');
+    document.getElementById('books-connection-badge').textContent = 'API Unreachable';
+  }
+  setCheck('check-render', currentBookRows.length ? `Rendered ${currentBookRows.length} books in table.` : 'Rendered with empty-state fallback.', 'connection-ok');
+}
 function bindCategoryListToggle() {
   const toggle = document.getElementById('category-list-toggle');
   const list = document.getElementById('category-list');
@@ -73,6 +100,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('new-category')?.addEventListener('keydown',(e)=>{if(e.key==='Enter'){e.preventDefault(); addCategory();}});
   ['status-filter','category-filter','sort-select'].forEach((id)=>document.getElementById(id)?.addEventListener('change',(e)=>{const map={'status-filter':'status','category-filter':'category','sort-select':'sort'}; bookFilters[map[id]]=e.target.value; loadBooks();}));
   document.getElementById('book-search')?.addEventListener('input',(e)=>{bookFilters.search=e.target.value; loadBooks();});
+  document.getElementById('books-search-clear')?.addEventListener('click',()=>{ const input=document.getElementById('book-search'); if(!input) return; input.value=''; bookFilters.search=''; loadBooks();});
   document.getElementById('open-import-btn')?.addEventListener('click',()=>document.getElementById('import-modal').style.display='flex');
   document.getElementById('import-close')?.addEventListener('click',()=>{document.getElementById('import-modal').style.display='none'; resetImport();});
   document.getElementById('import-analyze-btn')?.addEventListener('click', async()=>{ const fd=buildImportFormData(); if(!fd) return; const res=await fetch('/api/books/import/analyze',{method:'POST',body:fd}); const data=await res.json(); if(!res.ok){ alert(data.error||'Import analyze failed.'); return; } importData=data; showImportPreview(data);});
@@ -80,6 +108,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('open-sheets-btn')?.addEventListener('click',()=>document.getElementById('sheets-modal').style.display='flex');
   document.getElementById('sheets-close')?.addEventListener('click',()=>document.getElementById('sheets-modal').style.display='none');
   document.getElementById('sheets-sync-btn')?.addEventListener('click', async()=>{let url=document.getElementById('sheets-url').value.trim(); if(!url){ url=prompt('No Google Sheet connected yet. Paste the sheet URL to connect and sync:','')?.trim()||''; if(!url) return; document.getElementById('sheets-url').value=url; } const res=await fetch('/api/sheets/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sheet_url:url})}); const data=await res.json(); document.getElementById('sheets-result').innerHTML=data.error?data.error:`Inserted: ${data.inserted} | Updated: ${data.updated} | Skipped: ${data.skipped}`; if(res.ok) loadBooks();});
-  await loadCategories(); await loadBooks(); await loadDeletedCache(); await loadDeletedCategoryCache();
+  await loadCategories(); await loadBooks(); await loadDeletedCache(); await loadDeletedCategoryCache(); await runConnectionChecks();
   setInterval(()=>{ loadDeletedCache(); loadDeletedCategoryCache(); }, 30000);
 });
