@@ -126,6 +126,14 @@ def _calculate_expected_return_at(pickup_at, rules):
     return pickup_at + timedelta(days=days, hours=hours)
 
 
+def _apply_nearest_pickup_day(pickup_at, rules):
+    if not rules or not bool(rules.get('nearest_day_rule')):
+        return pickup_at
+    while pickup_at.weekday() == 6:
+        pickup_at += timedelta(days=1)
+    return pickup_at
+
+
 def _refresh_reservation_queue(cursor, book_id):
     cursor.execute(
         """
@@ -209,6 +217,7 @@ def reserve_book():
         return jsonify({'error': 'You already have an active reservation for this book.'}), 409
 
     rules = get_admin_rules(cursor)
+    pickup_at = _apply_nearest_pickup_day(pickup_at, rules)
     expected_return_at = _calculate_expected_return_at(pickup_at, rules)
     cursor.execute(
         """
@@ -405,13 +414,28 @@ def get_manage_transactions():
     sid = session.get('student_id') or request.args.get('student_id')
     if not sid: return jsonify({'reserved':[], 'borrowed':[], 'cancelled':[], 'history':[]})
     db = get_db(); c = db.cursor(dictionary=True); _ensure_tables(c)
-    c.execute("SELECT id, book_no, action, reserved_at, borrowed_at, due_at, notes FROM transactions WHERE student_id=%s ORDER BY created_at DESC", (sid,)); rows = c.fetchall(); c.close()
+    rules = get_admin_rules(c)
+    expire_seconds = (
+        (int(rules.get('expire_days') or 0) * 86400)
+        + (int(rules.get('expire_hours') or 0) * 3600)
+        + (int(rules.get('expire_mins') or 0) * 60)
+    )
+    if expire_seconds > 0:
+        c.execute(
+            "UPDATE transactions SET action='cancelled', notes='auto-cancelled: reservation expired', returned_at=NOW() "
+            "WHERE student_id=%s AND action='reserved' AND returned_at IS NULL "
+            "AND COALESCE(pickup_at, reserved_at, created_at) < DATE_SUB(NOW(), INTERVAL %s SECOND)",
+            (sid, expire_seconds),
+        )
+        db.commit()
+    c.execute("SELECT id, book_no, action, reserved_at, pickup_at, borrowed_at, due_at, notes FROM transactions WHERE student_id=%s ORDER BY created_at DESC", (sid,)); rows = c.fetchall(); c.close()
     out={'reserved':[],'borrowed':[],'cancelled':[],'history':[]}
     for r in rows:
         if r.get('reserved_at'): r['reserved_at']=r['reserved_at'].strftime('%m/%d/%Y')
+        if r.get('pickup_at'): r['pickup_at']=r['pickup_at'].strftime('%m/%d/%Y')
         if r.get('borrowed_at'): r['borrowed_at']=r['borrowed_at'].strftime('%m/%d/%Y')
         if r.get('due_at'): r['due_at']=r['due_at'].strftime('%m/%d/%Y')
-        if r['action']=='reserved': out['reserved'].append({'id':r['id'],'book_no':r['book_no'],'title':'—','reserved_at':r.get('reserved_at'),'pickup_date':'Pending'})
+        if r['action']=='reserved': out['reserved'].append({'id':r['id'],'book_no':r['book_no'],'title':'—','reserved_at':r.get('reserved_at'),'pickup_date':r.get('pickup_at') or 'Pending'})
         elif r['action']=='borrowed': out['borrowed'].append({'book_no':r['book_no'],'title':'—','accession_no':'—','borrowed_at':r.get('borrowed_at'),'due_at':r.get('due_at')})
         elif r['action']=='cancelled': out['cancelled'].append({'book_no':r['book_no'],'title':'—','reserved_at':r.get('reserved_at'),'pickup_date':'—','cancel_reason':'cancelled'})
         out['history'].append({'time':r.get('reserved_at') or r.get('borrowed_at') or '—','day':'—','action':r['action'].title()})

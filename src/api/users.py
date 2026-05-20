@@ -458,6 +458,12 @@ def get_user_card():
             elif action_text == 'reserved':
                 counters['reserved'] += 1
 
+        active_label = 'Pending'
+        if _active_action(action, returned_at):
+            if str(action or '').lower() == 'borrowed':
+                active_label = _format_datetime(due_at, True) or 'Pending'
+            elif str(action or '').lower() == 'reserved':
+                active_label = _format_datetime(tx.get('expected_return_at'), True) or 'Pending'
         transactions.append({
             'id': tx.get('id'),
             'date_borrowed': _format_datetime(tx.get('borrowed_at') or tx.get('reserved_at'), True) or '—',
@@ -467,7 +473,7 @@ def get_user_card():
             'book_no': tx.get('book_no') or '—',
             'title': tx.get('title') or '—',
             'accession_no': tx.get('book_no') or '—',
-            'date_returned': _format_datetime(returned_at, True) or ('Pending' if _active_action(action, returned_at) else '—'),
+            'date_returned': _format_datetime(returned_at, True) or (active_label if _active_action(action, returned_at) else '—'),
             'returned_at': _format_datetime(returned_at, True) or '—',
             'due_at': _format_datetime(due_at, True) or '—',
             'expected_return_at': _format_datetime(tx.get('expected_return_at'), True) or '—',
