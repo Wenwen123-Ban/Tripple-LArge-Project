@@ -102,6 +102,7 @@ function renderProfilePage(data) {
   const activeBorrows = data.active_borrows || [];
   const activeReservations = data.active_reservations || [];
   const history = data.borrow_history || [];
+  const cancelledReservations = data.cancelled_reservations || history.filter(row => /cancel|failed|no\s*-?show|missed\s*pickup/i.test(String(row.status || '')));
   const counters = data.counters || {};
 
   setText('profile-active-borrows-count', counters.borrowed ?? activeBorrows.length);
@@ -111,22 +112,25 @@ function renderProfilePage(data) {
   renderRows('active-borrows-list', activeBorrows, 'No active borrowed books.', [
     row => `<span>${escapeHtml(row.book_no || '—')}</span>`,
     row => `<span class="account-row__title">${escapeHtml(row.title || '—')}</span>`,
+    row => `<span>${escapeHtml(row.accession_no || '—')}</span>`,
     row => `<span>${escapeHtml(row.borrowed_at || row.date_borrowed || '—')}</span>`,
-    row => `<span><span class="status-pill ${statusClass(row.status)}">${escapeHtml(row.due_at || row.status || 'borrowed')}</span></span>`,
+    row => `<span>${escapeHtml(row.return_date || row.due_at || row.date_returned || '—')}</span>`,
   ]);
 
   renderRows('reservations-list', activeReservations, 'No active reservations.', [
     row => `<span>${escapeHtml(row.book_no || '—')}</span>`,
     row => `<span class="account-row__title">${escapeHtml(row.title || '—')}</span>`,
-    row => `<span>${escapeHtml(row.pickup_date || row.reserved_at || row.date_borrowed || '—')}</span>`,
-    row => `<span><span class="status-pill reserved">${escapeHtml(row.queue_position ? `Queue #${row.queue_position}` : (row.status || 'reserved'))}</span></span>`,
+    row => `<span>${escapeHtml(row.reserved_at || row.date_reserved || '—')}</span>`,
+    row => `<span>${escapeHtml(row.pickup_date || row.pick_up_date || '—')}</span>`,
+    row => `<span><span class="status-pill reserved">${escapeHtml(row.action || (row.queue_position ? `Queue #${row.queue_position}` : (row.status || 'Pending')))}</span></span>`,
   ]);
 
-  renderRows('borrow-history-list', history, 'No borrow history yet.', [
-    row => `<span>${escapeHtml(row.date_borrowed || row.reserved_at || '—')}</span>`,
-    row => `<span class="account-row__title">${escapeHtml(row.title || row.book_no || '—')}</span>`,
-    row => `<span>${escapeHtml(row.date_returned || row.returned_at || '—')}</span>`,
-    row => `<span><span class="status-pill ${statusClass(row.status)}">${escapeHtml(row.status || 'recorded')}</span></span>`,
+  renderRows('cancelled-list', cancelledReservations, 'No cancelled or failed reservations.', [
+    row => `<span>${escapeHtml(row.book_no || '—')}</span>`,
+    row => `<span class="account-row__title">${escapeHtml(row.title || row.book_title || '—')}</span>`,
+    row => `<span>${escapeHtml(row.reserved_at || row.date_reserved || '—')}</span>`,
+    row => `<span>${escapeHtml(row.pickup_date || row.pick_up_date || '—')}</span>`,
+    row => `<span><span class="status-pill overdue">${escapeHtml(row.status || 'Cancelled')}</span></span>`,
   ]);
 }
 
