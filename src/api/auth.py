@@ -712,6 +712,8 @@ def validate_registration_fields(data, is_admin=False):
             errors.append('ID year part must be between 2000 and 2099')
 
     lbc = _clean(data.get('lbc_no'))
+    if not lbc and not is_admin:
+        errors.append('LBC No is required for student registration')
     if lbc:
         if not re.match(r'^\d{4}-\d{5}$', lbc):
             errors.append('LBC No must be in format XXXX-XXXXX (4 digits, hyphen, 5 digits)')
