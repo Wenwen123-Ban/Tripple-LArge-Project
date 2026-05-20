@@ -161,6 +161,12 @@ body {
   min-width: 720px;
 }
 
+.account-table__head--five,
+.account-table__head--five + .account-table__body .account-row {
+  grid-template-columns: 14% 30% 18% 18% 20%;
+  min-width: 900px;
+}
+
 .account-table__head {
   background: #f8fafc;
   color: #64748b;
