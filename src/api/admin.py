@@ -479,9 +479,23 @@ def get_security_reports():
     cur = db.cursor(dictionary=True)
     _ensure_tables(cur)
 
+    cur.execute("SHOW COLUMNS FROM security_logs LIKE 'account_id'")
+    has_account_id = cur.fetchone() is not None
+    cur.execute("SHOW COLUMNS FROM security_logs LIKE 'student_id'")
+    has_student_id = cur.fetchone() is not None
+
+    if has_account_id and has_student_id:
+        account_expr = 'COALESCE(account_id, student_id)'
+    elif has_account_id:
+        account_expr = 'account_id'
+    elif has_student_id:
+        account_expr = 'student_id'
+    else:
+        account_expr = "'UNKNOWN'"
+
     cur.execute(
-        """
-        SELECT COALESCE(account_id, student_id) AS account_id, COALESCE(account_type, 'unknown') AS account_type,
+        f"""
+        SELECT {account_expr} AS account_id, COALESCE(account_type, 'unknown') AS account_type,
                event_type, ip_address, description, created_at
         FROM security_logs
         WHERE event_type IN ('ADMIN_LOGIN_SUCCESS', 'USER_LOGIN_SUCCESS')
@@ -493,8 +507,8 @@ def get_security_reports():
     login_history = cur.fetchall()
 
     cur.execute(
-        """
-        SELECT COALESCE(account_id, student_id) AS account_id, COALESCE(account_type, 'unknown') AS account_type,
+        f"""
+        SELECT {account_expr} AS account_id, COALESCE(account_type, 'unknown') AS account_type,
                event_type, ip_address, description, created_at
         FROM security_logs
         WHERE event_type LIKE '%FAIL%'
