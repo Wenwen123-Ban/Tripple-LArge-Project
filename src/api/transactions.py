@@ -184,7 +184,7 @@ def _notify_admins_of_reservation(cursor, reservation_id, student_id, book_no, t
             (
                 admin['admin_id'],
                 'New Click & Collect Reservation',
-                f'{student_id} reserved {book_no} — {title or "Untitled book"} for pickup on {pickup_at.strftime("%m/%d/%Y")}. Queue #{queue_position}.',
+                f'{student_id} reserved {book_no} — {title or "Untitled book"}. Awaiting approval. Queue #{queue_position}.',
                 payload,
             ),
         )
@@ -194,16 +194,11 @@ def reserve_book():
     data = request.get_json(silent=True) or {}
     book_id = data.get('book_id')
     student_id = data.get('student_id') or session.get('student_id')
-    pickup_at = _parse_pickup_date(data.get('pickup_date'))
 
     if not book_id:
         return jsonify({'error': 'Book is required.'}), 400
     if not student_id:
         return jsonify({'error': 'Student login is required to reserve a book.'}), 401
-    if pickup_at is None:
-        return jsonify({'error': 'Pickup date must use YYYY-MM-DD format.'}), 400
-    if pickup_at.date() < datetime.now().date():
-        return jsonify({'error': 'Pickup date cannot be in the past.'}), 400
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -225,16 +220,13 @@ def reserve_book():
         cursor.close()
         return jsonify({'error': 'You already have an active reservation for this book.'}), 409
 
-    rules = get_admin_rules(cursor)
-    pickup_at = _apply_nearest_pickup_day(pickup_at, rules)
-    expected_return_at = _calculate_expected_return_at(pickup_at, rules)
     cursor.execute(
         """
         INSERT INTO transactions
-            (book_id, book_no, student_id, action, actor_admin_id, reserved_at, pickup_at, due_at, expected_return_at)
-        SELECT id, book_no, %s, 'reserved', %s, NOW(), %s, %s, %s FROM books WHERE id = %s
+            (book_id, book_no, student_id, action, actor_admin_id, reserved_at)
+        SELECT id, book_no, %s, 'reserved', %s, NOW() FROM books WHERE id = %s
         """,
-        (student_id, session.get('admin_id'), pickup_at, expected_return_at, expected_return_at, book_id),
+        (student_id, session.get('admin_id'), book_id),
     )
     reservation_id = cursor.lastrowid
     if not reservation_id:
@@ -253,14 +245,12 @@ def reserve_book():
         cursor.execute("UPDATE books SET availability_hint='Reserved' WHERE id=%s", (book_id,))
     cursor.execute("SELECT book_no, title FROM books WHERE id=%s", (book_id,))
     book = cursor.fetchone() or {}
-    _notify_admins_of_reservation(cursor, reservation_id, student_id, book.get('book_no'), book.get('title'), pickup_at, queue_position)
+    _notify_admins_of_reservation(cursor, reservation_id, student_id, book.get('book_no'), book.get('title'), None, queue_position)
     db.commit(); cursor.close()
     return jsonify({
         'status': 'reserved',
         'transaction_id': reservation_id,
-        'pickup_date': pickup_at.strftime('%Y-%m-%d'),
         'queue_position': queue_position,
-        'expected_return_at': expected_return_at.strftime('%m/%d/%Y %I:%M %p'),
     })
 
 
@@ -458,7 +448,7 @@ def get_manage_transactions():
         if r.get('pickup_at'): r['pickup_at']=r['pickup_at'].strftime('%m/%d/%Y')
         if r.get('borrowed_at'): r['borrowed_at']=r['borrowed_at'].strftime('%m/%d/%Y')
         if r.get('due_at'): r['due_at']=r['due_at'].strftime('%m/%d/%Y')
-        if r['action']=='reserved': out['reserved'].append({'id':r['id'],'book_no':r['book_no'],'title':'—','reserved_at':r.get('reserved_at'),'pickup_date':r.get('pickup_at') or 'Pending'})
+        if r['action']=='reserved': out['reserved'].append({'id':r['id'],'book_no':r['book_no'],'title':'—','reserved_at':r.get('reserved_at'),'pickup_date':r.get('pickup_at') or 'Awaiting Approval'})
         elif r['action']=='borrowed': out['borrowed'].append({'book_no':r['book_no'],'title':'—','accession_no':'—','borrowed_at':r.get('borrowed_at'),'due_at':r.get('due_at')})
         elif r['action']=='cancelled': out['cancelled'].append({'book_no':r['book_no'],'title':'—','reserved_at':r.get('reserved_at'),'pickup_date':'—','cancel_reason':'cancelled'})
         out['history'].append({'time':r.get('reserved_at') or r.get('borrowed_at') or '—','day':'—','action':r['action'].title()})
