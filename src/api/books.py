@@ -119,6 +119,31 @@ def _purge_expired_deleted_books(cursor):
 def _purge_expired_deleted_categories(cursor):
     cursor.execute("DELETE FROM categories WHERE deleted_at IS NOT NULL AND delete_expires_at IS NOT NULL AND delete_expires_at <= NOW()")
 
+
+def _repair_stale_reserved_books(cursor):
+    cursor.execute(
+        """
+        UPDATE books b
+        SET b.status='Available', b.availability_hint='Available'
+        WHERE b.deleted_at IS NULL
+          AND COALESCE(b.availability_hint, b.status, 'Available')='Reserved'
+          AND NOT EXISTS (
+              SELECT 1
+              FROM transactions t
+              WHERE t.book_id=b.id
+                AND t.action='reserved'
+                AND t.returned_at IS NULL
+          )
+          AND NOT EXISTS (
+              SELECT 1
+              FROM transactions t
+              WHERE t.book_id=b.id
+                AND t.action='borrowed'
+                AND t.returned_at IS NULL
+          )
+        """
+    )
+
 def get_categories():
     db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c); _purge_expired_deleted_categories(c); c.execute('SELECT id, name FROM categories WHERE deleted_at IS NULL ORDER BY name'); r=c.fetchall(); c.close(); return jsonify(r)
 
@@ -162,6 +187,7 @@ def restore_deleted_category(id):
 def get_books():
     status=request.args.get('status','all'); category=request.args.get('category','all'); sort=request.args.get('sort','title_asc'); search=request.args.get('search','').strip(); page=int(request.args.get('page',1)); per_page=int(request.args.get('per_page',50)); off=(page-1)*per_page
     db=get_db(); c=db.cursor(dictionary=True); _ensure_tables(c)
+    _repair_stale_reserved_books(c)
     cond=['1=1']; p=[]
     if search: cond.append('(b.book_no LIKE %s OR b.title LIKE %s OR b.author LIKE %s OR c.name LIKE %s)'); lk=f'%{search}%'; p += [lk,lk,lk,lk]
     if category!='all': cond.append('b.category_id=%s'); p.append(category)
@@ -176,6 +202,7 @@ def get_books():
     if status!='all':
         wanted=str(status or '').strip().lower()
         rows=[b for b in rows if str(b.get('computed_status') or '').strip().lower()==wanted]
+    db.commit()
     c.close(); return jsonify(rows)
 
 def add_book():
