@@ -1,4 +1,9 @@
 from flask import Flask, jsonify, render_template, request, send_from_directory, session
+from functools import wraps
+from time import time
+import logging
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 import os
 from dotenv import load_dotenv
 
@@ -32,6 +37,30 @@ app.config.update(
     SEMAPHORE_SENDER_NAME=os.getenv('SEMAPHORE_SENDER_NAME', ''),
 )
 
+app.config.update(
+    SESSION_COOKIE_SECURE=False,
+    PERMANENT_SESSION_LIFETIME=3600,
+    SESSION_REFRESH_EACH_REQUEST=True,
+)
+
+ADMIN_WHITELIST_IPS = [ip.strip() for ip in os.getenv('ADMIN_WHITELIST_IPS', '127.0.0.1,172.28.234.190').split(',') if ip.strip()]
+LOG_DIR = Path(BASE_DIR if 'BASE_DIR' in globals() else os.getcwd()) / 'logs'
+LOG_DIR.mkdir(exist_ok=True)
+
+def _build_file_logger(name, filename):
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
+    if not logger.handlers:
+        handler = RotatingFileHandler(LOG_DIR / filename, maxBytes=5 * 1024 * 1024, backupCount=5)
+        handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+        logger.addHandler(handler)
+    return logger
+
+access_logger = _build_file_logger('lbas_access', 'lbas_access.log')
+security_logger = _build_file_logger('lbas_security', 'security_events.log')
+blocked_logger = _build_file_logger('admin_access_blocked', 'admin_access_blocked.log')
+
+
 app.teardown_appcontext(close_db)
 
 
@@ -52,6 +81,53 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PUBLIC_DIR = os.path.join(BASE_DIR, 'public')
 PAGES_DIR = os.path.join(PUBLIC_DIR, 'pages')
 register_api_blueprints(app)
+
+_rate_window = {}
+
+def _check_rate_limit(key, limit, period):
+    now = time()
+    bucket = [ts for ts in _rate_window.get(key, []) if now - ts < period]
+    if len(bucket) >= limit:
+        return False
+    bucket.append(now)
+    _rate_window[key] = bucket
+    return True
+
+@app.before_request
+def enforce_admin_ip_whitelist():
+    if request.path.startswith('/admin/') or request.path.startswith('/health/'):
+        ip = request.remote_addr or ''
+        if ip not in ADMIN_WHITELIST_IPS:
+            blocked_logger.warning('blocked ip=%s path=%s', ip, request.path)
+            return ('Admin access is restricted to authorized network addresses.', 403)
+
+@app.before_request
+def enforce_rate_limits():
+    ip = request.remote_addr or 'unknown'
+    if request.path == '/api/auth/login' and not _check_rate_limit(f'login:{ip}', 10, 600):
+        security_logger.warning('rate_limit login ip=%s', ip)
+        return ('Too many requests. Please wait before trying again.', 429)
+    if request.path.startswith('/admin/'):
+        uid = session.get('user_id') or ip
+        if not _check_rate_limit(f'admin:{uid}', 100, 60):
+            security_logger.warning('rate_limit admin uid=%s ip=%s', uid, ip)
+            return ('Too many requests. Please wait before trying again.', 429)
+    if request.path.startswith('/user/') or request.path.startswith('/api/users/'):
+        if not _check_rate_limit(f'student:{ip}', 50, 60):
+            security_logger.warning('rate_limit student ip=%s', ip)
+            return ('Too many requests. Please wait before trying again.', 429)
+
+@app.before_request
+def track_access_start():
+    request._start_time = time()
+
+@app.after_request
+def log_access(response):
+    elapsed = int((time() - getattr(request, '_start_time', time())) * 1000)
+    uid = session.get('user_id', 'anon')
+    access_logger.info('method=%s path=%s status=%s ms=%s user_id=%s', request.method, request.path, response.status_code, elapsed, uid)
+    return response
+
 
 
 
