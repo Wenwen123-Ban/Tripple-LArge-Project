@@ -162,6 +162,14 @@ def _first_existing_book_counter(cursor, candidates):
             return column
     return None
 
+
+def _sync_book_status(cursor, book_id):
+    effective_status = get_book_effective_status(cursor, book_id)
+    cursor.execute(
+        "UPDATE books SET status=%s, availability_hint=%s WHERE id=%s",
+        (effective_status, effective_status, book_id),
+    )
+
 def _notify_admins_of_reservation(cursor, reservation_id, student_id, book_no, title, pickup_at, queue_position):
     try:
         cursor.execute("SELECT admin_id FROM admins WHERE deleted_at IS NULL")
@@ -327,7 +335,8 @@ def return_book():
     db = get_db(); cursor = db.cursor(dictionary=True); _ensure_tables(cursor)
     book_id = data.get('book_id')
     cursor.execute("""UPDATE transactions SET action='returned', returned_at=NOW() WHERE book_id=%s AND returned_at IS NULL AND action IN ('borrowed','reserved')""", (book_id,))
-    cursor.execute("UPDATE books SET availability_hint='Available' WHERE id=%s", (book_id,))
+    _refresh_reservation_queue(cursor, book_id)
+    _sync_book_status(cursor, book_id)
     db.commit(); cursor.close()
     return jsonify({'status': 'returned'})
 
@@ -337,7 +346,8 @@ def force_return():
     db = get_db(); cursor = db.cursor(dictionary=True); _ensure_tables(cursor)
     book_id = data.get('book_id')
     cursor.execute("""UPDATE transactions SET action='force_returned', returned_at=NOW(), actor_admin_id=%s, notes=%s WHERE book_id=%s AND returned_at IS NULL""", (session.get('admin_id'), data.get('notes', 'Admin force return'), book_id))
-    cursor.execute("UPDATE books SET availability_hint='Available' WHERE id=%s", (book_id,))
+    _refresh_reservation_queue(cursor, book_id)
+    _sync_book_status(cursor, book_id)
     db.commit(); cursor.close()
     return jsonify({'status': 'force_returned'})
 
@@ -418,7 +428,12 @@ def cancel_reservation():
     data = request.get_json(silent=True) or {}
     txid = data.get('transaction_id')
     db = get_db(); c = db.cursor(dictionary=True); _ensure_tables(c)
+    c.execute("SELECT book_id FROM transactions WHERE id=%s", (txid,))
+    tx = c.fetchone() or {}
     c.execute("UPDATE transactions SET action='cancelled', notes='cancelled', returned_at=NOW() WHERE id=%s AND action='reserved' AND returned_at IS NULL", (txid,))
+    if c.rowcount and tx.get('book_id'):
+        _refresh_reservation_queue(c, tx['book_id'])
+        _sync_book_status(c, tx['book_id'])
     db.commit(); c.close();
     return jsonify({'status':'cancelled' if c.rowcount else 'failed'})
 
@@ -435,11 +450,20 @@ def get_manage_transactions():
     )
     if expire_seconds > 0:
         c.execute(
+            "SELECT DISTINCT book_id FROM transactions WHERE student_id=%s AND action='reserved' AND returned_at IS NULL",
+            (sid,),
+        )
+        affected_book_ids = [row['book_id'] for row in c.fetchall() if row.get('book_id')]
+        c.execute(
             "UPDATE transactions SET action='cancelled', notes='auto-cancelled: reservation expired', returned_at=NOW() "
             "WHERE student_id=%s AND action='reserved' AND returned_at IS NULL "
             "AND COALESCE(pickup_at, reserved_at, created_at) < DATE_SUB(NOW(), INTERVAL %s SECOND)",
             (sid, expire_seconds),
         )
+        if c.rowcount:
+            for book_id in affected_book_ids:
+                _refresh_reservation_queue(c, book_id)
+                _sync_book_status(c, book_id)
         db.commit()
     c.execute("SELECT id, book_no, action, reserved_at, pickup_at, borrowed_at, due_at, notes FROM transactions WHERE student_id=%s ORDER BY created_at DESC", (sid,)); rows = c.fetchall(); c.close()
     out={'reserved':[],'borrowed':[],'cancelled':[],'history':[]}
