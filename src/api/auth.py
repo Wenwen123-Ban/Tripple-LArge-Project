@@ -2014,6 +2014,8 @@ def login():
     session.pop('student_id', None)
     session.pop('student_name', None)
     session.pop('auth_token', None)
+    session.pop('user_role', None)
+    session.pop('user_id', None)
 
     auth_token = secrets.token_urlsafe(32)
     session['auth_token'] = auth_token
@@ -2022,6 +2024,8 @@ def login():
         session['admin_id'] = student_id
         session['admin_name'] = user['full_name']
         session['account_type'] = 'admin'
+        session['user_role'] = 'admin'
+        session['user_id'] = student_id
 
         cursor.execute(
             """
@@ -2054,6 +2058,8 @@ def login():
     session['student_id'] = student_id
     session['student_name'] = user['full_name']
     session['account_type'] = 'student'
+    session['user_role'] = 'student'
+    session['user_id'] = student_id
     try:
         cursor.execute("ALTER TABLE students ADD COLUMN last_login_time DATETIME NULL")
     except mysql.connector.Error as exc:
