@@ -138,6 +138,7 @@ def initialize_schema():
             delete_expires_at DATETIME DEFAULT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_books_category (category_id),
+            INDEX idx_books_status (status),
             UNIQUE KEY uniq_books_no_category (book_no, category_id),
             CONSTRAINT fk_books_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
         )
@@ -161,6 +162,8 @@ def initialize_schema():
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_transactions_student (student_id),
             INDEX idx_transactions_book (book_id),
+            INDEX idx_transactions_action_created (action, created_at),
+            INDEX idx_transactions_student_action (student_id, action),
             CONSTRAINT fk_transactions_book FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
         )
         """
@@ -219,7 +222,8 @@ def initialize_schema():
             data TEXT,
             is_read TINYINT(1) DEFAULT 0,
             is_used TINYINT(1) DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_notifications_recipient_created (recipient_id, created_at)
         )
         """
     )
