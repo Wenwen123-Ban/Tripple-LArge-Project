@@ -20,6 +20,8 @@ from flask import Blueprint, jsonify, request, session
 
 from src.core.db import get_db
 from src.core.security import generate_setup_code, hash_password, verify_password
+from src.core.metrics import failed_login_attempts, successful_logins
+from src.core.monitoring_alerts import send_system_alert
 
 TOKEN_TTL_SECONDS = 15 * 60
 CONFIRMATION_RESEND_COOLDOWN_SECONDS = 60
@@ -1982,6 +1984,7 @@ def login():
         return jsonify({'error': 'Account not found'}), 404
 
     if not verify_password(password, user['password_hash']):
+        failed_login_attempts.labels(role=user['account_type']).inc()
         log_security_event(student_id, 'LOGIN_FAIL', _client_ip(), 'Wrong password on login attempt', user['account_type'])
         # Track brute-force / spam attempts by IP in a short time window.
         fail_cursor = db.cursor(dictionary=True)
@@ -1998,6 +2001,7 @@ def login():
         recent_fails = (fail_cursor.fetchone() or {}).get('attempts', 0)
         fail_cursor.close()
         if recent_fails >= 5:
+            send_system_alert('failed_login_spike', f'{recent_fails} failed login attempts from IP {_client_ip()} in 10 minutes', 'warning')
             log_security_event(
                 student_id,
                 'LOGIN_SPAM_SUSPECTED',
@@ -2038,6 +2042,7 @@ def login():
         )
         db.commit()
         log_security_event(student_id, 'ADMIN_LOGIN_SUCCESS', _client_ip(), 'Admin logged in successfully', 'admin')
+        successful_logins.labels(role='admin').inc()
         cursor.close()
         return jsonify({
             'status': 'ok',
@@ -2060,6 +2065,7 @@ def login():
     session['account_type'] = 'student'
     session['user_role'] = 'student'
     session['user_id'] = student_id
+    successful_logins.labels(role='student').inc()
     try:
         cursor.execute("ALTER TABLE students ADD COLUMN last_login_time DATETIME NULL")
     except mysql.connector.Error as exc:

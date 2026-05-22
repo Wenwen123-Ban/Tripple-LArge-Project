@@ -13,6 +13,7 @@ from src.core.notifications import (
     ready_message,
     send_semaphore_sms,
 )
+from src.core.metrics import reservations_created, reservations_cancelled, books_borrowed, books_returned
 
 
 def _add_column_if_missing(cursor, table, column, definition):
@@ -255,6 +256,7 @@ def reserve_book():
     book = cursor.fetchone() or {}
     _notify_admins_of_reservation(cursor, reservation_id, student_id, book.get('book_no'), book.get('title'), None, queue_position)
     db.commit(); cursor.close()
+    reservations_created.inc()
     return jsonify({
         'status': 'reserved',
         'transaction_id': reservation_id,
@@ -327,6 +329,7 @@ def borrow_book():
         cursor.execute("UPDATE books SET availability_hint='Borrowed' WHERE id=%s", (book_id,))
     sms_result = _send_ready_alert(cursor, tx['id'])
     db.commit(); cursor.close()
+    books_borrowed.inc()
     return jsonify({'status': 'borrowed', 'sms': sms_result})
 
 
@@ -338,6 +341,7 @@ def return_book():
     _refresh_reservation_queue(cursor, book_id)
     _sync_book_status(cursor, book_id)
     db.commit(); cursor.close()
+    books_returned.inc()
     return jsonify({'status': 'returned'})
 
 
@@ -435,6 +439,8 @@ def cancel_reservation():
         _refresh_reservation_queue(c, tx['book_id'])
         _sync_book_status(c, tx['book_id'])
     db.commit(); c.close();
+    if c.rowcount:
+        reservations_cancelled.labels(cancelled_by='student').inc()
     return jsonify({'status':'cancelled' if c.rowcount else 'failed'})
 
 

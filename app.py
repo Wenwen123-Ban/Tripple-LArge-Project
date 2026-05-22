@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, request, send_from_directory, session
+from flask import Flask, jsonify, render_template, request, send_from_directory, session, Response
 from functools import wraps
 from time import time
 import logging
@@ -6,6 +6,8 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import psutil
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 # Load environment variables from external .env file for security
 load_dotenv('C:\\CC-Config\\.env')
@@ -22,6 +24,9 @@ from src.api.auth import (
 from src.core.db import close_db
 from src.core.models import initialize_schema
 from src.core.seed_demo import seed_demo_data
+from src.core.metrics import admin_ip_blocks, rate_limit_hits, view_response_time, session_conflicts, available_books_gauge, overdue_books_gauge, unread_notifications_gauge
+from src.core.monitoring_alerts import send_system_alert
+from src.core.db import get_db
 
 
 app = Flask(
@@ -98,6 +103,8 @@ def enforce_admin_ip_whitelist():
     if request.path.startswith('/admin/') or request.path.startswith('/health/'):
         ip = request.remote_addr or ''
         if ip not in ADMIN_WHITELIST_IPS:
+            admin_ip_blocks.inc()
+            send_system_alert('admin_ip_block', f'Blocked admin/health access from IP {ip} to {request.path}', 'warning')
             blocked_logger.warning('blocked ip=%s path=%s', ip, request.path)
             return ('Admin access is restricted to authorized network addresses.', 403)
 
@@ -105,15 +112,19 @@ def enforce_admin_ip_whitelist():
 def enforce_rate_limits():
     ip = request.remote_addr or 'unknown'
     if request.path == '/api/auth/login' and not _check_rate_limit(f'login:{ip}', 10, 600):
+        rate_limit_hits.labels(endpoint='login').inc()
+        send_system_alert('rate_limit_hit', f'Login rate limit hit for IP {ip}', 'warning')
         security_logger.warning('rate_limit login ip=%s', ip)
         return ('Too many requests. Please wait before trying again.', 429)
     if request.path.startswith('/admin/'):
         uid = session.get('user_id') or ip
         if not _check_rate_limit(f'admin:{uid}', 100, 60):
+            rate_limit_hits.labels(endpoint='admin').inc()
             security_logger.warning('rate_limit admin uid=%s ip=%s', uid, ip)
             return ('Too many requests. Please wait before trying again.', 429)
     if request.path.startswith('/user/') or request.path.startswith('/api/users/'):
         if not _check_rate_limit(f'student:{ip}', 50, 60):
+            rate_limit_hits.labels(endpoint='student').inc()
             security_logger.warning('rate_limit student ip=%s', ip)
             return ('Too many requests. Please wait before trying again.', 429)
 
@@ -124,6 +135,7 @@ def track_access_start():
 @app.after_request
 def log_access(response):
     elapsed = int((time() - getattr(request, '_start_time', time())) * 1000)
+    view_response_time.labels(view_name=request.endpoint or 'unknown').observe(elapsed / 1000.0)
     uid = session.get('user_id', 'anon')
     access_logger.info('method=%s path=%s status=%s ms=%s user_id=%s', request.method, request.path, response.status_code, elapsed, uid)
     return response
@@ -133,6 +145,7 @@ def log_access(response):
 
 
 def _session_conflict_response(expected_role):
+    session_conflicts.inc()
     role = (session.get('account_type') or session.get('user_role') or 'unknown').strip().lower()
     if expected_role == 'admin':
         if role == 'student':
@@ -146,6 +159,45 @@ def _session_conflict_response(expected_role):
     else:
         message = 'Your student session has expired. Please log in again to continue.'
     return jsonify({'error': message, 'session_conflict': True, 'redirect': '/main/sign_in'}), 401
+
+
+@app.route('/metrics')
+def metrics():
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+
+
+@app.route('/health/')
+def health_check():
+    from datetime import datetime
+    health = {'status': 'healthy', 'timestamp': datetime.utcnow().isoformat(), 'components': {}}
+    try:
+        db = get_db()
+        c = db.cursor()
+        c.execute("SELECT 1")
+        c.fetchone()
+        health['components']['database'] = {'status': 'ok'}
+    except Exception as exc:
+        health['status'] = 'degraded'
+        health['components']['database'] = {'status': 'error', 'message': str(exc)}
+    cpu = psutil.cpu_percent(interval=0.1)
+    mem = psutil.virtual_memory()
+    disk = psutil.disk_usage('/')
+    health['components']['system'] = {'status': 'ok' if cpu < 90 else 'warning', 'cpu_percent': cpu, 'memory_percent': mem.percent, 'disk_percent': disk.percent}
+    try:
+        c = db.cursor(dictionary=True)
+        c.execute("SELECT COUNT(*) c FROM books WHERE UPPER(COALESCE(availability_hint,status))='AVAILABLE'")
+        available = (c.fetchone() or {}).get('c', 0)
+        c.execute("SELECT COUNT(*) c FROM transactions WHERE action='borrowed' AND returned_at IS NULL AND due_at < NOW()")
+        overdue = (c.fetchone() or {}).get('c', 0)
+        c.execute("SELECT COUNT(*) c FROM notifications WHERE is_read=0")
+        unread = (c.fetchone() or {}).get('c', 0)
+        available_books_gauge.set(available); overdue_books_gauge.set(overdue); unread_notifications_gauge.set(unread)
+        health['components']['lbas'] = {'status': 'ok', 'available_books': available, 'overdue_books': overdue, 'unread_notifications': unread}
+        c.close()
+    except Exception as exc:
+        health['status'] = 'degraded'
+        health['components']['lbas'] = {'status': 'error', 'message': str(exc)}
+    return jsonify(health), (200 if health['status'] == 'healthy' else 503)
 
 
 @app.before_request
@@ -527,4 +579,3 @@ if __name__ == '__main__':
     print("📖 Starting development server...")
     print("🔗 Open browser: http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)
-
