@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dropdown = document.createElement('div');
     dropdown.id = 'notif-dropdown';
     dropdown.className = 'notif-dropdown';
-    dropdown.innerHTML = '<div class="notif-header"><span class="notif-heading">Notifications</span><button id="notif-clear-btn" class="notif-clear-btn" type="button">Clear All</button></div><div id="notif-list" class="notif-list"><div class="notif-empty">No notifications</div></div>';
+    dropdown.innerHTML = '<div class="notif-header"><span class="notif-heading">Notifications</span><div class="notif-actions"><button id="notif-mark-all-btn" class="notif-mark-btn" type="button">Mark all read</button><button id="notif-clear-btn" class="notif-clear-btn" type="button">Clear All</button></div></div><div id="notif-list" class="notif-list"><div class="notif-empty">No notifications</div></div>';
     wrapper.appendChild(dropdown);
 
     bellBtn.addEventListener('click', (event) => {
@@ -161,14 +161,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const unreadClass = (!n.is_read && !used) ? 'unread' : 'read';
             return `
             <div class="notif-item ${unreadClass} ${used ? 'used' : ''}" data-notif='${JSON.stringify(n).replace(/'/g, '&#39;')}'>
-              <div class="notif-title">${n.title || ''}${used ? ' <span class="notif-used-badge">Used</span>' : ''}</div>
+              <div class="notif-item-head">
+                <div class="notif-title">${n.title || ''}${used ? ' <span class="notif-used-badge">Used</span>' : ''}</div>
+                ${(!n.is_read && !used) ? '<button class="notif-item-btn" data-mark-read="1" type="button">Mark read</button>' : ''}
+              </div>
               <div class="notif-msg">${n.message || ''}</div>
               <div class="notif-time">${n.created_at || ''}</div>
             </div>`;
           }).join('')
         : '<div class="notif-empty">No notifications</div>';
+      const unreadIds = notifs.filter((n) => !n.is_read && !n.is_used).map((n) => n.id);
+      if (document.getElementById('notif-dropdown')?.classList.contains('open') && unreadIds.length) {
+        await markManyNotificationsRead(unreadIds);
+      }
       list.querySelectorAll('.notif-item').forEach((item) => {
-        item.addEventListener('click', () => {
+        item.addEventListener('click', (event) => {
+          if (event.target?.matches('[data-mark-read]')) {
+            event.stopPropagation();
+            const notif = JSON.parse(item.dataset.notif || '{}');
+            window.markNotificationRead(notif.id).then(() => window.loadNotifications());
+            return;
+          }
           const notif = JSON.parse(item.dataset.notif || '{}');
           window.handleNotification(notif);
         });
@@ -211,6 +224,10 @@ document.addEventListener('DOMContentLoaded', () => {
       event.stopPropagation();
       clearNotifications();
     }
+    if (event.target?.id === 'notif-mark-all-btn') {
+      event.stopPropagation();
+      markAllNotificationsRead();
+    }
   });
 
   window.markNotificationRead = async function markNotificationRead(notifId) {
@@ -221,6 +238,19 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Failed to mark notification read:', err);
     }
   };
+
+  async function markManyNotificationsRead(notifIds = []) {
+    const jobs = notifIds.filter(Boolean).map((id) => fetch(`/api/admin/notifications/${id}/read`, { method: 'POST' }));
+    if (jobs.length) await Promise.all(jobs);
+    window.loadNotifications();
+  }
+
+  async function markAllNotificationsRead() {
+    const res = await fetch('/api/admin/notifications');
+    const notifs = await res.json();
+    const unreadIds = (notifs || []).filter((n) => !n.is_read && !n.is_used).map((n) => n.id);
+    await markManyNotificationsRead(unreadIds);
+  }
 
   async function clearNotifications() {
     await fetch('/api/admin/notifications/clear', { method: 'POST' });
