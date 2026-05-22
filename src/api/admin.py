@@ -5,6 +5,7 @@ import os
 import random
 import string
 from datetime import datetime, timedelta
+from functools import wraps
 
 import mysql.connector
 import psutil
@@ -17,6 +18,51 @@ from src.api.auth import (
     send_admin_deleted_confirmation_email,
     send_admin_deletion_email,
 )
+
+
+def admin_session_required(f):
+    """Decorator to enforce admin role on every endpoint.
+    
+    This provides Layer 1 of session conflict protection by:
+    1. Checking if admin_id exists in session
+    2. Verifying account_type is 'admin'
+    3. Verifying user_role is 'admin'
+    4. Returning clear error message on role mismatch
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        admin_id = session.get('admin_id')
+        account_type = (session.get('account_type') or '').strip().lower()
+        user_role = (session.get('user_role') or '').strip().lower()
+        
+        # Session missing completely
+        if not admin_id:
+            return jsonify({
+                'error': 'Admin login required',
+                'session_conflict': True,
+                'redirect': '/main/sign_in'
+            }), 401
+        
+        # Session exists but role is wrong (session hijacking detected)
+        if account_type != 'admin' or user_role != 'admin':
+            # Determine what happened
+            if account_type == 'student':
+                message = 'Your librarian session was replaced by a student login in another tab. Please log in again as Librarian to continue.'
+            else:
+                message = 'Your librarian session has expired or was replaced. Please log in again as Librarian to continue.'
+            
+            return jsonify({
+                'error': message,
+                'session_conflict': True,
+                'redirect': '/main/sign_in',
+                'current_role': account_type or 'none',
+                'expected_role': 'admin'
+            }), 401
+        
+        # Session is valid, proceed
+        return f(*args, **kwargs)
+    
+    return decorated_function
 
 
 DEFAULT_RULES = {
@@ -96,6 +142,7 @@ def _ensure_tables(cursor):
 
 
 
+@admin_session_required
 def get_me():
     """Return current logged-in admin details."""
     admin_id = session.get('admin_id')
@@ -123,6 +170,7 @@ def get_me():
 
     return jsonify(admin)
 
+@admin_session_required
 def get_rules():
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -136,6 +184,7 @@ def get_rules():
     return jsonify(row)
 
 
+@admin_session_required
 def save_rules():
     data = request.get_json(silent=True) or {}
     db = get_db()
@@ -188,6 +237,7 @@ def save_rules():
     return jsonify({'status': 'saved'})
 
 
+@admin_session_required
 def server_health():
     cpu = psutil.cpu_percent(interval=1)
     ram = psutil.virtual_memory().percent
@@ -196,6 +246,7 @@ def server_health():
     return jsonify({'cpu': cpu, 'ram': ram, 'load': load, 'status': status})
 
 
+@admin_session_required
 def get_logs():
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -236,6 +287,7 @@ def get_logs():
     return jsonify(rows)
 
 
+@admin_session_required
 def clear_logs():
     """Clear security logs to prevent unbounded growth in the admin UI."""
     db = get_db()
@@ -291,6 +343,7 @@ def _ensure_deletion_and_notification_tables(cursor):
     )
 
 
+@admin_session_required
 def request_admin_deletion():
     data = request.get_json(silent=True) or {}
     target_id = str(data.get('target_id') or '').strip()
@@ -361,6 +414,7 @@ def request_admin_deletion():
     return jsonify({'status': 'email_sent'})
 
 
+@admin_session_required
 def confirm_admin_deletion():
     deletion_id = request.args.get('id')
     db = get_db()
@@ -399,6 +453,7 @@ def confirm_admin_deletion():
     return build_deletion_confirmed_html()
 
 
+@admin_session_required
 def finalize_admin_deletion():
     data = request.get_json(silent=True) or {}
     target_id = str(data.get('target_id') or '').strip()
@@ -473,6 +528,7 @@ def _fmt_admin_dt(value):
     return str(value)
 
 
+@admin_session_required
 def get_security_reports():
     """Return grouped security data for the admin reports page."""
     db = get_db()
@@ -553,6 +609,7 @@ def get_security_reports():
         'flagged_unreturned': flagged_books,
     })
 
+@admin_session_required
 def get_notifications():
     admin_id = session.get('admin_id')
     if not admin_id:
@@ -580,6 +637,7 @@ def get_notifications():
     return jsonify(rows)
 
 
+@admin_session_required
 def mark_notification_read(notif_id):
     admin_id = session.get('admin_id')
     if not admin_id:
@@ -599,6 +657,7 @@ def mark_notification_read(notif_id):
     return jsonify({'status': 'read'})
 
 
+@admin_session_required
 def clear_notifications():
     admin_id = session.get('admin_id')
     if not admin_id:
@@ -658,6 +717,7 @@ def _first_existing_book_metric(cursor, candidates, alias):
 
     return f"{best_col} AS {alias}"
 
+@admin_session_required
 def get_dashboard_stats():
     db = get_db()
     cur = db.cursor(dictionary=True)

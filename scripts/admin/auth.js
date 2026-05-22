@@ -25,6 +25,13 @@ async function fetchSession() {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok || !data.authenticated) {
+    // Check if this is a session conflict error
+    if (data.session_conflict) {
+      const message = data.error || 'Your session has expired. Please sign in again.';
+      console.warn('Session conflict detected:', message);
+      // Store the message for display after redirect
+      sessionStorage.setItem('sessionConflictMessage', message);
+    }
     throw new Error(data.error || 'Your session has expired. Please sign in again.');
   }
 

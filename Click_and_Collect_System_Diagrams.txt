@@ -1,0 +1,611 @@
+================================================================================
+        CLICK & COLLECT SYSTEM - COMPLETE ARCHITECTURE DIAGRAMS
+        Soft & Hard Copy Reference Document
+================================================================================
+Date Generated: May 20, 2026
+Purpose: Complete visual documentation of system flow and architecture
+
+================================================================================
+DIAGRAM 1: SYSTEM ARCHITECTURE OVERVIEW
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          CLICK & COLLECT SYSTEM                             │
+│                            Architecture Flow                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────┐    ┌──────────────────────┐    ┌──────────────────────┐
+│  FRONTEND - STUDENT  │    │  FRONTEND - ADMIN    │    │  PYTHON API BACKEND  │
+│      SIDE            │    │      SIDE            │    │      (Flask)         │
+├──────────────────────┤    ├──────────────────────┤    ├──────────────────────┤
+│                      │    │                      │    │                      │
+│ • userBookdisplay    │    │ • adminDashboard.    │    │ POST /api/           │
+│   .html              │    │   html               │    │   transaction/       │
+│                      │    │                      │    │   reserve            │
+│ • reserve.js         │    │ • dashboard.js       │    │                      │
+│   (Reserve Logic)    │    │   (Load Data)        │    │ POST /api/           │
+│                      │    │                      │    │   transactions/      │
+│ • account.js         │    │ • Account            │    │   borrow             │
+│   (User Account)     │    │   Management         │    │                      │
+│                      │    │                      │    │ POST /api/           │
+│                      │    │                      │    │   transactions/      │
+│                      │    │                      │    │   cancel             │
+│                      │    │                      │    │                      │
+│                      │    │                      │    │ GET /api/            │
+│                      │    │                      │    │   transactions/      │
+│                      │    │                      │    │   manage             │
+└──────────────────────┘    └──────────────────────┘    └──────────────────────┘
+           │                           │                           │
+           └───────────────────────────┴───────────────────────────┘
+                                      │
+                    ┌─────────────────▼─────────────────┐
+                    │    MYSQL DATABASE                 │
+                    ├───────────────────────────────────┤
+                    │ • transactions table              │
+                    │   (action: reserved/borrowed/     │
+                    │    cancelled/returned)            │
+                    │                                   │
+                    │ • books table                     │
+                    │   (availability_hint status)      │
+                    │                                   │
+                    │ • notifications table             │
+                    │   (admin alerts)                  │
+                    │                                   │
+                    │ • students table                  │
+                    │ • admins table                    │
+                    │ • books_categories table          │
+                    └───────────────────────────────────┘
+                                      │
+                    ┌─────────────────▼─────────────────┐
+                    │  NOTIFICATION SYSTEM              │
+                    ├───────────────────────────────────┤
+                    │ • _notify_admins_of_             │
+                    │   reservation()                   │
+                    │                                   │
+                    │ • send_semaphore_sms()            │
+                    │   (SMS to admin phone)            │
+                    │                                   │
+                    │ • INSERT to notifications table   │
+                    │   (In-app alerts)                 │
+                    └───────────────────────────────────┘
+
+
+================================================================================
+DIAGRAM 2: BOOK RESERVATION FLOW (Step-by-Step)
+================================================================================
+
+STEP 1: STUDENT INITIATES RESERVATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Student views available books on userBookdisplay.html
+Student clicks "Reserve" button on a book
+Example: Book #123 (Algorithms by Donald Knuth)
+
+
+STEP 2: FRONTEND SENDS REQUEST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+File: scripts/user/reserve.js
+Request: POST /api/transaction/reserve
+Payload:
+{
+  "book_id": 123,
+  "pickup_date": "2026-05-21",
+  "student_id": "STU001"
+}
+
+
+STEP 3: BACKEND VALIDATION (reserve_book function)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Location: src/api/transactions.py (line ~194)
+
+Checks performed:
+  ✓ Is book Available? (SELECT FROM books WHERE status='Available')
+  ✓ Already reserved by this student? (Check existing transactions)
+  ✓ Calculate nearest_pickup_day from admin rules
+  ✓ Calculate expected_return_date based on loan period
+
+
+STEP 4: DATABASE UPDATES
+━━━━━━━━━━━━━━━━━━━━━━━
+Four operations execute:
+
+Operation 1:
+  INSERT INTO transactions 
+  (book_id, student_id, action, reserved_at, pickup_at, due_at, deleted_at)
+  VALUES (123, STU001, 'reserved', NOW(), '2026-05-21', '2026-06-04', NULL)
+  
+Operation 2:
+  UPDATE books 
+  SET availability_hint='Reserved', 
+      reserve_count = reserve_count + 1 
+  WHERE book_id=123
+  
+Operation 3:
+  Calculate queue_position: 
+  SELECT COUNT(*) FROM transactions 
+  WHERE book_id=123 AND action='reserved' AND deleted_at IS NULL
+
+Operation 4:
+  Store transaction ID for response
+
+
+STEP 5: NOTIFY ALL ADMINS (CRITICAL!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Function: _notify_admins_of_reservation()
+Location: src/api/transactions.py (line ~166)
+
+For EACH admin in system:
+  ✓ Query: SELECT admin_id, phone_number FROM admins 
+    WHERE deleted_at IS NULL
+  
+  ✓ For each active admin:
+    - INSERT notification record with message
+    - SEND SMS via Semaphore API
+    - Log notification event
+
+
+STEP 6: ADMIN RECEIVES NOTIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SMS Alert Example:
+  "New Click & Collect Reservation
+   Student: STU001 (John Doe)
+   Book: #123 - Algorithms
+   Pickup: 2026-05-21
+   Queue Position: #1
+   Action: Approve or Reject"
+
+Dashboard Update:
+  - "Pending Reservations" table refreshes
+  - New row appears with status badge: [PENDING]
+  - Two action buttons visible:
+    * [GREEN] APPROVE
+    * [RED] REJECT
+
+
+STEP 7: ADMIN ACTION
+━━━━━━━━━━━━━━━━━━
+Two possible outcomes:
+
+OUTCOME A: ADMIN CLICKS APPROVE (Green Button)
+  POST /api/transactions/borrow
+  Payload: {book_id: 123, student_id: STU001}
+  
+  Backend updates:
+  - UPDATE transactions SET action='borrowed', borrowed_at=NOW()
+  - UPDATE books SET availability_hint='Borrowed'
+  - Remove from "Pending Reservations" list
+  - Status changes to [BORROWED]
+  - Student can pick up book
+
+OUTCOME B: ADMIN CLICKS REJECT (Red Button)
+  POST /api/transactions/cancel
+  Payload: {book_id: 123, student_id: STU001}
+  
+  Backend updates:
+  - UPDATE transactions SET action='cancelled', cancelled_at=NOW()
+  - UPDATE books SET availability_hint='Available'
+  - Remove from "Pending Reservations" list
+  - Status changes to [CANCELLED]
+  - Book goes back to Available
+
+
+================================================================================
+DIAGRAM 3: DATABASE STATE CHANGES THROUGH LIFECYCLE
+================================================================================
+
+TIMELINE OF DATA CHANGES:
+
+Time: T0 (Before Reservation)
+──────────────────────────────
+books table:
+  - book_id: 123
+  - title: Algorithms
+  - availability_hint: Available ✓
+  - reserve_count: 0
+
+transactions table:
+  - (empty for this book/student pair)
+
+
+Time: T1 (After Student Reserves)
+──────────────────────────────────
+books table:
+  - book_id: 123
+  - availability_hint: Reserved
+  - reserve_count: 1
+
+transactions table (NEW ROW):
+  - transaction_id: 50001
+  - book_id: 123
+  - student_id: STU001
+  - action: reserved
+  - reserved_at: 2026-05-20 10:30:00
+  - pickup_at: 2026-05-21
+  - due_at: 2026-06-04
+  - queue_position: 1
+
+
+Time: T2 (Admin Approves)
+──────────────────────────
+books table UPDATE:
+  - availability_hint: Borrowed (changed from Reserved)
+
+transactions table UPDATE (same row):
+  - action: borrowed (changed from reserved)
+  - borrowed_at: 2026-05-21 14:00:00 (newly set)
+
+
+Time: T3 (Student Returns Book)
+─────────────────────────────────
+books table UPDATE:
+  - availability_hint: Available (changed from Borrowed)
+
+transactions table UPDATE:
+  - action: returned (changed from borrowed)
+  - returned_at: 2026-06-03 16:30:00 (newly set)
+
+
+ALTERNATIVE PATH: ADMIN REJECTS (at T2)
+──────────────────────────────────────────
+books table UPDATE:
+  - availability_hint: Available (changed from Reserved)
+
+transactions table UPDATE:
+  - action: cancelled (changed from reserved)
+  - cancelled_at: 2026-05-20 10:45:00 (newly set)
+
+
+================================================================================
+DIAGRAM 4: ADMIN DASHBOARD VIEW & QUERIES
+================================================================================
+
+ADMIN SEES THIS ON DASHBOARD:
+─────────────────────────────
+
+┌─────────────────────────────────────────────────────────┐
+│              ADMIN DASHBOARD                            │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  📊 TOP 3 MOST RESERVED BOOKS                          │
+│  ┌───────────────────────────────────────┐             │
+│  │ 1. Algorithms (12 reservations)       │             │
+│  │ 2. Data Structures (8 reservations)   │             │
+│  │ 3. Python Mastery (5 reservations)    │             │
+│  └───────────────────────────────────────┘             │
+│                                                         │
+│  📊 TOP 3 MOST BORROWED BOOKS                          │
+│  ┌───────────────────────────────────────┐             │
+│  │ 1. Algorithms (45 borrows)            │             │
+│  │ 2. Database Design (32 borrows)       │             │
+│  │ 3. Web Development (28 borrows)       │             │
+│  └───────────────────────────────────────┘             │
+│                                                         │
+│  ⏳ PENDING RESERVATIONS (action='reserved')           │
+│  ┌─────────────────────────────────────────────────┐  │
+│  │ Student ID │ Book Title    │ Pickup  │ Actions │  │
+│  ├─────────────────────────────────────────────────┤  │
+│  │ STU001     │ Algorithms    │ 5/21    │[✓][✗]  │  │
+│  │ STU002     │ Data Struct.  │ 5/22    │[✓][✗]  │  │
+│  │ STU003     │ Python Master │ 5/23    │[✓][✗]  │  │
+│  └─────────────────────────────────────────────────┘  │
+│                 [✓] Approve  [✗] Reject               │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+
+PYTHON API ENDPOINTS CALLED:
+─────────────────────────────
+
+1. GET /api/transactions/manage
+   Returns all pending reservations and borrowed books
+
+2. POST /api/transactions/borrow
+   When admin clicks APPROVE button
+
+3. POST /api/transactions/cancel
+   When admin clicks REJECT button
+
+4. POST /api/transactions/force-return
+   For manual return by admin
+
+
+DATABASE QUERIES EXECUTED:
+──────────────────────────
+
+Query 1 - Get Pending Reservations:
+  SELECT * FROM transactions 
+  WHERE action='reserved' 
+  AND returned_at IS NULL
+
+Query 2 - Get Active Borrows:
+  SELECT * FROM transactions 
+  WHERE action='borrowed' 
+  AND returned_at IS NULL
+
+Query 3 - Top 3 Most Reserved:
+  SELECT book_id, COUNT(*) AS count 
+  FROM transactions 
+  WHERE action='reserved' 
+  GROUP BY book_id 
+  ORDER BY count DESC 
+  LIMIT 3
+
+Query 4 - Top 3 Most Borrowed:
+  SELECT book_id, COUNT(*) AS count 
+  FROM transactions 
+  WHERE action='borrowed' 
+  GROUP BY book_id 
+  ORDER BY count DESC 
+  LIMIT 3
+
+
+================================================================================
+DIAGRAM 5: COMPLETE NOTIFICATION SYSTEM FLOW
+================================================================================
+
+STAGE 1: STUDENT ACTION
+────────────────────────
+┌─────────────────────────────────┐
+│ Student clicks RESERVE button   │
+│ on Book #123 (Algorithms)       │
+└──────────────┬──────────────────┘
+               │
+               ▼
+
+STAGE 2: FRONTEND REQUEST
+─────────────────────────
+┌─────────────────────────────────┐
+│ reserve.js sends:               │
+│ POST /api/transaction/reserve   │
+│                                 │
+│ Payload:                        │
+│ {                               │
+│   book_id: 123,                │
+│   pickup_date: 2026-05-21,     │
+│   student_id: STU001           │
+│ }                               │
+└──────────────┬──────────────────┘
+               │
+               ▼
+
+STAGE 3: BACKEND PROCESSES
+─────────────────────────
+┌─────────────────────────────────────────┐
+│ reserve_book() function executes:       │
+│ 1. Validate book availability          │
+│ 2. Check for duplicates                │
+│ 3. Calculate dates                     │
+│ 4. INSERT into transactions table      │
+│ 5. UPDATE books table                  │
+│ 6. Calculate queue position            │
+└──────────────┬──────────────────────────┘
+               │
+               ▼
+
+STAGE 4: TRIGGER NOTIFICATION
+──────────────────────────────
+┌──────────────────────────────────────┐
+│ _notify_admins_of_reservation()      │
+│ function called                      │
+└──────────────┬───────────────────────┘
+               │
+               ▼
+
+STAGE 5: QUERY ALL ADMINS
+─────────────────────────
+┌──────────────────────────────────────┐
+│ SELECT admin_id, phone_number        │
+│ FROM admins                          │
+│ WHERE deleted_at IS NULL             │
+│                                      │
+│ Results: 3 active admins found       │
+│ - Admin001: 09123456789              │
+│ - Admin002: 09198765432              │
+│ - Admin003: 09111223344              │
+└──────────────┬───────────────────────┘
+               │
+               ▼
+
+STAGE 6: LOOP - FOR EACH ADMIN
+───────────────────────────────
+┌─────────────────────────────────────┐
+│ LOOP ITERATION 1: Admin001          │
+│                                     │
+│ Step 1: Prepare SMS message:        │
+│ "New Click & Collect Reservation    │
+│  Student: STU001 (John Doe)         │
+│  Book: Algorithms                   │
+│  Pickup: 2026-05-21                 │
+│  Queue: #1"                         │
+│                                     │
+│ Step 2: INSERT notification record  │
+│ INSERT INTO notifications           │
+│ (admin_id, message, created_at)     │
+│ VALUES (Admin001, message, NOW())   │
+│                                     │
+│ Step 3: SEND SMS via Semaphore      │
+│ Semaphore API call to 09123456789   │
+│ ✓ SMS SENT                          │
+│                                     │
+│ (Repeat for Admin002 and Admin003)  │
+│                                     │
+└──────────────┬───────────────────────┘
+               │
+               ▼
+
+STAGE 7: ALL ADMINS RECEIVE ALERTS
+──────────────────────────────────
+
+📱 MOBILE: SMS RECEIVED
+─────────────────────
+Admin001's phone rings:
+[SMS from Click & Collect System]
+"New Click & Collect Reservation
+ Student: STU001 (John Doe)
+ Book: Algorithms
+ Pickup: 2026-05-21
+ Queue Position: #1
+ Dashboard: admin.clickcollect.com"
+
+💻 BROWSER: DASHBOARD UPDATE
+────────────────────────────
+Admin opens dashboard (or it auto-refreshes)
+
+Pending Reservations Table:
+┌──────────────────────────────────────┐
+│ StudentID │ Book     │ Pickup │ Act  │
+├──────────────────────────────────────┤
+│ STU001    │ Algorit. │ 5/21   │[✓][✗]│
+└──────────────────────────────────────┘
+
+[✓] GREEN APPROVE button
+[✗] RED REJECT button
+
+🔔 IN-APP NOTIFICATION
+─────────────────────
+Toast/Popup appears:
+"New reservation pending!
+ STU001 reserved Algorithms
+ Pickup: 2026-05-21"
+
+
+STAGE 8: ADMIN ACTION
+────────────────────
+
+OPTION A: ADMIN CLICKS [✓] APPROVE
+──────────────────────────────────
+Request: POST /api/transactions/borrow
+Payload: {book_id: 123, student_id: STU001}
+
+Backend Updates:
+├─ UPDATE transactions SET action='borrowed'
+├─ UPDATE books SET availability_hint='Borrowed'
+├─ Set borrowed_at = NOW()
+├─ Remove from pending queue
+└─ INSERT success notification
+
+Result: Book status → BORROWED (Ready for pickup)
+
+
+OPTION B: ADMIN CLICKS [✗] REJECT
+─────────────────────────────────
+Request: POST /api/transactions/cancel
+Payload: {book_id: 123, student_id: STU001}
+
+Backend Updates:
+├─ UPDATE transactions SET action='cancelled'
+├─ UPDATE books SET availability_hint='Available'
+├─ Set cancelled_at = NOW()
+├─ Remove from pending queue
+└─ INSERT rejection notification
+
+Result: Book status → AVAILABLE (Goes back to shelf)
+
+
+STAGE 9: COMPLETION
+──────────────────
+Dashboard refreshes automatically
+- Pending Reservations table updates
+- Status badges change
+- Admins see confirmation message
+- Student (if logged in) sees their reservation status
+
+
+================================================================================
+SUMMARY: KEY QUESTION ANSWERED
+================================================================================
+
+Q: When a student posts a reservation, does the admin know what's happening?
+
+A: YES! IMMEDIATELY and COMPLETELY
+
+Confirmation:
+✓ SMS alert sent to ALL active admins within seconds
+✓ Dashboard shows new pending reservation with all details
+✓ In-app notification pops up on dashboard
+✓ Admin can see:
+  - Student name and ID
+  - Book title and ID
+  - Requested pickup date
+  - Queue position
+  - All history and details
+
+The system uses THREE notification channels:
+1. SMS (Semaphore API) - Real-time mobile alert
+2. Dashboard (Web UI) - Persistent visual display
+3. In-app Notification - Popup alert
+4. Notification Table - Stored record for audit trail
+
+ALL ADMINS are notified SIMULTANEOUSLY
+The notification triggers are AUTOMATIC
+The response is REQUIRED (Approve or Reject)
+
+
+================================================================================
+TECHNICAL SPECIFICATIONS
+================================================================================
+
+Transaction Lifecycle States:
+  1. reserved      - Waiting for admin approval
+  2. borrowed      - Approved, ready for or in pickup
+  3. returned      - Successfully returned by student
+  4. cancelled     - Admin rejected or student cancelled
+  5. overdue       - Returned after due date
+
+Queue Position System:
+  - Calculated as: SELECT COUNT(*) FROM transactions
+                   WHERE book_id=X AND action='reserved'
+  - Shows student's position in reservation line
+  - Helps manage multiple reservations per book
+
+Date Calculations:
+  - nearest_pickup_day: Admin configurable rule (default next day)
+  - expected_return_date: based on loan_period (default 15 days)
+  - due_at: Set when borrowed
+  - late if returned after due_at
+
+Notification Channels:
+  - SMS: Semaphore API (http://semaphore.co/)
+  - Email: (Optional, system ready)
+  - In-app: notifications table + browser popup
+  - Dashboard: Auto-refresh every 30 seconds
+
+Admin Permissions:
+  - View all pending reservations
+  - View all active borrows
+  - Approve reservations
+  - Reject reservations
+  - Force return books
+  - View reports and analytics
+
+
+================================================================================
+USAGE & PRINTING INSTRUCTIONS
+================================================================================
+
+To Print This Document:
+1. Open this file in any text editor (Notepad, VS Code, etc.)
+2. Select All (Ctrl+A)
+3. Print (Ctrl+P)
+4. Choose appropriate paper size (A4 recommended)
+5. Orientation: Portrait works best
+6. Margins: Use default or narrow for more content per page
+
+To Reference:
+- Keep printed copy near admin workstation
+- Digital copy on mobile device
+- Share with team members for training
+- Update when system changes occur
+
+For Modifications:
+- Edit this .txt file directly
+- Add custom notes or observations
+- Keep version history with dates
+- Document any system changes
+
+
+================================================================================
+END OF DOCUMENT
+Generated: May 20, 2026
+System: Click & Collect Library Management
+Status: Complete Architecture Documentation
+================================================================================
