@@ -54,6 +54,61 @@ PAGES_DIR = os.path.join(PUBLIC_DIR, 'pages')
 register_api_blueprints(app)
 
 
+
+
+def _session_conflict_response(expected_role):
+    role = (session.get('account_type') or session.get('user_role') or 'unknown').strip().lower()
+    if expected_role == 'admin':
+        if role == 'student':
+            message = 'Your librarian session was replaced by a student login in another tab. Please log in again as Librarian to continue.'
+        else:
+            message = 'Your librarian session has expired. Please log in again as Librarian to continue.'
+        return jsonify({'error': message, 'session_conflict': True, 'redirect': '/main/sign_in'}), 401
+
+    if role == 'admin':
+        message = 'Your student session was replaced by an admin login in another tab. Please log in again to continue.'
+    else:
+        message = 'Your student session has expired. Please log in again to continue.'
+    return jsonify({'error': message, 'session_conflict': True, 'redirect': '/main/sign_in'}), 401
+
+
+@app.before_request
+def enforce_role_scoped_api_sessions():
+    """Reject requests when the active session role doesn't match the API scope."""
+    if not request.path.startswith('/api/') or request.path.startswith('/api/auth/'):
+        return
+
+    account_type = (session.get('account_type') or '').strip().lower()
+    session_role = (session.get('user_role') or '').strip().lower()
+
+    if request.path.startswith('/api/admin/'):
+        if not session.get('admin_id'):
+            return _session_conflict_response('admin')
+        if account_type != 'admin' or session_role != 'admin':
+            return _session_conflict_response('admin')
+        return
+
+    if request.path.startswith('/api/users/') or request.path.startswith('/api/transactions/'):
+        admin_only_paths = (
+            '/api/users/pending',
+            '/api/users/',
+            '/api/transactions/borrow',
+            '/api/transactions/return',
+            '/api/transactions/force-return',
+            '/api/transactions/notify-borrower',
+            '/api/transactions/manage',
+        )
+        needs_admin = request.path.startswith(admin_only_paths)
+        expected_role = 'admin' if needs_admin else 'student'
+
+        if expected_role == 'admin':
+            if not session.get('admin_id') or account_type != 'admin' or session_role != 'admin':
+                return _session_conflict_response('admin')
+            return
+
+        if not session.get('student_id') or account_type != 'student' or session_role != 'student':
+            return _session_conflict_response('student')
+
 @app.before_request
 def audit_authenticated_api_actions():
     """Audit admin/student API activity for anomaly investigations."""
