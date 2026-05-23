@@ -9,6 +9,9 @@ from dotenv import load_dotenv
 import psutil
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
+# Base directory
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # Load environment variables from external .env file for security
 load_dotenv('C:\\CC-Config\\.env')
 
@@ -81,8 +84,6 @@ def register_api_blueprints(flask_app):
             flask_app.register_blueprint(blueprint)
 
 
-# Base directory
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PUBLIC_DIR = os.path.join(BASE_DIR, 'public')
 PAGES_DIR = os.path.join(PUBLIC_DIR, 'pages')
 register_api_blueprints(app)
