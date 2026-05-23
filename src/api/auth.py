@@ -22,6 +22,7 @@ from src.core.db import get_db
 from src.core.security import generate_setup_code, hash_password, verify_password
 from src.core.metrics import failed_login_attempts, successful_logins
 from src.core.monitoring_alerts import send_system_alert
+from src.core.rate_limit_service import consume_token, reset_tokens_on_success, update_load_snapshot
 
 TOKEN_TTL_SECONDS = 15 * 60
 CONFIRMATION_RESEND_COOLDOWN_SECONDS = 60
@@ -1957,6 +1958,16 @@ def login():
         return jsonify({'error': 'Student ID and password are required.'}), 400
 
     db = get_db()
+    active_sessions = len([k for k in session.keys() if k])
+    login_counter = int(session.get('simultaneous_login_counter', 0)) + 1
+    session['simultaneous_login_counter'] = login_counter
+    update_load_snapshot(simultaneous_logins=login_counter, active_users=active_sessions)
+    ip = _client_ip() or '0.0.0.0'
+    token_result = consume_token(ip)
+    if not token_result.get('allowed'):
+        session['blocked_until'] = str(token_result.get('blocked_until'))
+        return jsonify({'error': 'Too many failed login attempts', 'redirect': '/login/timeout/'}), 429
+
     cursor = db.cursor(dictionary=True)
     _ensure_admins_table(cursor)
     cursor.execute(
@@ -2010,7 +2021,7 @@ def login():
                 user['account_type'],
             )
         cursor.close()
-        return jsonify({'error': 'Incorrect password'}), 401
+        return jsonify({'error': f"Incorrect password. You have {token_result.get('tokens_remaining', 0)} attempt(s) remaining. Each attempt replenishes after {token_result.get('replenish_hours', 1)} hour(s)."}), 401
 
     # Always reset role-specific session keys before assigning the current login role.
     session.pop('admin_id', None)
@@ -2025,6 +2036,7 @@ def login():
     session['auth_token'] = auth_token
 
     if user['account_type'] == 'admin':
+        reset_tokens_on_success(ip)
         session['admin_id'] = student_id
         session['admin_name'] = user['full_name']
         session['account_type'] = 'admin'
@@ -2061,6 +2073,7 @@ def login():
         })
 
     session['student_id'] = student_id
+    reset_tokens_on_success(ip)
     session['student_name'] = user['full_name']
     session['account_type'] = 'student'
     session['user_role'] = 'student'

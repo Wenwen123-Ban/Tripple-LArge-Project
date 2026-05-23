@@ -30,6 +30,7 @@ from src.core.seed_demo import seed_demo_data
 from src.core.metrics import admin_ip_blocks, rate_limit_hits, view_response_time, session_conflicts, available_books_gauge, overdue_books_gauge, unread_notifications_gauge
 from src.core.monitoring_alerts import send_system_alert
 from src.core.db import get_db
+from src.core.rate_limit_service import consume_token
 
 
 app = Flask(
@@ -123,6 +124,25 @@ def enforce_rate_limits():
             rate_limit_hits.labels(endpoint='admin').inc()
             security_logger.warning('rate_limit admin uid=%s ip=%s', uid, ip)
             return ('Too many requests. Please wait before trying again.', 429)
+
+@app.before_request
+def enforce_blocked_ips_on_login():
+    if request.path in ['/main/sign_in', '/admin/login']:
+        ip = request.remote_addr or '0.0.0.0'
+        db = get_db(); c = db.cursor(dictionary=True)
+        try:
+            c.execute("SELECT is_blocked, blocked_until FROM ip_token_buckets WHERE ip_address=%s", (ip,))
+            row = c.fetchone()
+        finally:
+            c.close()
+        if row and row.get('is_blocked') and row.get('blocked_until'):
+            from datetime import datetime
+            if datetime.now() < row['blocked_until']:
+                if session.get('saw_timeout'):
+                    return ('Access Denied. This page is not available from your current connection.', 403)
+                session['saw_timeout'] = True
+                session['blocked_until'] = str(row['blocked_until'])
+                return ('Access Temporarily Suspended', 429)
     if request.path.startswith('/user/') or request.path.startswith('/api/users/'):
         if not _check_rate_limit(f'student:{ip}', 50, 60):
             rate_limit_hits.labels(endpoint='student').inc()
@@ -548,6 +568,10 @@ app.add_url_rule('/api/admin/finalize-deletion', 'finalize_admin_deletion', admi
 app.add_url_rule('/api/admin/notifications', 'get_notifications', admin.get_notifications, methods=['GET'])
 app.add_url_rule('/api/admin/notifications/<int:notif_id>/read', 'mark_notification_read', admin.mark_notification_read, methods=['POST'])
 app.add_url_rule('/api/admin/notifications/clear', 'clear_notifications', admin.clear_notifications, methods=['POST'])
+app.add_url_rule('/admin/notifications', 'admin_get_notifications_v2', admin.get_notifications, methods=['GET'])
+app.add_url_rule('/admin/notifications/mark-read/<int:notif_id>/', 'admin_mark_notification_read_v2', admin.mark_notification_read, methods=['POST'])
+app.add_url_rule('/admin/notifications/mark-all-read/', 'admin_mark_all_notifications_read_v2', admin.mark_all_notifications_read, methods=['POST'])
+app.add_url_rule('/admin/notifications/clear-all/', 'admin_clear_notifications_v2', admin.clear_notifications, methods=['POST'])
 app.add_url_rule('/api/admin/health', 'api_admin_health', admin.server_health, methods=['GET'])
 app.add_url_rule('/api/admin/server-health', 'api_admin_server_health', admin.server_health, methods=['GET'])
 
