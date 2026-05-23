@@ -217,13 +217,49 @@ def initialize_schema():
             id INT AUTO_INCREMENT PRIMARY KEY,
             recipient_id VARCHAR(40) NOT NULL,
             type VARCHAR(50) NOT NULL,
+            notification_type VARCHAR(50) DEFAULT 'general',
             title VARCHAR(120) NOT NULL,
             message TEXT,
             data TEXT,
             is_read TINYINT(1) DEFAULT 0,
             is_used TINYINT(1) DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_notifications_recipient_isread_created (recipient_id, is_read, created_at),
             INDEX idx_notifications_recipient_created (recipient_id, created_at)
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS ip_token_buckets (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            ip_address VARCHAR(64) NOT NULL UNIQUE,
+            tokens FLOAT DEFAULT 10.0,
+            max_tokens FLOAT DEFAULT 10.0,
+            replenish_hours FLOAT DEFAULT 1.0,
+            last_replenish DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_blocked TINYINT(1) DEFAULT 0,
+            blocked_until DATETIME NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_ip_token_ip (ip_address),
+            INDEX idx_ip_token_blocked (is_blocked, blocked_until)
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS system_load_snapshots (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            simultaneous_login_attempts INT DEFAULT 0,
+            simultaneous_active_users INT DEFAULT 0,
+            total_daily_users INT DEFAULT 0,
+            load_tier VARCHAR(20) DEFAULT 'normal',
+            snapshot_date DATE NOT NULL,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY uniq_snapshot_date (snapshot_date)
         )
         """
     )

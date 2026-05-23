@@ -619,7 +619,7 @@ def get_notifications():
     _ensure_deletion_and_notification_tables(cursor)
     cursor.execute(
         """
-        SELECT id, recipient_id, type, title, message, data, is_read, is_used, created_at
+        SELECT id, recipient_id, COALESCE(notification_type, type, 'general') AS notification_type, type, title, message, data, is_read, is_used, created_at
         FROM notifications
         WHERE recipient_id = %s
         ORDER BY created_at DESC
@@ -634,7 +634,9 @@ def get_notifications():
         row['is_used'] = bool(row.get('is_used'))
         if row.get('created_at'):
             row['created_at'] = row['created_at'].strftime('%m/%d/%Y %I:%M:%S %p')
-    return jsonify(rows)
+    unread_count = sum(1 for row in rows if not row.get('is_read'))
+    data = [{'id': r['id'], 'message': r.get('message'), 'is_read': r.get('is_read'), 'type': r.get('notification_type') or 'general', 'created_at': r.get('created_at')} for r in rows]
+    return jsonify({'notifications': data, 'unread_count': unread_count})
 
 
 @admin_session_required
@@ -682,6 +684,15 @@ def clear_notifications():
     db.commit()
     cursor.close()
     return jsonify({'status': 'cleared'})
+
+
+@admin_session_required
+def mark_all_notifications_read():
+    admin_id = session.get('admin_id')
+    db = get_db(); cursor = db.cursor()
+    cursor.execute("UPDATE notifications SET is_read = 1 WHERE recipient_id = %s AND is_read = 0", (admin_id,))
+    db.commit(); cursor.close()
+    return jsonify({'status': 'success', 'unread_count': 0})
 
 
 def _first_existing_book_metric(cursor, candidates, alias):

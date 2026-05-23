@@ -138,11 +138,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.loadNotifications = async function loadNotifications() {
     try {
-      const res = await fetch('/api/admin/notifications');
+      const res = await fetch('/admin/notifications/');
       if (!res.ok) return;
-      const notifs = await res.json();
+      const data = await res.json();
+      const notifs = data.notifications || [];
       const bell = document.getElementById('notif-btn');
-      const unread = notifs.filter((n) => !n.is_read && !n.is_used).length;
+      const unread = data.unread_count || 0;
       if (bell) {
         if (unread > 0) {
           bell.setAttribute('data-badge', unread);
@@ -233,27 +234,25 @@ document.addEventListener('DOMContentLoaded', () => {
   window.markNotificationRead = async function markNotificationRead(notifId) {
     if (!notifId) return;
     try {
-      await fetch(`/api/admin/notifications/${notifId}/read`, { method: 'POST' });
+      await fetch(`/admin/notifications/mark-read/${notifId}/`, { method: 'POST' });
     } catch (err) {
       console.error('Failed to mark notification read:', err);
     }
   };
 
   async function markManyNotificationsRead(notifIds = []) {
-    const jobs = notifIds.filter(Boolean).map((id) => fetch(`/api/admin/notifications/${id}/read`, { method: 'POST' }));
+    const jobs = notifIds.filter(Boolean).map((id) => fetch(`/admin/notifications/mark-read/${id}/`, { method: 'POST' }));
     if (jobs.length) await Promise.all(jobs);
     window.loadNotifications();
   }
 
   async function markAllNotificationsRead() {
-    const res = await fetch('/api/admin/notifications');
-    const notifs = await res.json();
-    const unreadIds = (notifs || []).filter((n) => !n.is_read && !n.is_used).map((n) => n.id);
-    await markManyNotificationsRead(unreadIds);
+    await fetch('/admin/notifications/mark-all-read/', { method: 'POST' });
+    window.loadNotifications();
   }
 
   async function clearNotifications() {
-    await fetch('/api/admin/notifications/clear', { method: 'POST' });
+    await fetch('/admin/notifications/clear-all/', { method: 'POST' });
     window.loadNotifications();
   }
   ensureNotificationDropdown();
