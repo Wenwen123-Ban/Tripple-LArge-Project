@@ -158,7 +158,8 @@
 </div>
 <p class="admin-form-subtitle">Admin registration form</p>
 </div>
-<div class="admin-registration-form">
+<form class="admin-registration-form" id="admin-registration-form">
+<div class="admin-form-section-title">Personal Information</div>
 <label class="admin-underline-field" for="admin-fullname">
 <span>Name:</span>
 <input type="text" id="admin-fullname" class="admin-input-underline" placeholder="Full name" autocomplete="name">
@@ -187,19 +188,21 @@
 <span>Gmail:</span>
 <input type="email" id="admin-gmail" class="admin-input-gmail" placeholder="name@gmail.com" autocomplete="email">
 </label>
+<div class="admin-form-section-title">Security Credentials</div>
 <label class="admin-underline-field" for="admin-password">
 <span>Password:</span>
 <input type="password" id="admin-password" class="admin-input-underline" placeholder="Minimum 8 characters" autocomplete="new-password">
 </label>
+<div class="admin-form-section-title">Authorization</div>
 <label class="admin-checkbox-row" for="admin-email-confirmed">
 <input type="checkbox" id="admin-email-confirmed" aria-readonly="true">
 <span>I confirm that the new admin's Gmail has been verified and can receive administrator notices.</span>
 </label>
 <div class="modal-divider">
 </div>
-<button class="btn-primary admin-confirm-button" id="admin-confirm-gmail-btn">Confirm Gmail</button>
+<button type="button" class="btn-primary admin-confirm-button" id="admin-confirm-gmail-btn">Confirm Gmail</button>
 <p class="modal-note" id="admin-confirmation-note">A confirmation email will be sent to the new admin's Gmail. Their one-time recovery code will be shown privately on the confirmation page.</p>
-</div>
+</form>
 </div>
 </div>
 <div style="padding:0 24px 24px;">
