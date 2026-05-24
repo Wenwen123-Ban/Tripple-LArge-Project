@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const openModal = () => {
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    form?.querySelector('input, select')?.focus();
   };
 
   const closeModal = () => {
@@ -29,6 +30,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  document.querySelectorAll('.pass-toggle').forEach((toggleBtn) => {
+    toggleBtn.addEventListener('click', () => {
+      const targetId = toggleBtn.dataset.target;
+      const input = document.getElementById(targetId);
+      if (!input) return;
+      const hidden = input.type === 'password';
+      input.type = hidden ? 'text' : 'password';
+      toggleBtn.textContent = hidden ? 'Hide' : 'Show';
+    });
+  });
+
   form?.addEventListener('submit', (event) => {
     event.preventDefault();
     const submitBtn = form.querySelector('button[type="submit"]');
@@ -42,6 +54,9 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
         form.reset();
+        document.querySelectorAll('.pass-toggle').forEach((btn) => {
+          btn.textContent = 'Show';
+        });
         closeModal();
       }, 700);
     }, 900);
