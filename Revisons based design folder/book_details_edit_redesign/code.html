@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Book Details | Librarian Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Pacifico&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "user-teal-start": "#26C6DA",
+                    "surface-container": "#f0ecfa",
+                    "surface-bright": "#fcf8ff",
+                    "tertiary-fixed": "#e1e0ff",
+                    "tertiary-fixed-dim": "#c0c1ff",
+                    "tertiary": "#232376",
+                    "on-error": "#ffffff",
+                    "outline-variant": "#cdc3d2",
+                    "secondary-fixed-dim": "#e9c400",
+                    "on-surface-variant": "#4b4451",
+                    "outline": "#7c7482",
+                    "primary-fixed": "#efdbff",
+                    "on-error-container": "#93000a",
+                    "surface-dim": "#dcd8e6",
+                    "on-tertiary-container": "#aaacff",
+                    "on-surface": "#1b1b24",
+                    "primary-container": "#5b2d8e",
+                    "surface": "#fcf8ff",
+                    "on-secondary-container": "#6e5c00",
+                    "status-available": "#22C55E",
+                    "on-primary-fixed": "#2b0053",
+                    "on-primary-container": "#cda0ff",
+                    "on-primary-fixed-variant": "#5c2e8f",
+                    "glass-bg": "rgba(255, 255, 255, 0.7)",
+                    "surface-tint": "#7548a9",
+                    "background": "#fcf8ff",
+                    "surface-container-high": "#eae6f4",
+                    "error-container": "#ffdad6",
+                    "status-due": "#EF4444",
+                    "tertiary-container": "#3a3c8d",
+                    "secondary-container": "#fcd400",
+                    "on-primary": "#ffffff",
+                    "surface-container-low": "#f6f2ff",
+                    "on-tertiary-fixed-variant": "#3b3d8e",
+                    "primary": "#431076",
+                    "status-reserved": "#F59E0B",
+                    "inverse-surface": "#302f3a",
+                    "primary-fixed-dim": "#dbb8ff",
+                    "inverse-primary": "#dbb8ff",
+                    "surface-container-highest": "#e4e0ee",
+                    "secondary": "#705d00",
+                    "error": "#ba1a1a",
+                    "on-background": "#1b1b24",
+                    "status-borrowed": "#1565C0",
+                    "on-secondary-fixed": "#221b00",
+                    "on-secondary-fixed-variant": "#544600",
+                    "on-tertiary": "#ffffff",
+                    "user-blue-end": "#0288D1",
+                    "surface-variant": "#e4e0ee",
+                    "on-tertiary-fixed": "#0b0763",
+                    "inverse-on-surface": "#f3effd",
+                    "secondary-fixed": "#ffe16d"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "md": "16px",
+                    "sm": "8px",
+                    "sidebar-width-user": "72px",
+                    "sidebar-width-admin": "240px",
+                    "container-max": "1320px",
+                    "xl": "32px",
+                    "sidebar-width-collapsed": "64px",
+                    "lg": "24px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "headline-display": ["Poppins"],
+                    "wordmark-mobile": ["Pacifico"],
+                    "headline-sm": ["Poppins"],
+                    "wordmark-lg": ["Pacifico"],
+                    "body-md": ["Poppins"],
+                    "label-caps": ["Poppins"],
+                    "body-lg": ["Poppins"],
+                    "wordmark-md": ["Pacifico"],
+                    "label-sm": ["Poppins"]
+            },
+            "fontSize": {
+                    "headline-display": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "wordmark-mobile": ["20px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "wordmark-lg": ["34px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "wordmark-md": ["24px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .admin-card {
+            background: #ffffff;
+            border-top: 3px solid #431076;
+            box-shadow: 0 4px 20px rgba(26, 26, 110, 0.04);
+        }
+        .gold-accent-card {
+            border-top: 3px solid #fcd400;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f0ecfa;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #7c7482;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-surface-container font-body-md text-on-surface">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-lg h-16 bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline">
+<div class="flex items-center gap-md">
+<span class="text-wordmark-md font-wordmark-md text-primary dark:text-inverse-primary">Click &amp; Collect</span>
+</div>
+<div class="hidden md:flex items-center gap-xl">
+<nav class="flex gap-lg">
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors px-sm py-xs rounded" href="#">Dashboard</a>
+<a class="text-primary dark:text-inverse-primary border-b-2 border-secondary-container dark:border-secondary font-bold px-sm py-xs" href="#">Books</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors px-sm py-xs rounded" href="#">Users</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors px-sm py-xs rounded" href="#">Security</a>
+</nav>
+</div>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-variant/50 p-sm rounded-full transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-variant/50 p-sm rounded-full transition-colors">account_circle</button>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] z-40 flex flex-col bg-surface-container dark:bg-inverse-surface border-r border-outline-variant dark:border-outline w-sidebar-width-admin shadow-sm">
+<div class="p-lg flex flex-col items-start gap-xs">
+<span class="text-label-sm font-label-sm text-primary uppercase tracking-widest">Central Command</span>
+<span class="text-headline-sm font-headline-sm">Librarian Portal</span>
+</div>
+<nav class="mt-md flex flex-col gap-xs px-sm">
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-label-sm font-label-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm bg-secondary-fixed dark:bg-secondary-fixed-dim text-on-secondary-fixed border-l-4 border-primary dark:border-primary-fixed font-bold opacity-90" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="text-label-sm font-label-sm">Books</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-label-sm font-label-sm">Users</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">security</span>
+<span class="text-label-sm font-label-sm">Security</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width-admin pt-16 min-h-screen p-lg">
+<div class="max-w-container-max mx-auto">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-xs text-label-sm font-label-sm text-outline mb-md">
+<a class="hover:text-primary transition-colors" href="#">Librarian Portal</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Book Management</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface font-semibold">Book Details</span>
+</nav>
+<!-- Book Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-xl">
+<div>
+<h1 class="font-headline-display text-headline-display text-primary">The Architecture of Information</h1>
+<p class="text-body-lg text-outline font-medium flex items-center gap-sm">
+                        ISBN: 978-3-16-148410-0 
+                        <span class="inline-flex items-center px-sm py-[2px] bg-secondary-container text-on-secondary-container rounded-full text-label-sm font-bold">PHYSICAL COPY</span>
+</p>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-sm px-md py-sm admin-card gold-accent-card rounded-lg" id="statusIndicator">
+<span class="w-3 h-3 rounded-full bg-status-available"></span>
+<span class="font-bold text-label-caps text-primary">AVAILABLE</span>
+</div>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-lg pb-xl">
+<!-- Section 1: Basic Info (6 cols) -->
+<section class="col-span-12 lg:col-span-7 admin-card p-lg rounded-xl flex flex-col gap-lg">
+<div class="flex items-center justify-between border-b border-outline-variant pb-sm">
+<h2 class="font-headline-sm text-headline-sm flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">info</span>
+                            Basic Information
+                        </h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="flex flex-col gap-xs">
+<label class="text-label-caps font-label-caps text-outline">BOOK TITLE</label>
+<input class="w-full rounded-lg border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary bg-surface-container-low p-sm text-body-md font-medium" type="text" value="The Architecture of Information"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="text-label-caps font-label-caps text-outline">PRIMARY AUTHOR</label>
+<input class="w-full rounded-lg border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary bg-surface-container-low p-sm text-body-md font-medium" type="text" value="Dr. Eleanor Vance"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="text-label-caps font-label-caps text-outline">CATEGORY</label>
+<select class="w-full rounded-lg border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary bg-surface-container-low p-sm text-body-md font-medium">
+<option>Information Science</option>
+<option>Computer Architecture</option>
+<option>Modern Philosophy</option>
+<option>Academic Reference</option>
+</select>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="text-label-caps font-label-caps text-outline">PUBLICATION YEAR</label>
+<input class="w-full rounded-lg border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary bg-surface-container-low p-sm text-body-md font-medium" type="number" value="2023"/>
+</div>
+<div class="col-span-1 md:col-span-2 flex flex-col gap-xs">
+<label class="text-label-caps font-label-caps text-outline">BOOK DESCRIPTION</label>
+<textarea class="w-full rounded-lg border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary bg-surface-container-low p-sm text-body-md leading-relaxed" rows="4">A comprehensive guide to the structural design of shared information environments. This volume explores how data structures influence human behavior in digital and physical library ecosystems, focusing on the synthesis of academic tradition and modern technology.</textarea>
+</div>
+</div>
+</section>
+<!-- Section 2: Copy Management (5 cols) -->
+<section class="col-span-12 lg:col-span-5 flex flex-col gap-lg">
+<div class="admin-card gold-accent-card p-lg rounded-xl flex flex-col gap-lg h-fit">
+<div class="flex items-center justify-between border-b border-outline-variant pb-sm">
+<h2 class="font-headline-sm text-headline-sm flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">inventory_2</span>
+                                Copy Management
+                            </h2>
+</div>
+<div class="grid grid-cols-1 gap-md">
+<div class="flex flex-col gap-xs">
+<label class="text-label-caps font-label-caps text-outline">ACCESSION NUMBER</label>
+<div class="bg-surface-container-highest p-sm rounded-lg font-mono text-primary font-bold">ACC-LIB-2024-0891</div>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="text-label-caps font-label-caps text-outline">CURRENT CONDITION</label>
+<select class="w-full rounded-lg border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary bg-surface-container-low p-sm text-body-md font-medium">
+<option>Excellent (Pristine)</option>
+<option>Good (Normal Wear)</option>
+<option>Fair (Significant Wear)</option>
+<option>Poor (Requires Repair)</option>
+</select>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="text-label-caps font-label-caps text-outline">SHELF LOCATION</label>
+<div class="flex items-center gap-sm">
+<input class="flex-grow rounded-lg border-outline-variant focus:ring-2 focus:ring-primary focus:border-primary bg-surface-container-low p-sm text-body-md font-medium" type="text" value="Floor 2, Row G, Shelf 12"/>
+<button class="material-symbols-outlined text-primary bg-primary-fixed p-sm rounded-lg hover:bg-primary-fixed-dim transition-colors">map</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Status Control -->
+<div class="admin-card p-lg rounded-xl flex flex-col gap-md">
+<h2 class="font-headline-sm text-headline-sm text-primary">Status Control</h2>
+<div class="flex flex-wrap gap-sm">
+<button class="flex-1 flex items-center justify-center gap-sm py-md px-sm rounded-lg border-2 border-status-available bg-status-available/10 text-status-available font-bold transition-all hover:scale-[1.02] active:scale-95" onclick="updateStatus('available')">
+<span class="material-symbols-outlined">check_circle</span>
+                                Available
+                            </button>
+<button class="flex-1 flex items-center justify-center gap-sm py-md px-sm rounded-lg border-2 border-outline-variant text-outline font-bold transition-all hover:border-status-reserved hover:text-status-reserved hover:scale-[1.02] active:scale-95" onclick="updateStatus('repair')">
+<span class="material-symbols-outlined">build</span>
+                                Repair
+                            </button>
+<button class="flex-1 flex items-center justify-center gap-sm py-md px-sm rounded-lg border-2 border-outline-variant text-outline font-bold transition-all hover:border-status-due hover:text-status-due hover:scale-[1.02] active:scale-95" onclick="updateStatus('lost')">
+<span class="material-symbols-outlined">report_problem</span>
+                                Lost
+                            </button>
+</div>
+</div>
+</section>
+<!-- Section 3: Circulation History (Full width in this responsive context) -->
+<section class="col-span-12 admin-card p-lg rounded-xl overflow-hidden">
+<div class="flex items-center justify-between border-b border-outline-variant pb-sm mb-lg">
+<h2 class="font-headline-sm text-headline-sm flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">history</span>
+                            Circulation History
+                        </h2>
+<span class="text-label-sm font-label-sm text-outline">Last 5 Borrowers</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="p-md text-label-caps font-label-caps text-outline border-b border-outline-variant">BORROWER</th>
+<th class="p-md text-label-caps font-label-caps text-outline border-b border-outline-variant">DATE OUT</th>
+<th class="p-md text-label-caps font-label-caps text-outline border-b border-outline-variant">DATE DUE</th>
+<th class="p-md text-label-caps font-label-caps text-outline border-b border-outline-variant">RETURNED</th>
+<th class="p-md text-label-caps font-label-caps text-outline border-b border-outline-variant">STATUS</th>
+</tr>
+</thead>
+<tbody>
+<tr class="hover:bg-surface-container transition-colors border-b border-outline-variant">
+<td class="p-md flex items-center gap-sm font-medium">
+<img alt="Profile" class="w-8 h-8 rounded-full" data-alt="A clean, professional headshot of a young male student wearing glasses and a navy sweater, set against a soft blurred library background. The lighting is bright and modern, conveying intelligence and academic focus in a light-mode UI style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjsGowPQl-rtQzVRTjDYa-ASVML1STX3KTWecUBAW54QOJX0H_FOA4gyh8fiOqeQNdcZeTOU53cW4LHW1WosS3tUt95Rpsh3H95xbEGpyCxxpE9BqfZOdqX35Zh25tnmR3IwFgla-JWMs3qQwK2yyrzNGYKmWVpD8iu3CX9qcJf77amG9GMKwJS9yIUGCl3gYm3FVrtkWe8i2j6ZWueyU7MFEK78KbaAsqXA5Xqo9yFtweHzSThyB4xxe8J-s0dHadGoqU01ffAOU"/>
+                                        Julian Rivers
+                                    </td>
+<td class="p-md text-body-md">Aug 12, 2024</td>
+<td class="p-md text-body-md">Aug 26, 2024</td>
+<td class="p-md text-body-md">Aug 24, 2024</td>
+<td class="p-md">
+<span class="inline-flex items-center px-sm py-[2px] bg-status-available/10 text-status-available rounded text-label-sm font-bold">RETURNED</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors border-b border-outline-variant">
+<td class="p-md flex items-center gap-sm font-medium">
+<img alt="Profile" class="w-8 h-8 rounded-full" data-alt="A portrait of a cheerful female graduate student with dark hair, lit by warm window light in a contemporary university setting. The image is high-resolution with a premium, academic feel, using a clean palette of whites and soft pastels to match a light-mode librarian dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFuB7DmEZGmpnB5W2fFh_DyWZdsNiuadzILrvIetx_ax_CLGwuWgq12lSxIMUhWI3-kFJO6yfVzx3RRDWTg-04oSbdgd_TUfJA0rd6qPk7xJNvixyOue9MzQNt6fTIzykyiV5ZmY3lDjjpEhEp-YfV-UikUKodrmX-o02TVOs0e8lnqEgbLx64HJzv0HUPhuf8gK3erB1wO01dleOcwqHXiTwYeDNne5AqIvo4QMc4Ra17u1xA7dgQc7AsjJamX_TtgYa3mY_Ly1M"/>
+                                        Maya Sterling
+                                    </td>
+<td class="p-md text-body-md">July 20, 2024</td>
+<td class="p-md text-body-md">Aug 03, 2024</td>
+<td class="p-md text-body-md">Aug 03, 2024</td>
+<td class="p-md">
+<span class="inline-flex items-center px-sm py-[2px] bg-status-available/10 text-status-available rounded text-label-sm font-bold">RETURNED</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors border-b border-outline-variant">
+<td class="p-md flex items-center gap-sm font-medium">
+<img alt="Profile" class="w-8 h-8 rounded-full" data-alt="A professional close-up of a middle-aged male researcher, with salt-and-pepper hair and a friendly expression. The background shows a modern digital workspace with soft purple accents. The photography is sharp and bright, optimized for a corporate academic interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_ZGf7amZvtXTXzp1xaMoDa7mxwRIasMRePRHtgM240FsLYFBO7oHmjQZay8mKti5WDZP15M8txDk4PHLzD4M-UD_ZaKDjAqHy-ruDPHsGFnA-QIYG80jcodaxERjVyGvSgqEO53D4uL8HGkpMF2aO0q9rHH9lycDFBY-xT0LS5Lp1sE_5SiIi2qTTM9QM6iir3bhfpQFbZHgpi4xLwtMCe3JNX-AO5U0oEjB5RWPbHQQ7kbC3Rjc-lQ4DXuUTmHOOO4tpt0ZPT6o"/>
+                                        Prof. Samuel Thorne
+                                    </td>
+<td class="p-md text-body-md">June 15, 2024</td>
+<td class="p-md text-body-md">July 15, 2024</td>
+<td class="p-md text-body-md">July 10, 2024</td>
+<td class="p-md">
+<span class="inline-flex items-center px-sm py-[2px] bg-status-available/10 text-status-available rounded text-label-sm font-bold">RETURNED</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors border-b border-outline-variant">
+<td class="p-md flex items-center gap-sm font-medium">
+<img alt="Profile" class="w-8 h-8 rounded-full" data-alt="A focused portrait of a female student leader wearing a crisp white shirt, sitting in a modern study hall with ample natural light. The visual style is professional and clean, using a sophisticated academic aesthetic that fits perfectly into a high-end SaaS librarian tool." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrD-QLvtCqmL-i5OFR19w_vSr6Eez30r0ILXx4lp99T-OTEV6xxshagPELNwVnmwf6ReO0k3WTNwU8h87O18Fuh2l0Un1Amh_-Qs_yPwPLqFv7-YxNMJPRoVsc2AH4HjoJe4B-SPm5O2rnfXOOwiv2KF1FATscjBc_p1BGXgftj5EYls4X_iQOn0XC0B0qcbXYi5G2Cr2_9tDVr-YLZYd5nuI4oidc8h5gVZAdWcBjFPwy1wZuTkP05U4klpj0qlvh76uRGWs6Uus"/>
+                                        Elena Kostas
+                                    </td>
+<td class="p-md text-body-md">May 02, 2024</td>
+<td class="p-md text-body-md">May 16, 2024</td>
+<td class="p-md text-body-md">May 18, 2024</td>
+<td class="p-md">
+<span class="inline-flex items-center px-sm py-[2px] bg-status-due/10 text-status-due rounded text-label-sm font-bold">LATE RETURN</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Footer Actions -->
+<div class="fixed bottom-0 left-sidebar-width-admin right-0 bg-surface-container-highest/90 backdrop-blur-md border-t border-outline-variant px-lg py-md flex justify-between items-center z-50">
+<button class="flex items-center gap-sm text-error font-bold hover:bg-error/10 px-md py-sm rounded-lg transition-all active:scale-95">
+<span class="material-symbols-outlined">delete_forever</span>
+                    Delete Record
+                </button>
+<div class="flex items-center gap-md">
+<button class="px-lg py-sm rounded-lg font-bold text-primary border-2 border-primary hover:bg-primary/5 transition-all active:scale-95">Discard Changes</button>
+<button class="px-xl py-sm rounded-lg font-bold text-white bg-primary shadow-lg shadow-primary/20 hover:translate-y-[-2px] transition-all active:scale-95">Save Changes</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Space Holder for Fixed Bar -->
+<div class="h-24"></div>
+<script>
+        function updateStatus(type) {
+            const indicator = document.getElementById('statusIndicator');
+            const dot = indicator.querySelector('span:first-child');
+            const text = indicator.querySelector('span:last-child');
+            
+            // Visual feedback of change
+            indicator.classList.add('scale-105');
+            setTimeout(() => indicator.classList.remove('scale-105'), 200);
+
+            if (type === 'available') {
+                dot.className = 'w-3 h-3 rounded-full bg-status-available';
+                text.innerText = 'AVAILABLE';
+            } else if (type === 'repair') {
+                dot.className = 'w-3 h-3 rounded-full bg-status-reserved';
+                text.innerText = 'UNDER REPAIR';
+            } else if (type === 'lost') {
+                dot.className = 'w-3 h-3 rounded-full bg-status-due';
+                text.innerText = 'LOST';
+            }
+        }
+    </script>
+</body></html>

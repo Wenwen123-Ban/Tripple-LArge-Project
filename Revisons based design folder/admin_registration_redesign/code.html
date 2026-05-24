@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Registration | Click &amp; Collect Librarian Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&amp;family=Poppins:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Shared Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline": "#7c7482",
+                    "on-background": "#1b1b24",
+                    "on-tertiary-fixed": "#0b0763",
+                    "surface": "#fcf8ff",
+                    "surface-container-high": "#eae6f4",
+                    "background": "#fcf8ff",
+                    "primary-container": "#5b2d8e",
+                    "primary-fixed-dim": "#dbb8ff",
+                    "on-secondary-fixed": "#221b00",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-container": "#aaacff",
+                    "outline-variant": "#cdc3d2",
+                    "on-primary-fixed-variant": "#5c2e8f",
+                    "inverse-primary": "#dbb8ff",
+                    "secondary-container": "#fcd400",
+                    "on-surface-variant": "#4b4451",
+                    "status-reserved": "#F59E0B",
+                    "tertiary-fixed": "#e1e0ff",
+                    "glass-bg": "rgba(255, 255, 255, 0.7)",
+                    "user-teal-start": "#26C6DA",
+                    "on-error": "#ffffff",
+                    "secondary": "#705d00",
+                    "inverse-on-surface": "#f3effd",
+                    "on-surface": "#1b1b24",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed": "#ffe16d",
+                    "on-error-container": "#93000a",
+                    "surface-container": "#f0ecfa",
+                    "surface-variant": "#e4e0ee",
+                    "error": "#ba1a1a",
+                    "primary": "#431076",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed": "#2b0053",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-dim": "#dcd8e6",
+                    "status-due": "#EF4444",
+                    "status-borrowed": "#1565C0",
+                    "surface-tint": "#7548a9",
+                    "surface-container-highest": "#e4e0ee",
+                    "on-primary-container": "#cda0ff",
+                    "tertiary": "#232376",
+                    "on-secondary-container": "#6e5c00",
+                    "primary-fixed": "#efdbff",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#fcf8ff",
+                    "on-tertiary-fixed-variant": "#3b3d8e",
+                    "surface-container-low": "#f6f2ff",
+                    "secondary-fixed-dim": "#e9c400",
+                    "inverse-surface": "#302f3a",
+                    "status-available": "#22C55E",
+                    "on-secondary-fixed-variant": "#544600",
+                    "tertiary-container": "#3a3c8d",
+                    "tertiary-fixed-dim": "#c0c1ff",
+                    "user-blue-end": "#0288D1"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max": "1320px",
+                    "sidebar-width-admin": "240px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "sidebar-width-user": "72px",
+                    "lg": "24px",
+                    "xs": "4px",
+                    "base": "4px",
+                    "sm": "8px",
+                    "sidebar-width-collapsed": "64px"
+            },
+            "fontFamily": {
+                    "wordmark-lg": ["Pacifico"],
+                    "label-sm": ["Poppins"],
+                    "wordmark-mobile": ["Pacifico"],
+                    "label-caps": ["Poppins"],
+                    "body-md": ["Poppins"],
+                    "wordmark-md": ["Pacifico"],
+                    "headline-display": ["Poppins"],
+                    "body-lg": ["Poppins"],
+                    "headline-sm": ["Poppins"]
+            },
+            "fontSize": {
+                    "wordmark-lg": ["34px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "wordmark-mobile": ["20px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "wordmark-md": ["24px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                    "headline-display": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .admin-bg-pattern {
+            background-color: #f6f2ff;
+            background-image: radial-gradient(#cdc3d2 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="admin-bg-pattern min-h-screen flex flex-col font-body-md text-on-surface">
+<!-- Suppressing TopNavBar/SideNav as this is a focused transactional registration page -->
+<main class="flex-grow flex items-center justify-center p-md lg:p-xl">
+<div class="max-w-2xl w-full">
+<!-- Registration Card -->
+<div class="glass-panel rounded-xl shadow-lg overflow-hidden border-t-4 border-primary">
+<!-- Signature Traffic Light Dots (Lumina Collect Style) -->
+<div class="px-lg pt-md flex gap-1.5">
+<div class="w-3 h-3 rounded-full bg-status-due opacity-80"></div>
+<div class="w-3 h-3 rounded-full bg-status-reserved opacity-80"></div>
+<div class="w-3 h-3 rounded-full bg-status-available opacity-80"></div>
+</div>
+<div class="p-lg lg:p-xl space-y-xl">
+<!-- Header -->
+<header class="text-center space-y-xs">
+<h1 class="font-wordmark-md text-wordmark-md text-primary">Click &amp; Collect</h1>
+<p class="font-label-caps text-label-caps text-outline tracking-widest uppercase">Librarian Registration</p>
+</header>
+<form class="space-y-lg" id="registrationForm">
+<!-- Section 1: Personal Information -->
+<section class="space-y-md">
+<div class="flex items-center gap-sm">
+<div class="h-px flex-grow bg-outline-variant"></div>
+<h2 class="font-label-caps text-label-caps text-primary shrink-0">Personal Information</h2>
+<div class="h-px flex-grow bg-outline-variant"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="space-y-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">Full Name</label>
+<input class="w-full bg-surface-container-low border-outline-variant rounded-lg px-md py-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="e.g. Eleanor Vance" type="text"/>
+</div>
+<div class="space-y-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">Employee ID Number</label>
+<input class="w-full bg-surface-container-low border-outline-variant rounded-lg px-md py-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="ID-000-000" type="text"/>
+</div>
+<div class="md:col-span-2 space-y-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">Institutional Email</label>
+<input class="w-full bg-surface-container-low border-outline-variant rounded-lg px-md py-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="e.g. librarian@university.edu" type="email"/>
+</div>
+</div>
+</section>
+<!-- Section 2: Security Credentials -->
+<section class="space-y-md">
+<div class="flex items-center gap-sm">
+<div class="h-px flex-grow bg-outline-variant"></div>
+<h2 class="font-label-caps text-label-caps text-primary shrink-0">Security Credentials</h2>
+<div class="h-px flex-grow bg-outline-variant"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="space-y-xs relative">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">Password</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-outline-variant rounded-lg px-md py-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none pr-10" id="pass-field" placeholder="••••••••" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors" onclick="togglePass('pass-field', 'pass-icon')" type="button">
+<span class="material-symbols-outlined text-lg" id="pass-icon">visibility</span>
+</button>
+</div>
+</div>
+<div class="space-y-xs relative">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">Confirm Password</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-outline-variant rounded-lg px-md py-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none pr-10" id="confirm-pass-field" placeholder="••••••••" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors" onclick="togglePass('confirm-pass-field', 'confirm-pass-icon')" type="button">
+<span class="material-symbols-outlined text-lg" id="confirm-pass-icon">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Role & Authorization -->
+<section class="space-y-md">
+<div class="flex items-center gap-sm">
+<div class="h-px flex-grow bg-outline-variant"></div>
+<h2 class="font-label-caps text-label-caps text-primary shrink-0">Role &amp; Authorization</h2>
+<div class="h-px flex-grow bg-outline-variant"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="space-y-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">Admin Role</label>
+<select class="w-full bg-surface-container-low border-outline-variant rounded-lg px-md py-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none appearance-none cursor-pointer">
+<option>Staff Librarian</option>
+<option>Chief Librarian</option>
+<option>IT Specialist</option>
+<option>Archivist</option>
+</select>
+</div>
+<div class="space-y-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-sm">Authorization Code</label>
+<div class="relative">
+<input class="w-full bg-secondary-container/10 border-secondary border-dashed border-2 rounded-lg px-md py-sm focus:ring-2 focus:ring-secondary focus:border-transparent transition-all outline-none" placeholder="Enter secure key" type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-secondary text-lg">key</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Privacy Policy Checkbox -->
+<div class="flex items-start gap-sm pt-md">
+<input class="mt-1 w-4 h-4 text-primary rounded border-outline-variant focus:ring-primary" id="policy" type="checkbox"/>
+<label class="text-body-md text-on-surface-variant" for="policy">
+                                I agree to the <a class="text-primary font-semibold hover:underline" href="#">Institutional Data Security &amp; Privacy Policy</a> and understand my administrative responsibilities.
+                            </label>
+</div>
+<!-- CTA Actions -->
+<div class="pt-lg space-y-md">
+<button class="w-full bg-primary hover:bg-primary-container text-white py-md rounded-xl font-headline-sm flex items-center justify-center gap-sm transition-all transform active:scale-95 shadow-md" type="submit">
+                                Register Administrator
+                                <span class="material-symbols-outlined" data-weight="fill">shield</span>
+</button>
+<div class="text-center">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md" href="#">
+                                    Already have an account? <span class="font-bold border-b border-outline-variant">Sign In</span>
+</a>
+</div>
+</div>
+</form>
+</div>
+<!-- Subtle Accent Bar at Bottom -->
+<div class="h-2 bg-secondary-container"></div>
+</div>
+<!-- Footer Decoration -->
+<div class="mt-xl text-center">
+<p class="font-label-sm text-outline opacity-60">© 2024 Click &amp; Collect | Central Library System | Security Protocol v.8.42</p>
+</div>
+</div>
+</main>
+<!-- Visual Flourish: Glassmorphic Background Blur Circles -->
+<div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary opacity-5 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+<div class="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary-container opacity-10 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+<script>
+        function togglePass(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.textContent = "visibility_off";
+            } else {
+                input.type = "password";
+                icon.textContent = "visibility";
+            }
+        }
+
+        // Add micro-interaction to input fields
+        const inputs = document.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.closest('div').classList.add('scale-[1.01]');
+                input.parentElement.closest('div').classList.add('transition-transform');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.closest('div').classList.remove('scale-[1.01]');
+            });
+        });
+
+        // Form Submit Simulation
+        document.getElementById('registrationForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Processing...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Registered!';
+                btn.classList.replace('bg-primary', 'bg-status-available');
+            }, 1500);
+        });
+    </script>
+</body></html>

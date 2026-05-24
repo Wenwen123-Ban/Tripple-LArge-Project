@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Librarian Portal | Notification Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;family=Pacifico&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cdc3d2;
+            border-radius: 10px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "user-teal-start": "#26C6DA",
+                        "surface-container": "#f0ecfa",
+                        "surface-bright": "#fcf8ff",
+                        "tertiary-fixed": "#e1e0ff",
+                        "tertiary-fixed-dim": "#c0c1ff",
+                        "tertiary": "#232376",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#cdc3d2",
+                        "secondary-fixed-dim": "#e9c400",
+                        "on-surface-variant": "#4b4451",
+                        "outline": "#7c7482",
+                        "primary-fixed": "#efdbff",
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#dcd8e6",
+                        "on-tertiary-container": "#aaacff",
+                        "on-surface": "#1b1b24",
+                        "primary-container": "#5b2d8e",
+                        "surface": "#fcf8ff",
+                        "on-secondary-container": "#6e5c00",
+                        "status-available": "#22C55E",
+                        "on-primary-fixed": "#2b0053",
+                        "on-primary-container": "#cda0ff",
+                        "on-primary-fixed-variant": "#5c2e8f",
+                        "glass-bg": "rgba(255, 255, 255, 0.7)",
+                        "surface-tint": "#7548a9",
+                        "background": "#fcf8ff",
+                        "surface-container-high": "#eae6f4",
+                        "error-container": "#ffdad6",
+                        "status-due": "#EF4444",
+                        "tertiary-container": "#3a3c8d",
+                        "secondary-container": "#fcd400",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#f6f2ff",
+                        "on-tertiary-fixed-variant": "#3b3d8e",
+                        "primary": "#431076",
+                        "status-reserved": "#F59E0B",
+                        "inverse-surface": "#302f3a",
+                        "primary-fixed-dim": "#dbb8ff",
+                        "inverse-primary": "#dbb8ff",
+                        "surface-container-highest": "#e4e0ee",
+                        "secondary": "#705d00",
+                        "error": "#ba1a1a",
+                        "on-background": "#1b1b24",
+                        "status-borrowed": "#1565C0",
+                        "on-secondary-fixed": "#221b00",
+                        "on-secondary-fixed-variant": "#544600",
+                        "on-tertiary": "#ffffff",
+                        "user-blue-end": "#0288D1",
+                        "surface-variant": "#e4e0ee",
+                        "on-tertiary-fixed": "#0b0763",
+                        "inverse-on-surface": "#f3effd",
+                        "secondary-fixed": "#ffe16d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "sidebar-width-user": "72px",
+                        "sidebar-width-admin": "240px",
+                        "container-max": "1320px",
+                        "xl": "32px",
+                        "sidebar-width-collapsed": "64px",
+                        "lg": "24px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-display": ["Poppins"],
+                        "wordmark-mobile": ["Pacifico"],
+                        "headline-sm": ["Poppins"],
+                        "wordmark-lg": ["Pacifico"],
+                        "body-md": ["Poppins"],
+                        "label-caps": ["Poppins"],
+                        "body-lg": ["Poppins"],
+                        "wordmark-md": ["Pacifico"],
+                        "label-sm": ["Poppins"]
+                    },
+                    "fontSize": {
+                        "headline-display": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "wordmark-mobile": ["20px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "wordmark-lg": ["34px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "wordmark-md": ["24px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed overflow-hidden">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-lg h-16 bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline">
+<div class="flex items-center gap-md">
+<span class="text-wordmark-md font-wordmark-md text-primary dark:text-inverse-primary">Click &amp; Collect</span>
+<div class="hidden md:flex gap-md ml-lg">
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors px-sm py-xs rounded-lg text-label-caps font-label-caps" href="#">Dashboard</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors px-sm py-xs rounded-lg text-label-caps font-label-caps" href="#">Books</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors px-sm py-xs rounded-lg text-label-caps font-label-caps" href="#">Users</a>
+<a class="text-primary dark:text-inverse-primary border-b-2 border-secondary-container dark:border-secondary font-bold px-sm py-xs text-label-caps font-label-caps" href="#">Security</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="relative group">
+<span class="material-symbols-outlined text-primary p-sm hover:bg-surface-variant/50 rounded-full cursor-pointer transition-colors" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</div>
+<span class="material-symbols-outlined text-primary p-sm hover:bg-surface-variant/50 rounded-full cursor-pointer transition-colors" data-icon="account_circle">account_circle</span>
+</div>
+</header>
+<!-- SideNavBar (Admin) -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] z-40 w-sidebar-width-admin flex flex-col bg-surface-container dark:bg-inverse-surface border-r border-outline-variant dark:border-outline shadow-sm transition-all">
+<div class="p-md flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white font-bold">LP</div>
+<div>
+<h3 class="text-label-sm font-label-sm text-primary">Librarian Portal</h3>
+<p class="text-[10px] text-on-surface-variant">Central Command</p>
+</div>
+</div>
+<nav class="flex-1 px-sm space-y-1">
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant hover:translate-x-1 transition-transform duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-label-sm font-label-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant hover:translate-x-1 transition-transform duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="text-label-sm font-label-sm">Books</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant hover:translate-x-1 transition-transform duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="text-label-sm font-label-sm">Users</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm bg-secondary-fixed dark:bg-secondary-fixed-dim text-on-secondary-fixed border-l-4 border-primary dark:border-primary-fixed font-bold opacity-90 rounded-lg group" href="#">
+<span class="material-symbols-outlined" data-icon="security">security</span>
+<span class="text-label-sm font-label-sm">Security</span>
+</a>
+</nav>
+<div class="p-md">
+<div class="p-md rounded-xl bg-primary/5 border border-primary/10">
+<p class="text-[10px] uppercase font-bold text-primary mb-xs">System Health</p>
+<div class="flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-status-available"></span>
+<span class="text-label-sm font-label-sm">Operational</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width-admin pt-16 h-screen flex flex-col overflow-hidden">
+<!-- Header / Stats Bar -->
+<div class="p-lg bg-surface flex justify-between items-center shrink-0">
+<div>
+<h1 class="text-headline-display font-headline-display text-primary">Notification Management</h1>
+<p class="text-body-md font-body-md text-on-surface-variant">Oversee system alerts and user interaction requests.</p>
+</div>
+<div class="flex gap-md">
+<div class="flex items-center gap-sm bg-surface-container-high px-md py-sm rounded-xl border border-outline-variant shadow-sm">
+<span class="material-symbols-outlined text-status-due" data-icon="error" style="font-variation-settings: 'FILL' 1;">error</span>
+<div>
+<p class="text-label-caps font-label-caps text-on-surface-variant">Active Overdue</p>
+<p class="text-headline-sm font-headline-sm text-primary">12</p>
+</div>
+</div>
+<div class="flex items-center gap-sm bg-surface-container-high px-md py-sm rounded-xl border border-outline-variant shadow-sm">
+<span class="material-symbols-outlined text-status-available" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<p class="text-label-caps font-label-caps text-on-surface-variant">Processed</p>
+<p class="text-headline-sm font-headline-sm text-primary">84</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Split-View Container -->
+<div class="flex-1 flex overflow-hidden border-t border-outline-variant mx-lg mb-lg bg-white rounded-t-2xl shadow-lg border-x overflow-hidden">
+<!-- Left Panel: Categories -->
+<div class="w-72 border-r border-outline-variant flex flex-col shrink-0 bg-surface-container-low/50">
+<div class="p-md border-b border-outline-variant">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-white border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Filter categories..." type="text"/>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-sm space-y-1 custom-scrollbar">
+<button class="w-full flex items-center justify-between p-md rounded-xl bg-primary text-white shadow-md group transition-all">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+<span class="font-bold text-label-sm">System Alerts</span>
+</div>
+<span class="bg-white/20 px-2 py-0.5 rounded-full text-label-sm">4</span>
+</button>
+<button class="w-full flex items-center justify-between p-md rounded-xl hover:bg-surface-variant transition-all group">
+<div class="flex items-center gap-md text-on-surface-variant">
+<span class="material-symbols-outlined text-status-due" data-icon="notification_important">notification_important</span>
+<span class="text-label-sm">Overdue Warnings</span>
+</div>
+<span class="bg-outline-variant/30 text-on-surface-variant px-2 py-0.5 rounded-full text-label-sm">12</span>
+</button>
+<button class="w-full flex items-center justify-between p-md rounded-xl hover:bg-surface-variant transition-all group">
+<div class="flex items-center gap-md text-on-surface-variant">
+<span class="material-symbols-outlined text-status-borrowed" data-icon="bookmark">bookmark</span>
+<span class="text-label-sm">New Reservations</span>
+</div>
+<span class="bg-outline-variant/30 text-on-surface-variant px-2 py-0.5 rounded-full text-label-sm">8</span>
+</button>
+<button class="w-full flex items-center justify-between p-md rounded-xl hover:bg-surface-variant transition-all group">
+<div class="flex items-center gap-md text-on-surface-variant">
+<span class="material-symbols-outlined text-status-reserved" data-icon="person_add">person_add</span>
+<span class="text-label-sm">Account Requests</span>
+</div>
+<span class="bg-outline-variant/30 text-on-surface-variant px-2 py-0.5 rounded-full text-label-sm">3</span>
+</button>
+<div class="pt-lg px-md pb-md">
+<p class="text-label-caps font-label-caps text-outline mb-md uppercase tracking-widest">History</p>
+<button class="w-full flex items-center gap-md p-md rounded-xl hover:bg-surface-variant transition-all text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="text-label-sm">Archive</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Main Area: Notification List -->
+<div class="flex-1 flex flex-col bg-surface-bright overflow-hidden">
+<div class="p-lg flex justify-between items-center border-b border-outline-variant/50 glass-panel shrink-0">
+<div class="flex items-center gap-md">
+<h2 class="text-headline-sm font-headline-sm text-primary">System Alerts</h2>
+<span class="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">LIVE FEED</span>
+</div>
+<div class="flex gap-sm">
+<button class="px-md py-sm bg-white border border-outline-variant rounded-lg text-label-sm font-bold text-on-surface-variant flex items-center gap-xs hover:bg-surface transition-all">
+<span class="material-symbols-outlined scale-75" data-icon="filter_list">filter_list</span> Filter
+                        </button>
+<button class="px-md py-sm bg-primary text-white rounded-lg text-label-sm font-bold shadow-md hover:scale-[1.02] active:scale-95 transition-all">
+                            Mark All Read
+                        </button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-lg space-y-md custom-scrollbar bg-gradient-to-b from-surface-container-low/20 to-transparent">
+<!-- Notification Card 1 (High Priority) -->
+<div class="p-md bg-white rounded-xl border-l-[6px] border-l-status-due border-y border-r border-outline-variant shadow-sm hover:shadow-md transition-shadow relative group">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-sm">
+<span class="w-3 h-3 rounded-full bg-status-due animate-pulse"></span>
+<span class="text-label-caps font-label-caps text-status-due">CRITICAL SYSTEM ERROR</span>
+</div>
+<span class="text-label-sm font-label-sm text-outline">2 mins ago</span>
+</div>
+<h4 class="text-body-lg font-bold text-on-surface mb-xs">Database Sync Failure: Node CL-4</h4>
+<p class="text-body-md font-body-md text-on-surface-variant mb-md leading-relaxed">Automatic backup synchronization failed for the North Campus branch database. Potential data discrepancy detected in 'Recent Returns' table.</p>
+<div class="flex justify-between items-center pt-md border-t border-outline-variant/30">
+<div class="flex gap-sm">
+<button class="px-md py-2 bg-primary text-white rounded-lg text-label-sm font-bold hover:brightness-110 transition-all flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="terminal">terminal</span> Fix Now
+                                </button>
+<button class="px-md py-2 bg-white border border-outline-variant text-on-surface-variant rounded-lg text-label-sm font-bold hover:bg-surface transition-all">
+                                    View Logs
+                                </button>
+</div>
+<button class="p-2 text-outline hover:text-primary rounded-full hover:bg-primary/5 transition-all" title="Mark as Read">
+<span class="material-symbols-outlined" data-icon="done_all">done_all</span>
+</button>
+</div>
+</div>
+<!-- Notification Card 2 (Medium Priority) -->
+<div class="p-md bg-white rounded-xl border-l-[6px] border-l-status-reserved border-y border-r border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-sm">
+<span class="w-3 h-3 rounded-full bg-status-reserved"></span>
+<span class="text-label-caps font-label-caps text-status-reserved">OVERDUE WARNING</span>
+</div>
+<span class="text-label-sm font-label-sm text-outline">45 mins ago</span>
+</div>
+<h4 class="text-body-lg font-bold text-on-surface mb-xs">Overdue: The Great Gatsby - User STU-99201</h4>
+<p class="text-body-md font-body-md text-on-surface-variant mb-md leading-relaxed">Book ID: #GATSBY-2023. User has 3 previous warnings. Fine accumulation started at $1.50/day.</p>
+<div class="flex justify-between items-center pt-md border-t border-outline-variant/30">
+<div class="flex gap-sm">
+<button class="px-md py-2 bg-secondary text-on-secondary rounded-lg text-label-sm font-bold hover:brightness-110 transition-all flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="mail">mail</span> Send Reminder
+                                </button>
+<button class="px-md py-2 bg-white border border-outline-variant text-on-surface-variant rounded-lg text-label-sm font-bold hover:bg-surface transition-all">
+                                    View Record
+                                </button>
+</div>
+<button class="p-2 text-outline hover:text-primary rounded-full hover:bg-primary/5 transition-all">
+<span class="material-symbols-outlined" data-icon="done">done</span>
+</button>
+</div>
+</div>
+<!-- Notification Card 3 (Low Priority) -->
+<div class="p-md bg-white rounded-xl border-l-[6px] border-l-status-borrowed border-y border-r border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-sm">
+<span class="w-3 h-3 rounded-full bg-status-borrowed"></span>
+<span class="text-label-caps font-label-caps text-status-borrowed">RESERVATION UPDATE</span>
+</div>
+<span class="text-label-sm font-label-sm text-outline">2 hours ago</span>
+</div>
+<h4 class="text-body-lg font-bold text-on-surface mb-xs">New Reservation: 'Molecular Biology' - STU-44021</h4>
+<p class="text-body-md font-body-md text-on-surface-variant mb-md leading-relaxed">Item #MB-402 is now reserved for pickup. Please move item to the 'Reserved' shelf by end of shift.</p>
+<div class="flex justify-between items-center pt-md border-t border-outline-variant/30">
+<div class="flex gap-sm">
+<button class="px-md py-2 bg-surface-container-high text-primary rounded-lg text-label-sm font-bold hover:bg-primary-fixed transition-all flex items-center gap-xs border border-primary/20">
+<span class="material-symbols-outlined text-[18px]" data-icon="inventory">inventory</span> Move to Shelf
+                                </button>
+</div>
+<button class="p-2 text-outline hover:text-primary rounded-full hover:bg-primary/5 transition-all">
+<span class="material-symbols-outlined" data-icon="done">done</span>
+</button>
+</div>
+</div>
+<!-- Notification Card 4 (Account) -->
+<div class="p-md bg-white rounded-xl border-l-[6px] border-l-primary-container border-y border-r border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-sm">
+<span class="w-3 h-3 rounded-full bg-primary-container"></span>
+<span class="text-label-caps font-label-caps text-primary">ACCOUNT REQUEST</span>
+</div>
+<span class="text-label-sm font-label-sm text-outline">5 hours ago</span>
+</div>
+<h4 class="text-body-lg font-bold text-on-surface mb-xs">Staff Account: New Assistant Librarian Access</h4>
+<p class="text-body-md font-body-md text-on-surface-variant mb-md leading-relaxed">User 'Sarah Miller' (EMP-0092) requested 'Editor' permissions for the Digital Archives section.</p>
+<div class="flex justify-between items-center pt-md border-t border-outline-variant/30">
+<div class="flex gap-sm">
+<button class="px-md py-2 bg-primary text-white rounded-lg text-label-sm font-bold hover:brightness-110 transition-all flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="person_check" style="font-variation-settings: 'FILL' 1;">person_check</span> Approve
+                                </button>
+<button class="px-md py-2 bg-white border border-outline-variant text-error rounded-lg text-label-sm font-bold hover:bg-error/5 transition-all">
+                                    Deny
+                                </button>
+</div>
+<button class="p-2 text-outline hover:text-primary rounded-full hover:bg-primary/5 transition-all">
+<span class="material-symbols-outlined" data-icon="done">done</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Component -->
+<footer class="fixed bottom-0 left-0 w-full py-md px-lg flex justify-between items-center bg-surface-container-lowest border-t border-outline-variant dark:border-outline z-50">
+<p class="text-label-sm font-label-sm text-on-surface-variant">© 2024 Click &amp; Collect | Central Library System</p>
+<div class="flex gap-lg">
+<a class="text-label-sm font-label-sm text-on-surface-variant hover:underline" href="#">School Info</a>
+<a class="text-label-sm font-label-sm text-on-surface-variant hover:underline" href="#">Location</a>
+<a class="text-label-sm font-label-sm text-on-surface-variant hover:underline" href="#">System Status</a>
+</div>
+</footer>
+<script>
+        // Simple Interaction logic for category switching
+        const categoryBtns = document.querySelectorAll('button[class*="w-full flex items-center justify-between"]');
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                categoryBtns.forEach(b => {
+                    b.classList.remove('bg-primary', 'text-white', 'shadow-md');
+                    b.classList.add('hover:bg-surface-variant');
+                    const textDiv = b.querySelector('.flex.items-center.gap-md');
+                    if (textDiv) textDiv.classList.add('text-on-surface-variant');
+                    const icon = b.querySelector('.material-symbols-outlined');
+                    // Reset icons to their original colors would go here
+                });
+                btn.classList.add('bg-primary', 'text-white', 'shadow-md');
+                btn.classList.remove('hover:bg-surface-variant');
+                const textDiv = btn.querySelector('.flex.items-center.gap-md');
+                if (textDiv) textDiv.classList.remove('text-on-surface-variant');
+            });
+        });
+
+        // Toggle Mark Read state
+        const markButtons = document.querySelectorAll('.material-symbols-outlined[data-icon="done"]');
+        markButtons.forEach(btn => {
+            btn.parentElement.addEventListener('click', (e) => {
+                const card = btn.closest('.rounded-xl');
+                card.classList.toggle('opacity-50');
+                btn.textContent = btn.textContent === 'done' ? 'done_all' : 'done';
+            });
+        });
+    </script>
+</body></html>

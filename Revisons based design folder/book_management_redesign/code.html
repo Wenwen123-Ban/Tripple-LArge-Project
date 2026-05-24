@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Book Management | Click &amp; Collect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Pacifico&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#3b3d8e",
+                        "on-background": "#1b1b24",
+                        "on-primary-container": "#cda0ff",
+                        "on-primary-fixed": "#2b0053",
+                        "inverse-on-surface": "#f3effd",
+                        "user-blue-end": "#0288D1",
+                        "error": "#ba1a1a",
+                        "status-available": "#22C55E",
+                        "surface": "#fcf8ff",
+                        "on-secondary-fixed": "#221b00",
+                        "tertiary-fixed": "#e1e0ff",
+                        "secondary-fixed": "#ffe16d",
+                        "surface-tint": "#7548a9",
+                        "status-borrowed": "#1565C0",
+                        "secondary": "#705d00",
+                        "on-tertiary-container": "#aaacff",
+                        "status-reserved": "#F59E0B",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#544600",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#6e5c00",
+                        "background": "#fcf8ff",
+                        "on-primary-fixed-variant": "#5c2e8f",
+                        "user-teal-start": "#26C6DA",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#3a3c8d",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#dbb8ff",
+                        "secondary-fixed-dim": "#e9c400",
+                        "primary": "#431076",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#232376",
+                        "surface-variant": "#e4e0ee",
+                        "secondary-container": "#fcd400",
+                        "surface-variant": "#e4e0ee",
+                        "secondary-container": "#fcd400",
+                        "surface-container": "#f0ecfa",
+                        "outline": "#7c7482",
+                        "inverse-primary": "#dbb8ff",
+                        "outline-variant": "#cdc3d2",
+                        "surface-dim": "#dcd8e6",
+                        "on-surface-variant": "#4b4451",
+                        "surface-container-low": "#f6f2ff",
+                        "surface-container-high": "#eae6f4",
+                        "primary-container": "#5b2d8e",
+                        "status-due": "#EF4444",
+                        "glass-bg": "rgba(255, 255, 255, 0.7)",
+                        "on-tertiary-fixed": "#0b0763",
+                        "primary-fixed": "#efdbff",
+                        "surface-container-highest": "#e4e0ee",
+                        "tertiary-fixed-dim": "#c0c1ff",
+                        "surface-bright": "#fcf8ff",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#302f3a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#1b1b24"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sidebar-width-admin": "240px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "base": "4px",
+                        "sidebar-width-collapsed": "64px",
+                        "md": "16px",
+                        "xs": "4px",
+                        "sidebar-width-user": "72px",
+                        "container-max": "1320px",
+                        "xl": "32px"
+                    },
+                    "fontFamily": {
+                        "wordmark-md": ["Pacifico"],
+                        "wordmark-lg": ["Pacifico"],
+                        "body-lg": ["Poppins"],
+                        "headline-sm": ["Poppins"],
+                        "body-md": ["Poppins"],
+                        "headline-display": ["Poppins"],
+                        "label-sm": ["Poppins"],
+                        "wordmark-mobile": ["Pacifico"],
+                        "label-caps": ["Poppins"]
+                    },
+                    "fontSize": {
+                        "wordmark-md": ["24px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                        "wordmark-lg": ["34px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-display": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "wordmark-mobile": ["20px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cdc3d2;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md overflow-x-hidden">
+<!-- TopNavBar (Shared Component) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-lg h-16 bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline">
+<div class="flex items-center gap-md">
+<span class="text-wordmark-md font-wordmark-md text-primary dark:text-inverse-primary">Click &amp; Collect</span>
+</div>
+<nav class="hidden md:flex gap-xl">
+<a class="text-on-surface-variant dark:text-surface-variant text-label-caps font-label-caps hover:bg-surface-variant/50 transition-colors px-sm py-base" href="#">Dashboard</a>
+<a class="text-primary dark:text-inverse-primary border-b-2 border-secondary-container dark:border-secondary font-bold text-label-caps font-label-caps hover:bg-surface-variant/50 transition-colors px-sm py-base" href="#">Books</a>
+<a class="text-on-surface-variant dark:text-surface-variant text-label-caps font-label-caps hover:bg-surface-variant/50 transition-colors px-sm py-base" href="#">Users</a>
+<a class="text-on-surface-variant dark:text-surface-variant text-label-caps font-label-caps hover:bg-surface-variant/50 transition-colors px-sm py-base" href="#">Security</a>
+</nav>
+<div class="flex items-center gap-md">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="pl-xl pr-md py-xs rounded-lg border border-outline-variant bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary w-64 text-body-md" placeholder="Quick search..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-primary dark:text-inverse-primary p-xs hover:bg-surface-variant/50 rounded-full">notifications</button>
+<button class="material-symbols-outlined text-primary dark:text-inverse-primary p-xs hover:bg-surface-variant/50 rounded-full">account_circle</button>
+</div>
+</header>
+<!-- SideNavBar (Shared Component) -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] z-40 flex flex-col bg-surface-container dark:bg-inverse-surface border-r border-outline-variant dark:border-outline w-sidebar-width-admin shadow-sm transition-all duration-300">
+<div class="p-lg flex flex-col gap-xs">
+<h2 class="text-primary font-bold text-headline-sm">Librarian Portal</h2>
+<p class="text-on-surface-variant text-label-sm">Central Command</p>
+</div>
+<nav class="flex-1 px-sm">
+<a class="flex items-center gap-md p-md mb-xs text-on-surface-variant hover:bg-surface-variant hover:translate-x-1 transition-transform duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-label-sm font-label-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-md p-md mb-xs bg-secondary-fixed dark:bg-secondary-fixed-dim text-on-secondary-fixed border-l-4 border-primary dark:border-primary-fixed font-bold rounded-lg shadow-sm" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="text-label-sm font-label-sm">Books</span>
+</a>
+<a class="flex items-center gap-md p-md mb-xs text-on-surface-variant hover:bg-surface-variant hover:translate-x-1 transition-transform duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-label-sm font-label-sm">Users</span>
+</a>
+<a class="flex items-center gap-md p-md mb-xs text-on-surface-variant hover:bg-surface-variant hover:translate-x-1 transition-transform duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">security</span>
+<span class="text-label-sm font-label-sm">Security</span>
+</a>
+</nav>
+<div class="p-lg mt-auto border-t border-outline-variant">
+<div class="flex items-center gap-sm">
+<img alt="Admin" class="w-10 h-10 rounded-full object-cover border-2 border-secondary-container" data-alt="A professional headshot of a senior librarian with a friendly smile, set in a brightly lit academic library. The lighting is soft and natural, emphasizing the professional and trustworthy atmosphere. The style is modern corporate photography with a warm color palette of deep purples and golds." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdGHLE5lKeRJvmsybj5joSsFva6RHNzKyGybN5c6us0XlCtQjMOJTQi28C3s1nM_rMJ8tP5Os2Srs1qD11jhQvxxrXo4IjMANDVVXiSrqhJ1j_oYTgyXbMNG939AYbeqOTgZ8HDjsaZ44Turnq1utdPI3OvUTt5ljS27AfV79PNq1ZEOAOjK5Ze6pDhDAdEvH7nx2onb2KEON7zH50_S_ypDZFa3MM631IWD_ej4TntncVpMfSxssFlmx0GX8LAxivW6kwIVdP7jM"/>
+<div>
+<p class="font-bold text-label-sm">Admin User</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest">Master Access</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Stage -->
+<main class="ml-sidebar-width-admin mt-16 p-lg min-h-[calc(100vh-64px)] transition-all duration-300">
+<!-- Top Row: Add Panels -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-lg mb-lg">
+<!-- Add Books Panel -->
+<section class="lg:col-span-2 bg-surface-container-low rounded-xl border border-outline-variant relative overflow-hidden shadow-sm">
+<div class="h-1 bg-secondary-container w-full"></div>
+<div class="p-lg">
+<div class="flex items-center gap-sm mb-lg">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+<h3 class="text-headline-sm font-headline-sm text-primary">Add Books</h3>
+</div>
+<form class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="flex flex-col gap-xs">
+<label class="text-label-caps font-label-caps text-on-surface-variant px-xs">Book Title</label>
+<input class="px-md py-sm rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Enter full book title..." type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="text-label-caps font-label-caps text-on-surface-variant px-xs">Book Number (ISBN/UID)</label>
+<input class="px-md py-sm rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="e.g. 978-3-16-148410-0" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="text-label-caps font-label-caps text-on-surface-variant px-xs">Category</label>
+<select class="px-md py-sm rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-white appearance-none cursor-pointer">
+<option>Select Category</option>
+<option>Computer Science</option>
+<option>Ancient History</option>
+<option>Theoretical Physics</option>
+<option>Modern Literature</option>
+</select>
+</div>
+<div class="flex items-end">
+<button class="w-full bg-primary text-white font-bold py-sm rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-sm group" type="submit">
+<span class="material-symbols-outlined text-secondary-container transition-transform group-hover:scale-110">save</span>
+                                Save Book to Inventory
+                            </button>
+</div>
+</form>
+</div>
+</section>
+<!-- Add Category Panel -->
+<section class="bg-surface-container-low rounded-xl border border-outline-variant relative overflow-hidden shadow-sm">
+<div class="h-1 bg-secondary-container w-full"></div>
+<div class="p-lg">
+<div class="flex items-center justify-between mb-lg">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">category</span>
+<h3 class="text-headline-sm font-headline-sm text-primary">Add Category</h3>
+</div>
+<div class="w-2 h-2 rounded-full bg-status-available animate-pulse"></div>
+</div>
+<div class="flex flex-col gap-md">
+<div class="flex flex-col gap-xs">
+<label class="text-label-caps font-label-caps text-on-surface-variant px-xs">Category Name</label>
+<div class="flex gap-xs">
+<input class="flex-1 px-md py-sm rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="New category..." type="text"/>
+<button class="bg-secondary-container text-on-secondary-container p-sm rounded-lg hover:brightness-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+<!-- Custom Toggle Dropdown for Category List -->
+<div class="relative mt-sm" id="category-dropdown-container">
+<button class="w-full flex items-center justify-between px-md py-sm bg-surface-container-high rounded-lg border border-outline-variant hover:bg-surface-variant transition-colors group" onclick="document.getElementById('category-list').classList.toggle('hidden')">
+<span class="text-label-sm font-label-sm text-primary uppercase tracking-wider">Manage Categories</span>
+<span class="material-symbols-outlined group-hover:rotate-180 transition-transform">expand_more</span>
+</button>
+<div class="hidden absolute top-full left-0 w-full mt-xs bg-white border border-outline-variant rounded-xl shadow-xl z-10 glass-panel max-h-48 overflow-y-auto custom-scrollbar" id="category-list">
+<div class="p-xs flex flex-col">
+<div class="flex items-center justify-between p-sm hover:bg-surface-container rounded-lg transition-colors group">
+<span class="text-body-md">Computer Science</span>
+<button class="material-symbols-outlined text-error opacity-0 group-hover:opacity-100 hover:scale-110 transition-all text-sm">delete</button>
+</div>
+<div class="flex items-center justify-between p-sm hover:bg-surface-container rounded-lg transition-colors group">
+<span class="text-body-md">Ancient History</span>
+<button class="material-symbols-outlined text-error opacity-0 group-hover:opacity-100 hover:scale-110 transition-all text-sm">delete</button>
+</div>
+<div class="flex items-center justify-between p-sm hover:bg-surface-container rounded-lg transition-colors group">
+<span class="text-body-md">Theoretical Physics</span>
+<button class="material-symbols-outlined text-error opacity-0 group-hover:opacity-100 hover:scale-110 transition-all text-sm">delete</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Books List Section -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<!-- Header with Search/Filters -->
+<div class="p-lg border-b border-outline-variant bg-surface-container-low flex flex-col md:flex-row md:items-center justify-between gap-md">
+<div class="flex items-center gap-md">
+<h3 class="text-headline-sm font-headline-sm text-primary">Books List</h3>
+<div class="px-md py-xs bg-primary-fixed text-primary rounded-full text-label-sm font-bold">1,248 Total</div>
+</div>
+<div class="flex flex-wrap items-center gap-sm">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline">filter_list</span>
+<select class="pl-xl pr-md py-sm bg-white border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary outline-none cursor-pointer">
+<option>All Status</option>
+<option>Available</option>
+<option>Borrowed</option>
+<option>Due Soon</option>
+</select>
+</div>
+<button class="flex items-center gap-sm bg-surface-container-high border border-outline-variant text-on-surface px-md py-sm rounded-lg hover:bg-surface-variant transition-all font-bold">
+<span class="material-symbols-outlined text-primary">upload_file</span>
+                        Bulk Import
+                    </button>
+<button class="flex items-center gap-sm bg-primary text-white px-md py-sm rounded-lg hover:shadow-md active:scale-95 transition-all font-bold">
+<span class="material-symbols-outlined text-secondary-container">print</span>
+                        Export PDF
+                    </button>
+</div>
+</div>
+<!-- Books Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container text-on-surface-variant text-label-caps font-label-caps">
+<tr>
+<th class="px-lg py-md border-b border-outline-variant">Book No</th>
+<th class="px-lg py-md border-b border-outline-variant">Title</th>
+<th class="px-lg py-md border-b border-outline-variant">Category</th>
+<th class="px-lg py-md border-b border-outline-variant">Status</th>
+<th class="px-lg py-md border-b border-outline-variant text-center">Borrowed Count</th>
+<th class="px-lg py-md border-b border-outline-variant text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-lg py-md font-mono text-sm">B-90210-CS</td>
+<td class="px-lg py-md font-bold text-primary">The Pragmatic Programmer: 20th Anniversary</td>
+<td class="px-lg py-md">Computer Science</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center gap-xs px-md py-xs bg-status-available/10 text-status-available rounded-full font-bold text-[11px] uppercase border border-status-available/20">
+<span class="w-2 h-2 rounded-full bg-status-available"></span> Available
+                                </span>
+</td>
+<td class="px-lg py-md text-center font-bold text-on-surface-variant">42</td>
+<td class="px-lg py-md text-right">
+<div class="flex items-center justify-end gap-xs opacity-60 group-hover:opacity-100 transition-opacity">
+<button class="p-xs text-primary hover:bg-primary-fixed rounded-lg transition-colors" title="View History"><span class="material-symbols-outlined">history</span></button>
+<button class="p-xs text-status-reserved hover:bg-secondary-fixed rounded-lg transition-colors" title="Force Return"><span class="material-symbols-outlined">assignment_return</span></button>
+<button class="p-xs text-status-borrowed hover:bg-tertiary-fixed rounded-lg transition-colors" title="Notify"><span class="material-symbols-outlined">mail</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-lg py-md font-mono text-sm">B-44123-PH</td>
+<td class="px-lg py-md font-bold text-primary">A Brief History of Time</td>
+<td class="px-lg py-md">Theoretical Physics</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center gap-xs px-md py-xs bg-status-borrowed/10 text-status-borrowed rounded-full font-bold text-[11px] uppercase border border-status-borrowed/20">
+<span class="w-2 h-2 rounded-full bg-status-borrowed"></span> Borrowed
+                                </span>
+</td>
+<td class="px-lg py-md text-center font-bold text-on-surface-variant">156</td>
+<td class="px-lg py-md text-right">
+<div class="flex items-center justify-end gap-xs opacity-60 group-hover:opacity-100 transition-opacity">
+<button class="p-xs text-primary hover:bg-primary-fixed rounded-lg transition-colors" title="View History"><span class="material-symbols-outlined">history</span></button>
+<button class="p-xs text-status-reserved hover:bg-secondary-fixed rounded-lg transition-colors" title="Force Return"><span class="material-symbols-outlined">assignment_return</span></button>
+<button class="p-xs text-status-borrowed hover:bg-tertiary-fixed rounded-lg transition-colors" title="Notify"><span class="material-symbols-outlined">mail</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-lg py-md font-mono text-sm">B-11092-LT</td>
+<td class="px-lg py-md font-bold text-primary">The Great Gatsby</td>
+<td class="px-lg py-md">Modern Literature</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center gap-xs px-md py-xs bg-status-due/10 text-status-due rounded-full font-bold text-[11px] uppercase border border-status-due/20">
+<span class="w-2 h-2 rounded-full bg-status-due animate-pulse"></span> Overdue
+                                </span>
+</td>
+<td class="px-lg py-md text-center font-bold text-on-surface-variant">89</td>
+<td class="px-lg py-md text-right">
+<div class="flex items-center justify-end gap-xs opacity-60 group-hover:opacity-100 transition-opacity">
+<button class="p-xs text-primary hover:bg-primary-fixed rounded-lg transition-colors" title="View History"><span class="material-symbols-outlined">history</span></button>
+<button class="p-xs text-status-reserved hover:bg-secondary-fixed rounded-lg transition-colors" title="Force Return"><span class="material-symbols-outlined">assignment_return</span></button>
+<button class="p-xs text-error hover:bg-error-container rounded-lg transition-colors font-bold" title="Notify"><span class="material-symbols-outlined">priority_high</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-primary/5 transition-colors group">
+<td class="px-lg py-md font-mono text-sm">B-77234-AH</td>
+<td class="px-lg py-md font-bold text-primary">The Fall of Rome</td>
+<td class="px-lg py-md">Ancient History</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center gap-xs px-md py-xs bg-status-reserved/10 text-status-reserved rounded-full font-bold text-[11px] uppercase border border-status-reserved/20">
+<span class="w-2 h-2 rounded-full bg-status-reserved"></span> Reserved
+                                </span>
+</td>
+<td class="px-lg py-md text-center font-bold text-on-surface-variant">31</td>
+<td class="px-lg py-md text-right">
+<div class="flex items-center justify-end gap-xs opacity-60 group-hover:opacity-100 transition-opacity">
+<button class="p-xs text-primary hover:bg-primary-fixed rounded-lg transition-colors" title="View History"><span class="material-symbols-outlined">history</span></button>
+<button class="p-xs text-status-reserved hover:bg-secondary-fixed rounded-lg transition-colors" title="Force Return"><span class="material-symbols-outlined">assignment_return</span></button>
+<button class="p-xs text-status-borrowed hover:bg-tertiary-fixed rounded-lg transition-colors" title="Notify"><span class="material-symbols-outlined">mail</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination-like footer -->
+<div class="px-lg py-md bg-surface-container-low flex items-center justify-between border-t border-outline-variant">
+<span class="text-label-sm text-on-surface-variant">Showing 1-4 of 1,248 entries</span>
+<div class="flex gap-xs">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant bg-white hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-primary bg-primary text-white font-bold text-sm">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant bg-white hover:bg-surface-variant transition-colors text-sm">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant bg-white hover:bg-surface-variant transition-colors text-sm">3</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant bg-white hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="ml-sidebar-width-admin w-[calc(100%-240px)] py-md px-lg flex justify-between items-center bg-surface-container-lowest border-t border-outline-variant dark:border-outline">
+<p class="text-body-md font-body-md text-on-surface-variant">© 2024 Click &amp; Collect | Central Library System</p>
+<div class="flex gap-lg">
+<a class="text-label-sm font-label-sm text-on-surface-variant hover:underline" href="#">School Info</a>
+<a class="text-label-sm font-label-sm text-on-surface-variant hover:underline" href="#">Location</a>
+<a class="text-label-sm font-label-sm text-on-surface-variant hover:underline" href="#">System Status</a>
+</div>
+</footer>
+<script>
+        // Micro-interaction for Category delete actions
+        document.querySelectorAll('#category-list button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if(confirm('Are you sure you want to delete this category? All related items will need re-categorizing.')) {
+                    btn.closest('.group').style.opacity = '0.3';
+                    btn.closest('.group').style.pointerEvents = 'none';
+                }
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const container = document.getElementById('category-dropdown-container');
+            const list = document.getElementById('category-list');
+            if (!container.contains(e.target)) {
+                list.classList.add('hidden');
+            }
+        });
+    </script>
+</body></html>

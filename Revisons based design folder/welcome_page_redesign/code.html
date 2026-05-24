@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Welcome to Click &amp; Collect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Pacifico&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "background": "#fcf8ff",
+                    "on-secondary-container": "#6e5c00",
+                    "on-error": "#ffffff",
+                    "status-reserved": "#F59E0B",
+                    "on-secondary-fixed-variant": "#544600",
+                    "on-secondary-fixed": "#221b00",
+                    "primary-fixed": "#efdbff",
+                    "secondary-fixed-dim": "#e9c400",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#4b4451",
+                    "on-background": "#1b1b24",
+                    "surface-container-low": "#f6f2ff",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#3a3c8d",
+                    "secondary-fixed": "#ffe16d",
+                    "primary": "#431076",
+                    "primary-container": "#5b2d8e",
+                    "tertiary": "#232376",
+                    "surface-bright": "#fcf8ff",
+                    "error": "#ba1a1a",
+                    "surface-container-highest": "#e4e0ee",
+                    "on-primary-fixed": "#2b0053",
+                    "status-available": "#22C55E",
+                    "on-secondary": "#ffffff",
+                    "surface-container-high": "#eae6f4",
+                    "status-borrowed": "#1565C0",
+                    "error-container": "#ffdad6",
+                    "glass-bg": "rgba(255, 255, 255, 0.7)",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#e1e0ff",
+                    "primary-fixed-dim": "#dbb8ff",
+                    "outline-variant": "#cdc3d2",
+                    "surface-dim": "#dcd8e6",
+                    "status-due": "#EF4444",
+                    "surface-tint": "#7548a9",
+                    "outline": "#7c7482",
+                    "inverse-primary": "#dbb8ff",
+                    "on-tertiary-fixed-variant": "#3b3d8e",
+                    "on-surface": "#1b1b24",
+                    "on-error-container": "#93000a",
+                    "user-blue-end": "#0288D1",
+                    "on-tertiary-container": "#aaacff",
+                    "inverse-surface": "#302f3a",
+                    "inverse-on-surface": "#f3effd",
+                    "tertiary-fixed-dim": "#c0c1ff",
+                    "secondary-container": "#fcd400",
+                    "on-primary-fixed-variant": "#5c2e8f",
+                    "on-tertiary-fixed": "#0b0763",
+                    "surface": "#fcf8ff",
+                    "user-teal-start": "#26C6DA",
+                    "surface-variant": "#e4e0ee",
+                    "surface-container": "#f0ecfa",
+                    "on-primary-container": "#cda0ff",
+                    "secondary": "#705d00"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "sidebar-width-user": "72px",
+                    "sidebar-width-admin": "240px",
+                    "md": "16px",
+                    "sm": "8px",
+                    "base": "4px",
+                    "xl": "32px",
+                    "sidebar-width-collapsed": "64px",
+                    "lg": "24px",
+                    "container-max": "1320px"
+            },
+            "fontFamily": {
+                    "wordmark-mobile": ["Pacifico"],
+                    "body-lg": ["Poppins"],
+                    "label-sm": ["Poppins"],
+                    "body-md": ["Poppins"],
+                    "headline-sm": ["Poppins"],
+                    "headline-display": ["Poppins"],
+                    "wordmark-lg": ["Pacifico"],
+                    "label-caps": ["Poppins"],
+                    "wordmark-md": ["Pacifico"]
+            },
+            "fontSize": {
+                    "wordmark-mobile": ["20px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "headline-display": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "wordmark-lg": ["34px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+                    "wordmark-md": ["24px", {"lineHeight": "1.2", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .hexagon-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            background-color: #fcf8ff;
+        }
+
+        .hexagon {
+            position: absolute;
+            background-color: white;
+            border: 2px solid #cdc3d2;
+            width: 80px;
+            height: 46px;
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+            opacity: 0.4;
+        }
+
+        /* Gold lines for header */
+        .header-gold-divider {
+            width: 2px;
+            height: 24px;
+            background-color: #ffe16d;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden h-screen cursor-pointer" onclick="window.location.href='/login'">
+<!-- Background Decoration -->
+<div class="hexagon-bg">
+<div class="hexagon" style="top: 10%; left: 5%;"></div>
+<div class="hexagon" style="top: 25%; left: 85%;"></div>
+<div class="hexagon" style="top: 60%; left: 15%;"></div>
+<div class="hexagon" style="top: 75%; left: 70%;"></div>
+<div class="hexagon" style="top: 40%; left: 45%;"></div>
+<div class="hexagon" style="top: 85%; left: 20%;"></div>
+</div>
+<!-- Header Decorative Bar -->
+<header class="fixed top-0 w-full flex justify-between items-center px-lg py-md z-50 bg-primary shadow-sm border-b border-outline-variant/20">
+<!-- Traffic Light Dots -->
+<div class="flex gap-xs items-center ml-sm">
+<div class="w-3 h-3 rounded-full bg-status-borrowed"></div>
+<div class="w-3 h-3 rounded-full bg-secondary-container"></div>
+<div class="w-3 h-3 rounded-full bg-status-due"></div>
+</div>
+<!-- Centered Gold Lines -->
+<div class="absolute left-1/2 -translate-x-1/2 flex gap-sm items-center">
+<div class="header-gold-divider"></div>
+<div class="header-gold-divider"></div>
+</div>
+<!-- Brand Icon -->
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary-fixed" data-icon="local_library">local_library</span>
+</div>
+</header>
+<!-- Main Content Grid -->
+<main class="grid grid-cols-1 md:grid-cols-3 h-full pt-[64px] px-xl relative">
+<!-- Left Column: Copy -->
+<section class="flex flex-col justify-center items-start space-y-sm">
+<div class="flex flex-col leading-none">
+<h2 class="text-on-surface font-headline-display text-[64px] md:text-[84px] tracking-tight mb-2">WELCOME</h2>
+<h2 class="text-primary font-headline-display text-[64px] md:text-[84px] tracking-tight mb-2">TO</h2>
+<h1 class="text-primary font-wordmark-lg text-wordmark-lg md:text-[60px] drop-shadow-sm">Click &amp; Collect</h1>
+</div>
+<p class="text-on-surface-variant font-body-lg max-w-xs mt-lg opacity-80">
+                Institutional Library Management for the next generation of academic excellence.
+            </p>
+</section>
+<!-- Center Column: Prompt -->
+<section class="flex flex-col justify-center items-center">
+<div class="animate-float group">
+<div class="bg-glass-bg/60 backdrop-blur-xl border border-white p-xl rounded-[2rem] shadow-xl transition-all duration-500 group-hover:scale-105 group-hover:bg-glass-bg/80">
+<span class="material-symbols-outlined text-primary text-[48px] block mb-md text-center" data-icon="fingerprint">fingerprint</span>
+<p class="text-primary font-headline-sm text-headline-sm tracking-wide text-center">
+                        Click Anywhere to Sign In
+                    </p>
+<div class="mt-md flex justify-center space-x-2">
+<div class="w-2 h-2 rounded-full bg-primary/20"></div>
+<div class="w-2 h-2 rounded-full bg-primary/40"></div>
+<div class="w-2 h-2 rounded-full bg-primary/20"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Attribution -->
+<section class="flex flex-col justify-center items-end text-right">
+<div class="bg-white/40 p-lg rounded-xl border border-outline-variant/30 backdrop-blur-md">
+<img alt="National Management Science College Seal" class="w-32 h-32 mb-lg ml-auto object-contain" data-alt="A highly detailed academic institutional seal for the National Management Science College. The logo is circular, featuring intricate classical motifs, an open book icon in the center symbolizing knowledge, and a laurel wreath bordering the edges. The color palette uses elegant deep purple and metallic gold accents on a clean white background, reflecting an authoritative, trustworthy, and prestigious academic atmosphere in a high-fidelity modern UI style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7cYndifm3ludl12CNK7k5h3pBGbXHhfvQPeUsr-C_yJDZaNkMAuwLg0hCprO1D5a6ad8NRW5bmbLQSHdNc3ZofcoXfpACsWZARJPtmyK891KFcZ1wYewspN7Wgtb4U-xPgBIHdX8NWSt3KnR1vV71ut6ry3h1M0ZzLXzhciYm4PhJUNy7lqKtmKPYUM2KXyXMtPnMzh_39A1HIZDfA6MWNtIFbbYiDBdTscyFTlMPumeKmODR1ooSfi2oDgppyw-UNAkXFa3iqis"/>
+<h3 class="text-primary font-label-caps text-label-caps mb-xs">OFFICIAL PORTAL</h3>
+<h4 class="text-on-surface font-headline-sm text-headline-sm leading-tight max-w-[200px]">
+                    National Management Science College
+                </h4>
+<div class="w-12 h-1 bg-secondary-container mt-md ml-auto"></div>
+</div>
+</section>
+<!-- Bottom-Left Decorative Cluster -->
+<div class="absolute bottom-xl left-xl pointer-events-none opacity-60">
+<img alt="Hexagonal icon cluster" class="w-48 md:w-64" data-alt="A sophisticated digital cluster of geometric hexagonal shapes floating in 3D space. Each hexagon contains a minimalist library-themed icon like a book, a magnifying glass, or a digital tablet. The composition uses a soft light-mode color palette with lavender, teal, and gold highlights, featuring subtle glassmorphic transparency and refined shadows to create a modern, high-tech institutional aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJj8GTkLT74esAOCF6Wx36HjOv16ykHJ3yZsQ4Qgyb5iVnsprXqmRbJtbS3PVISP0HCR2eCzImQt5U4-nJmBVGdS_nmKHh82aQLBVCIzcgF3EtR5_gEio_vRaq6JhmTAJYQ76XB6Gk--fLvL06xyfoMyDc_KraCwy0s81P0BFUWCC0nEgcLusjjnyFz8ZKeLtSyxa3XHesvE3jjwWQsGZxSoXxmdErdPQEDspScjIEJ9AvOdKepm18oPUk_uHUCHs_y88y4QceezE"/>
+</div>
+</main>
+<!-- Footer Identity -->
+<footer class="fixed bottom-0 w-full py-md px-lg flex flex-col md:flex-row justify-between items-center gap-md border-t border-outline-variant bg-surface-container-lowest/50 backdrop-blur-sm">
+<p class="text-on-surface-variant/80 font-label-sm text-label-sm">
+            © 2024 Click &amp; Collect. Institutional Library Management System.
+        </p>
+<div class="flex gap-lg">
+<a class="text-on-surface-variant/80 font-label-sm text-label-sm hover:text-primary transition-colors" href="#">Accessibility</a>
+<a class="text-on-surface-variant/80 font-label-sm text-label-sm hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant/80 font-label-sm text-label-sm hover:text-primary transition-colors" href="#">Security Standards</a>
+</div>
+</footer>
+<script>
+        // Interactive Hexagons: slight movement on mouse move
+        document.addEventListener('mousemove', (e) => {
+            const hexes = document.querySelectorAll('.hexagon');
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            
+            hexes.forEach((hex, index) => {
+                const speed = (index + 1) * 10;
+                hex.style.transform = `translate(${x * speed}px, ${y * speed}px)`;
+            });
+        });
+    </script>
+</body></html>
