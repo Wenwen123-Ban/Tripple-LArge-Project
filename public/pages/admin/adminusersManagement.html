@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Users Management</title>
+  <link rel="stylesheet" href="../../assets/fonts/fonts.css" />
+  <link rel="stylesheet" href="../../styles/admin/admin_management.css" />
+</head>
+<body>
+  <main class="admin-users-page">
+    <header class="page-header">
+      <div>
+        <h1>User Management</h1>
+        <p>Manage administrator accounts and permissions.</p>
+      </div>
+      <button id="openAddAdminModal" class="btn-primary" type="button">Add Admin</button>
+    </header>
+
+    <section class="panel-placeholder">
+      <p>Admin user table loads here.</p>
+    </section>
+  </main>
+
+  <div id="adminRegisterModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="admin-modal-title">
+    <div class="modal-card">
+      <button id="closeAddAdminModal" class="close-btn" type="button" aria-label="Close">×</button>
+
+      <div class="brand-row">
+        <img src="../../assets/logo/NMSC%20LOGO.jpg" alt="NMSCST Logo" class="school-logo" />
+        <div>
+          <h2 id="admin-modal-title">Register Administrator</h2>
+          <p>NMSCST Library Click &amp; Collect Portal</p>
+        </div>
+      </div>
+
+      <form id="adminRegistrationForm" class="register-form">
+        <div class="section-title">Personal Information</div>
+        <div class="form-grid">
+          <label>
+            <span>Full Name</span>
+            <input type="text" name="full_name" placeholder="e.g. Eleanor Vance" required />
+          </label>
+          <label>
+            <span>Employee ID Number</span>
+            <input type="text" name="employee_id" placeholder="ID-000-000" required />
+          </label>
+          <label class="span-2">
+            <span>Institutional Email</span>
+            <input type="email" name="email" placeholder="e.g. librarian@nmscst.edu.ph" required />
+          </label>
+        </div>
+
+        <div class="section-title">Security Credentials</div>
+        <div class="form-grid">
+          <label>
+            <span>Password</span>
+            <input type="password" name="password" placeholder="••••••••" required />
+          </label>
+          <label>
+            <span>Confirm Password</span>
+            <input type="password" name="confirm_password" placeholder="••••••••" required />
+          </label>
+        </div>
+
+        <div class="section-title">Role &amp; Authorization</div>
+        <div class="form-grid">
+          <label>
+            <span>Admin Role</span>
+            <select name="role" required>
+              <option value="Staff Librarian">Staff Librarian</option>
+              <option value="Chief Librarian">Chief Librarian</option>
+              <option value="IT Specialist">IT Specialist</option>
+              <option value="Archivist">Archivist</option>
+            </select>
+          </label>
+          <label>
+            <span>Authorization Code</span>
+            <input type="text" name="auth_code" placeholder="Enter secure key" required />
+          </label>
+        </div>
+
+        <label class="check-row">
+          <input type="checkbox" name="policy" required />
+          <span>I agree to the Institutional Data Security &amp; Privacy Policy.</span>
+        </label>
+
+        <div class="modal-actions">
+          <button type="button" id="cancelAddAdmin" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Register Administrator</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../../../scripts/admin/users.js"></script>
+</body>
+</html>
