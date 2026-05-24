@@ -326,6 +326,8 @@ def _ensure_deletion_and_notification_tables(cursor):
         )
         """
     )
+    _add_column_if_missing(cursor, 'notifications', "notification_type VARCHAR(50) DEFAULT NULL")
+
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS deletion_codes (
@@ -619,7 +621,7 @@ def get_notifications():
     _ensure_deletion_and_notification_tables(cursor)
     cursor.execute(
         """
-        SELECT id, recipient_id, COALESCE(notification_type, type, 'general') AS notification_type, type, title, message, data, is_read, is_used, created_at
+        SELECT id, recipient_id, COALESCE(NULLIF(notification_type, ''), type, 'general') AS notification_type, type, title, message, data, is_read, is_used, created_at
         FROM notifications
         WHERE recipient_id = %s
         ORDER BY created_at DESC
