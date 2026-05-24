@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>User Notifications | Click &amp; Collect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Pacifico&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary-fixed": "#0b0763",
+            "status-reserved": "#F59E0B",
+            "surface-tint": "#7548a9",
+            "tertiary-fixed": "#e1e0ff",
+            "primary-container": "#5b2d8e",
+            "primary-fixed": "#efdbff",
+            "inverse-surface": "#302f3a",
+            "on-tertiary-fixed-variant": "#3b3d8e",
+            "on-secondary-container": "#6e5c00",
+            "secondary-fixed": "#ffe16d",
+            "status-borrowed": "#1565C0",
+            "surface": "#fcf8ff",
+            "status-due": "#EF4444",
+            "glass-bg": "rgba(255, 255, 255, 0.7)",
+            "tertiary-container": "#3a3c8d",
+            "on-surface": "#1b1b24",
+            "secondary-container": "#fcd400",
+            "on-primary-fixed": "#2b0053",
+            "surface-dim": "#dcd8e6",
+            "primary": "#431076",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "on-error-container": "#93000a",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-container": "#aaacff",
+            "on-primary-fixed-variant": "#5c2e8f",
+            "inverse-primary": "#dbb8ff",
+            "secondary": "#705d00",
+            "on-primary-container": "#cda0ff",
+            "surface-container": "#f0ecfa",
+            "surface-container-high": "#eae6f4",
+            "status-available": "#22C55E",
+            "on-secondary-fixed-variant": "#544600",
+            "surface-variant": "#e4e0ee",
+            "on-surface-variant": "#4b4451",
+            "background": "#fcf8ff",
+            "user-teal-start": "#26C6DA",
+            "on-secondary": "#ffffff",
+            "on-secondary-fixed": "#221b00",
+            "inverse-on-surface": "#f3effd",
+            "on-primary": "#ffffff",
+            "user-blue-end": "#0288D1",
+            "outline-variant": "#cdc3d2",
+            "outline": "#7c7482",
+            "tertiary-fixed-dim": "#c0c1ff",
+            "tertiary": "#232376",
+            "surface-container-low": "#f6f2ff",
+            "error": "#ba1a1a",
+            "surface-bright": "#fcf8ff",
+            "surface-container-highest": "#e4e0ee",
+            "on-background": "#1b1b24",
+            "secondary-fixed-dim": "#e9c400",
+            "primary-fixed-dim": "#dbb8ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "xs": "4px",
+            "sm": "8px",
+            "md": "16px",
+            "sidebar-width-user": "72px",
+            "sidebar-width-collapsed": "64px",
+            "lg": "24px",
+            "base": "4px",
+            "sidebar-width-admin": "240px",
+            "xl": "32px",
+            "container-max": "1320px"
+          },
+          "fontFamily": {
+            "label-caps": ["Poppins"],
+            "wordmark-mobile": ["Pacifico"],
+            "headline-sm": ["Poppins"],
+            "label-sm": ["Poppins"],
+            "body-md": ["Poppins"],
+            "body-lg": ["Poppins"],
+            "headline-display": ["Poppins"],
+            "wordmark-md": ["Pacifico"],
+            "wordmark-lg": ["Pacifico"]
+          },
+          "fontSize": {
+            "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+            "wordmark-mobile": ["20px", {"lineHeight": "1.2", "fontWeight": "400"}],
+            "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+            "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "headline-display": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "wordmark-md": ["24px", {"lineHeight": "1.2", "fontWeight": "400"}],
+            "wordmark-lg": ["34px", {"lineHeight": "1.2", "fontWeight": "400"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .glass-effect {
+      backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-background font-body-md text-on-surface">
+<!-- Side Navigation Bar (User Portal Style) -->
+<aside class="h-screen w-sidebar-width-user fixed left-0 top-0 lg:w-sidebar-width-admin bg-surface-container-lowest dark:bg-surface-container-low shadow-md z-40 transition-all duration-300">
+<div class="flex flex-col h-full">
+<div class="p-md lg:p-lg flex flex-col items-center lg:items-start gap-xs">
+<h1 class="font-wordmark-md text-wordmark-md text-user-teal-start">Click &amp; Collect</h1>
+<div class="hidden lg:block mt-md">
+<p class="font-headline-sm text-headline-sm text-on-surface">Welcome back</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Student Access</p>
+</div>
+</div>
+<nav class="flex-1 mt-md space-y-xs overflow-y-auto scrollbar-hide">
+<!-- Home -->
+<a class="text-on-surface-variant mx-sm py-sm px-md flex items-center gap-sm hover:bg-surface-container dark:hover:bg-surface-variant rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="hidden lg:block font-body-md">Home</span>
+</a>
+<!-- My Books -->
+<a class="text-on-surface-variant mx-sm py-sm px-md flex items-center gap-sm hover:bg-surface-container dark:hover:bg-surface-variant rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+<span class="hidden lg:block font-body-md">My Books</span>
+</a>
+<!-- Library Card -->
+<a class="text-on-surface-variant mx-sm py-sm px-md flex items-center gap-sm hover:bg-surface-container dark:hover:bg-surface-variant rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="contactless">contactless</span>
+<span class="hidden lg:block font-body-md">Library Card</span>
+</a>
+<!-- Notifications (ACTIVE) -->
+<a class="bg-gradient-to-r from-user-teal-start to-user-blue-end text-on-primary rounded-xl mx-sm py-sm px-md flex items-center gap-sm scale-98 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="notifications" style="font-variation-settings: 'FILL' 1;">notifications</span>
+<span class="hidden lg:block font-body-md">Notifications</span>
+</a>
+</nav>
+<div class="p-md border-t border-outline-variant/30 flex items-center gap-md">
+<img alt="User Profile" class="w-10 h-10 rounded-full bg-surface-container shadow-sm" data-alt="A clean, professional headshot avatar of a diverse university student with a friendly expression. The background is a soft, out-of-focus academic setting with warm sunlight and cool teal accents. The visual style is crisp and modern, matching the professional SaaS environment of a digital library portal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEyxlZLHAgppHDoopSLh0i4bnCMYBszEkErxVCKqYhzyaJdqlWz1EEds-b1_1chCMyXh7awPF8Wtq3r7aCBzYsSNa80K41K9xkgh4cHA-R-9w31FDrH3r5pTAkJ-y5S-_Qn_icifFtMXVpvq1dBrng7wo87eKweq0gPoAb-i5l-0pj2td_ILqiLoB4CugSGpEMQCZkwi3Ld-zFCPkbETW_CB2LWKklKKMpvXC9ZJTt5ZlQ1jl9FPw8hlVm80ZDJgA2RZvq_xxpnTo"/>
+<div class="hidden lg:block overflow-hidden">
+<p class="font-label-sm text-label-sm font-bold truncate">Alex Chen</p>
+<p class="text-[10px] text-on-surface-variant truncate">ID: 2024-NMSC-0042</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-sidebar-width-user lg:ml-sidebar-width-admin min-h-screen flex flex-col transition-all duration-300">
+<!-- Top App Bar -->
+<header class="bg-glass-bg dark:bg-surface-container-highest backdrop-blur-md sticky top-0 z-30 border-b border-outline-variant/30 shadow-sm px-lg py-sm flex justify-between items-center w-full">
+<div class="flex items-center gap-md">
+<h2 class="font-headline-sm text-headline-sm text-primary">Notifications</h2>
+</div>
+<div class="flex items-center gap-sm">
+<button class="p-sm rounded-full hover:bg-primary-container/10 transition-colors duration-200 material-symbols-outlined" data-icon="search">search</button>
+<button class="p-sm rounded-full hover:bg-primary-container/10 transition-colors duration-200 material-symbols-outlined" data-icon="account_circle">account_circle</button>
+</div>
+</header>
+<!-- Page Body -->
+<div class="p-md lg:p-xl flex-1 flex flex-col items-center">
+<div class="w-full max-container-max flex flex-col gap-lg">
+<!-- Action & Filter Bar -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-md mb-md">
+<div class="relative w-full md:w-96">
+<input class="w-full pl-xl pr-md py-sm bg-surface-container-lowest border border-outline-variant rounded-full font-body-md focus:outline-none focus:ring-2 focus:ring-user-teal-start/50 transition-all" placeholder="Search notifications..." type="text"/>
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant" data-icon="search">search</span>
+</div>
+<div class="flex items-center gap-sm self-end">
+<button class="flex items-center gap-xs px-md py-sm text-user-blue-end font-label-sm hover:bg-user-teal-start/10 rounded-lg transition-colors" id="mark-read">
+<span class="material-symbols-outlined text-[18px]" data-icon="done_all">done_all</span>
+              Mark all as read
+            </button>
+<div class="h-8 w-[1px] bg-outline-variant/50 hidden md:block"></div>
+<button class="p-sm hover:bg-surface-container rounded-lg transition-colors material-symbols-outlined" data-icon="filter_list">filter_list</button>
+</div>
+</div>
+<!-- Notifications Container (Centralized Feed) -->
+<div class="w-full max-w-4xl mx-auto space-y-md">
+<!-- Section Title -->
+<h3 class="font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant pb-xs">New Notifications</h3>
+<!-- Notification Card: Book Ready -->
+<div class="glass-effect p-md rounded-xl shadow-sm border-l-4 border-status-available flex gap-md hover:translate-x-1 transition-transform cursor-pointer relative overflow-hidden group">
+<div class="flex-shrink-0 w-12 h-12 rounded-full bg-status-available/10 flex items-center justify-center text-status-available">
+<span class="material-symbols-outlined" data-icon="auto_stories">auto_stories</span>
+</div>
+<div class="flex-1 space-y-xs">
+<div class="flex justify-between items-start">
+<p class="font-body-lg font-bold text-on-surface">Book Ready for Pickup</p>
+<span class="text-[11px] text-on-surface-variant">2 mins ago</span>
+</div>
+<p class="font-body-md text-on-surface-variant">Your reserved copy of <span class="font-semibold text-on-surface">"Modern Web Architectures"</span> is now available at the Main Circulation Desk. Please collect it within 48 hours.</p>
+<div class="pt-sm flex gap-sm">
+<button class="px-md py-xs bg-user-teal-start text-white rounded-lg text-label-sm font-bold shadow-sm hover:opacity-90 transition-opacity">Reserve Details</button>
+</div>
+</div>
+<div class="absolute right-md bottom-md opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-outline" data-icon="delete">delete</span>
+</div>
+</div>
+<!-- Notification Card: Due Date Reminder -->
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-sm border border-outline-variant/30 flex gap-md hover:bg-surface-container-low transition-colors cursor-pointer relative">
+<div class="flex-shrink-0 w-12 h-12 rounded-full bg-status-reserved/10 flex items-center justify-center text-status-reserved">
+<span class="material-symbols-outlined" data-icon="event_upcoming">event_upcoming</span>
+</div>
+<div class="flex-1 space-y-xs">
+<div class="flex justify-between items-start">
+<p class="font-body-lg font-bold text-on-surface">Due Date Reminder</p>
+<span class="text-[11px] text-on-surface-variant">3 hours ago</span>
+</div>
+<p class="font-body-md text-on-surface-variant">Friendly reminder that <span class="font-semibold text-on-surface">"Advanced Algorithms"</span> is due tomorrow, Oct 28th. You can renew this online if there are no pending holds.</p>
+<div class="pt-sm flex gap-sm">
+<button class="px-md py-xs border border-user-teal-start text-user-teal-start rounded-lg text-label-sm font-bold hover:bg-user-teal-start/5 transition-colors">Renew Book</button>
+</div>
+</div>
+</div>
+<!-- Section Title: Older -->
+<h3 class="font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant pb-xs pt-lg">Earlier this week</h3>
+<!-- Notification Card: Overdue Alert -->
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-sm border-l-4 border-status-due flex gap-md opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+<div class="flex-shrink-0 w-12 h-12 rounded-full bg-status-due/10 flex items-center justify-center text-status-due">
+<span class="material-symbols-outlined" data-icon="error">error</span>
+</div>
+<div class="flex-1 space-y-xs">
+<div class="flex justify-between items-start">
+<p class="font-body-lg font-bold text-on-surface">Overdue Alert</p>
+<span class="text-[11px] text-on-surface-variant">Oct 25, 2024</span>
+</div>
+<p class="font-body-md text-on-surface-variant">The item <span class="font-semibold text-on-surface">"Introduction to Quantum Physics"</span> is now 2 days overdue. Daily fines are being applied to your account.</p>
+<div class="pt-sm">
+<span class="text-status-due font-label-sm font-bold bg-error-container px-sm py-[2px] rounded-full">Fine Accruing: $1.50</span>
+</div>
+</div>
+</div>
+<!-- Notification Card: System Announcement -->
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-sm border border-outline-variant/30 flex gap-md opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+<div class="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="campaign">campaign</span>
+</div>
+<div class="flex-1 space-y-xs">
+<div class="flex justify-between items-start">
+<p class="font-body-lg font-bold text-on-surface">System Announcement</p>
+<span class="text-[11px] text-on-surface-variant">Oct 24, 2024</span>
+</div>
+<p class="font-body-md text-on-surface-variant">The North Campus Library will be closed for maintenance this Sunday from 8:00 AM to 5:00 PM. Digital collections will remain accessible.</p>
+</div>
+</div>
+<!-- Empty State (Hidden by default) -->
+<div class="hidden py-xl flex flex-col items-center justify-center text-center opacity-60" id="empty-state">
+<span class="material-symbols-outlined text-6xl text-outline-variant mb-md" data-icon="notifications_off">notifications_off</span>
+<p class="font-headline-sm text-on-surface">All caught up!</p>
+<p class="font-body-md text-on-surface-variant">Check back later for new library updates.</p>
+</div>
+</div>
+<!-- Asymmetric Detail Graphic -->
+<div class="mt-xl grid grid-cols-1 md:grid-cols-3 gap-lg opacity-40 select-none">
+<div class="p-lg rounded-3xl bg-gradient-to-br from-user-teal-start/20 to-transparent flex flex-col justify-end min-h-[160px]">
+<span class="material-symbols-outlined text-4xl mb-sm" data-icon="trending_up">trending_up</span>
+<p class="font-label-caps text-label-caps">Reader Stats</p>
+<p class="font-body-md">Your notification frequency is 12% lower than last month.</p>
+</div>
+<div class="p-lg rounded-3xl bg-gradient-to-br from-user-blue-end/20 to-transparent flex flex-col justify-end min-h-[160px]">
+<span class="material-symbols-outlined text-4xl mb-sm" data-icon="verified">verified</span>
+<p class="font-label-caps text-label-caps">Good Standing</p>
+<p class="font-body-md">98% of your notifications were resolved on time.</p>
+</div>
+<div class="md:col-span-1">
+<img class="w-full h-full object-cover rounded-3xl grayscale" data-alt="A stylized, artistic overhead view of an organized study desk with open books, a sleek modern laptop, and a minimalist desk lamp. The lighting is soft and ethereal, using a cyan and white color palette that conveys a peaceful, focused academic atmosphere. The composition is clean and modern, representing student productivity in a digital age." src="https://lh3.googleusercontent.com/aida-public/AB6AXuByBwsRLItyYHKRAFmrHR5g9C81NqK1nUKpf1FESjo-IrXd_UdNeokYSb00vdJQT8RBxJgxAStGw3yWV-indYAC_fm_1ep81dyxtFefJdrHAuwP6QMH6bQRhQT8QwV6kqQ6JCR3_HAZ8yyo41dU0V16JbaDR5V16Rp5Fu7Dr7o0EsTcRMZ5ekbw-F5JmxXurklqP2yMYnqS9-MnStI7PWyil25OCrOabZ06iW7g5cJrkDkfxPwncA0PQnfv58Gpz7qN9WaQVGjir-w"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="mt-auto w-full py-lg bg-surface-container-highest dark:bg-surface-dim border-t border-outline-variant flex flex-col items-center justify-center gap-sm">
+<div class="flex gap-md">
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Contact Support</a>
+</div>
+<p class="font-body-md text-on-surface-variant">© 2024 NMSCST Click &amp; Collect. Academic Library System.</p>
+</footer>
+</main>
+<script>
+    // Simple Interaction Script
+    document.getElementById('mark-read').addEventListener('click', function() {
+      const cards = document.querySelectorAll('.glass-effect, .bg-surface-container-lowest');
+      cards.forEach(card => {
+        card.classList.remove('glass-effect', 'border-l-4');
+        card.classList.add('bg-surface-container-lowest', 'opacity-60');
+      });
+      this.innerHTML = '<span class="material-symbols-outlined text-[18px]">check_circle</span> All Read';
+      this.classList.replace('text-user-blue-end', 'text-on-surface-variant');
+    });
+
+    // Interaction for clicking cards
+    document.querySelectorAll('.cursor-pointer').forEach(card => {
+      card.addEventListener('click', function() {
+        this.classList.add('scale-95');
+        setTimeout(() => this.classList.remove('scale-95'), 150);
+      });
+    });
+  </script>
+</body></html>

@@ -584,6 +584,7 @@ app.add_url_rule('/api/admin/notifications', 'get_notifications', admin.get_noti
 app.add_url_rule('/api/admin/notifications/<int:notif_id>/read', 'mark_notification_read', admin.mark_notification_read, methods=['POST'])
 app.add_url_rule('/api/admin/notifications/clear', 'clear_notifications', admin.clear_notifications, methods=['POST'])
 app.add_url_rule('/admin/notifications', 'admin_get_notifications_v2', admin.get_notifications, methods=['GET'])
+app.add_url_rule('/admin/notifications/', 'admin_get_notifications_v2_slash', admin.get_notifications, methods=['GET'])
 app.add_url_rule('/admin/notifications/mark-read/<int:notif_id>/', 'admin_mark_notification_read_v2', admin.mark_notification_read, methods=['POST'])
 app.add_url_rule('/admin/notifications/mark-all-read/', 'admin_mark_all_notifications_read_v2', admin.mark_all_notifications_read, methods=['POST'])
 app.add_url_rule('/admin/notifications/clear-all/', 'admin_clear_notifications_v2', admin.clear_notifications, methods=['POST'])

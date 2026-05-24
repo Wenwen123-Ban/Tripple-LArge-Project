@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Librarian Manual | Click &amp; Collect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Pacifico&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#0b0763",
+                        "status-reserved": "#F59E0B",
+                        "surface-tint": "#7548a9",
+                        "tertiary-fixed": "#e1e0ff",
+                        "primary-container": "#5b2d8e",
+                        "primary-fixed": "#efdbff",
+                        "inverse-surface": "#302f3a",
+                        "on-tertiary-fixed-variant": "#3b3d8e",
+                        "on-secondary-container": "#6e5c00",
+                        "secondary-fixed": "#ffe16d",
+                        "status-borrowed": "#1565C0",
+                        "surface": "#fcf8ff",
+                        "status-due": "#EF4444",
+                        "glass-bg": "rgba(255, 255, 255, 0.7)",
+                        "tertiary-container": "#3a3c8d",
+                        "on-surface": "#1b1b24",
+                        "secondary-container": "#fcd400",
+                        "on-primary-fixed": "#2b0053",
+                        "surface-dim": "#dcd8e6",
+                        "primary": "#431076",
+                        "error-container": "#ffdad6",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-container": "#aaacff",
+                        "on-primary-fixed-variant": "#5c2e8f",
+                        "inverse-primary": "#dbb8ff",
+                        "secondary": "#705d00",
+                        "on-primary-container": "#cda0ff",
+                        "surface-container": "#f0ecfa",
+                        "surface-container-high": "#eae6f4",
+                        "status-available": "#22C55E",
+                        "on-secondary-fixed-variant": "#544600",
+                        "surface-variant": "#e4e0ee",
+                        "on-surface-variant": "#4b4451",
+                        "background": "#fcf8ff",
+                        "user-teal-start": "#26C6DA",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#221b00",
+                        "inverse-on-surface": "#f3effd",
+                        "on-primary": "#ffffff",
+                        "user-blue-end": "#0288D1",
+                        "outline-variant": "#cdc3d2",
+                        "outline": "#7c7482",
+                        "tertiary-fixed-dim": "#c0c1ff",
+                        "tertiary": "#232376",
+                        "surface-container-low": "#f6f2ff",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#fcf8ff",
+                        "surface-container-highest": "#e4e0ee",
+                        "on-background": "#1b1b24",
+                        "secondary-fixed-dim": "#e9c400",
+                        "primary-fixed-dim": "#dbb8ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "sidebar-width-user": "72px",
+                        "sidebar-width-collapsed": "64px",
+                        "lg": "24px",
+                        "base": "4px",
+                        "sidebar-width-admin": "240px",
+                        "xl": "32px",
+                        "container-max": "1320px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Poppins"],
+                        "wordmark-mobile": ["Pacifico"],
+                        "headline-sm": ["Poppins"],
+                        "label-sm": ["Poppins"],
+                        "body-md": ["Poppins"],
+                        "body-lg": ["Poppins"],
+                        "headline-display": ["Poppins"],
+                        "wordmark-md": ["Pacifico"],
+                        "wordmark-lg": ["Pacifico"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+                        "wordmark-mobile": ["20px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-display": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "wordmark-md": ["24px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                        "wordmark-lg": ["34px", {"lineHeight": "1.2", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cdc3d2;
+            border-radius: 10px;
+        }
+        .doc-section {
+            scroll-margin-top: 100px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Admin Side Bar -->
+<aside class="h-screen w-sidebar-width-admin fixed left-0 top-0 overflow-y-auto bg-surface-container-low border-r border-outline-variant/30 flex flex-col z-50">
+<div class="font-wordmark-md text-wordmark-md text-primary px-md py-lg">
+            Click &amp; Collect
+        </div>
+<div class="px-md mb-md">
+<div class="text-label-caps font-label-caps text-on-surface-variant opacity-70 mb-sm">MAIN MENU</div>
+<nav class="space-y-xs">
+<a class="text-on-surface-variant px-md py-sm flex items-center gap-sm hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+<a class="text-on-surface-variant px-md py-sm flex items-center gap-sm hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="font-label-caps text-label-caps">Inventory</span>
+</a>
+<a class="text-on-surface-variant px-md py-sm flex items-center gap-sm hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-caps text-label-caps">Patrons</span>
+</a>
+<a class="text-on-surface-variant px-md py-sm flex items-center gap-sm hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="security">security</span>
+<span class="font-label-caps text-label-caps">Security</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto px-md py-lg border-t border-outline-variant/20">
+<a class="bg-secondary-fixed text-on-secondary-fixed border-l-4 border-primary px-md py-sm flex items-center gap-sm translate-x-1 transition-transform mb-xs rounded-r-lg" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-label-caps text-label-caps">Librarian Manual</span>
+</a>
+<a class="text-on-surface-variant px-md py-sm flex items-center gap-sm hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+<a class="text-on-surface-variant px-md py-sm flex items-center gap-sm hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-label-caps text-label-caps">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-sidebar-width-admin min-h-screen flex flex-col">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-40 w-full h-16 bg-glass-bg backdrop-blur-md border-b border-outline-variant/30 flex items-center justify-between px-lg shadow-sm">
+<div class="flex items-center gap-md">
+<h1 class="font-headline-sm text-headline-sm text-primary">Librarian Portal</h1>
+<div class="h-4 w-px bg-outline-variant"></div>
+<nav class="flex items-center gap-sm text-on-surface-variant text-body-md">
+<a class="hover:text-primary" href="#">Admin</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-primary font-bold">Librarian Manual</span>
+</nav>
+</div>
+<div class="flex items-center gap-lg">
+<div class="relative group">
+<input class="w-64 pl-10 pr-4 py-2 rounded-full border border-outline-variant bg-surface-container focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search documentation..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" data-icon="search">search</span>
+</div>
+<div class="flex items-center gap-md">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-primary-container/10 transition-colors">
+<span class="material-symbols-outlined text-primary" data-icon="notifications">notifications</span>
+</button>
+<button class="flex items-center gap-sm bg-surface-container-high px-sm py-xs rounded-full border border-outline-variant/30">
+<img alt="Librarian Avatar" class="w-8 h-8 rounded-full bg-primary-fixed" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqZZkw55Wot9ofitBIjgyC6SKcmfKLVD42mRYPYBN848Mpxy9symngqup2AuPNg_wfAKrnni3hDxIzj2k0K7WOzUlIHv5KIZJ4JMtSHRxzL3Fzf8-aZ_T3iiFv4ypmp8VrshAkkGrjUiOgbfKTXlLYC1PCkJyONTHSgY-Ubz-3ZeL5cnr-Dky-nK3GykNMHrbEOrdXvcRP1nxdZ4hVGPyS2efs-ywui4YrQUTnqkejhs-x68PtzvvYYaFJt5R6M8SbCEeacAYzymE"/>
+<span class="font-label-sm text-label-sm pr-xs">Librarian J. Doe</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Documentation Layout -->
+<div class="flex-1 flex w-full max-w-container-max mx-auto p-lg gap-lg">
+<!-- Table of Contents (Left Sticky) -->
+<aside class="w-64 hidden lg:block">
+<div class="sticky top-24 p-md rounded-xl bg-surface-container-low border border-outline-variant/20">
+<h3 class="font-label-caps text-label-caps text-primary mb-md">ON THIS PAGE</h3>
+<ul class="space-y-sm">
+<li>
+<a class="text-body-md text-on-surface-variant hover:text-primary transition-colors flex items-center gap-xs" href="#getting-started">
+<div class="w-1.5 h-1.5 rounded-full bg-primary/20"></div>
+                                Getting Started
+                            </a>
+</li>
+<li>
+<a class="text-body-md text-on-surface-variant hover:text-primary transition-colors flex items-center gap-xs" href="#managing-inventory">
+<div class="w-1.5 h-1.5 rounded-full bg-primary/20"></div>
+                                Managing Inventory
+                            </a>
+</li>
+<li>
+<a class="text-body-md text-on-surface-variant hover:text-primary transition-colors flex items-center gap-xs" href="#user-verification">
+<div class="w-1.5 h-1.5 rounded-full bg-primary/20"></div>
+                                User Verification
+                            </a>
+</li>
+<li>
+<a class="text-body-md text-on-surface-variant hover:text-primary transition-colors flex items-center gap-xs" href="#security-protocols">
+<div class="w-1.5 h-1.5 rounded-full bg-primary/20"></div>
+                                Security Protocols
+                            </a>
+</li>
+</ul>
+<div class="mt-xl pt-lg border-t border-outline-variant/30">
+<div class="p-md rounded-lg bg-primary-container text-on-primary-container">
+<p class="font-label-sm text-label-sm mb-xs">NEED ASSISTANCE?</p>
+<p class="text-body-md mb-md opacity-80">Contact the system administrator for technical support.</p>
+<button class="w-full py-sm bg-secondary-fixed text-on-secondary-fixed font-bold rounded-lg text-body-md hover:scale-[1.02] active:scale-95 transition-all">
+                                Support Ticket
+                            </button>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content (Right) -->
+<div class="flex-1 max-w-4xl space-y-xl pb-32">
+<!-- Introduction Header -->
+<section class="mb-xl">
+<div class="p-lg rounded-2xl bg-gradient-to-br from-primary to-primary-container text-on-primary shadow-lg relative overflow-hidden">
+<div class="relative z-10">
+<h2 class="font-headline-display text-headline-display mb-sm">Librarian Operations Manual</h2>
+<p class="font-body-lg text-body-lg opacity-90 max-w-2xl">Essential guidelines for managing the Click &amp; Collect system, ensuring institutional security, and providing seamless service to our academic community.</p>
+</div>
+<div class="absolute top-0 right-0 p-lg opacity-20">
+<span class="material-symbols-outlined text-[120px]" data-icon="auto_stories">auto_stories</span>
+</div>
+</div>
+</section>
+<!-- Section: Getting Started -->
+<article class="doc-section space-y-md" id="getting-started">
+<div class="flex items-center gap-sm text-primary">
+<span class="material-symbols-outlined text-[28px]" data-icon="rocket_launch">rocket_launch</span>
+<h3 class="font-headline-display text-headline-display">Getting Started</h3>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant/30 shadow-sm">
+<p class="text-body-lg text-on-surface-variant mb-md">Welcome to your dashboard. This portal is designed to manage the full lifecycle of book acquisitions, patron interactions, and security monitoring.</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md mt-lg">
+<div class="p-md border-l-4 border-secondary bg-surface-container rounded-r-lg">
+<h4 class="font-bold text-primary mb-xs">Login Requirements</h4>
+<p class="text-body-md text-on-surface-variant">Multi-factor authentication (MFA) is required for all librarian accounts to maintain FERPA compliance.</p>
+</div>
+<div class="p-md border-l-4 border-status-available bg-surface-container rounded-r-lg">
+<h4 class="font-bold text-primary mb-xs">Daily Routine</h4>
+<p class="text-body-md text-on-surface-variant">Review the "Action Required" queue each morning for overdue notifications and pending pickups.</p>
+</div>
+</div>
+</div>
+</article>
+<!-- Section: Managing Inventory -->
+<article class="doc-section space-y-md" id="managing-inventory">
+<div class="flex items-center gap-sm text-primary">
+<span class="material-symbols-outlined text-[28px]" data-icon="inventory_2">inventory_2</span>
+<h3 class="font-headline-display text-headline-display">Managing Inventory</h3>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant/30 shadow-sm space-y-md">
+<p class="text-body-md text-on-surface-variant">Our cataloging system uses a real-time sync with the central institutional database. Follow these steps for accurate record keeping:</p>
+<ul class="space-y-sm list-none">
+<li class="flex gap-md p-sm bg-surface-container-low rounded-lg border border-outline-variant/10">
+<span class="font-bold text-primary">01</span>
+<span class="text-body-md">Scan ISBN or enter the Library of Congress classification number manually if the barcode is damaged.</span>
+</li>
+<li class="flex gap-md p-sm bg-surface-container-low rounded-lg border border-outline-variant/10">
+<span class="font-bold text-primary">02</span>
+<span class="text-body-md">Verify the physical condition of the item and update the 'Condition' metadata field.</span>
+</li>
+<li class="flex gap-md p-sm bg-surface-container-low rounded-lg border border-outline-variant/10">
+<span class="font-bold text-primary">03</span>
+<span class="text-body-md">Assign a specific storage bin or shelf location to ensure correct 'Collect' instructions for students.</span>
+</li>
+</ul>
+<!-- Callout Box: Tip -->
+<div class="p-md bg-secondary-fixed/30 border border-secondary/50 rounded-xl flex items-start gap-md">
+<span class="material-symbols-outlined text-secondary" data-icon="lightbulb">lightbulb</span>
+<div class="text-on-secondary-fixed">
+<p class="font-bold mb-xs">Librarian Tip</p>
+<p class="text-body-md">Use the "Bulk Import" feature when receiving large shipments from publishers to save time and reduce entry errors.</p>
+</div>
+</div>
+</div>
+</article>
+<!-- Section: User Verification -->
+<article class="doc-section space-y-md" id="user-verification">
+<div class="flex items-center gap-sm text-primary">
+<span class="material-symbols-outlined text-[28px]" data-icon="verified_user">verified_user</span>
+<h3 class="font-headline-display text-headline-display">User Verification</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant/30 shadow-sm col-span-2">
+<p class="text-body-md text-on-surface-variant mb-md">Before releasing any collection items, librarians must confirm the identity of the student or faculty member using the standard verification tree:</p>
+<div class="space-y-sm">
+<div class="flex items-center gap-md p-md bg-white rounded-lg border border-outline-variant/20 shadow-sm">
+<span class="material-symbols-outlined text-status-borrowed" data-icon="badge">badge</span>
+<span class="text-body-md">Physical Institutional ID Card matching the system name.</span>
+</div>
+<div class="flex items-center gap-md p-md bg-white rounded-lg border border-outline-variant/20 shadow-sm">
+<span class="material-symbols-outlined text-status-available" data-icon="qr_code_2">qr_code_2</span>
+<span class="text-body-md">Digital Pickup QR code generated within the Student App.</span>
+</div>
+<div class="flex items-center gap-md p-md bg-white rounded-lg border border-outline-variant/20 shadow-sm">
+<span class="material-symbols-outlined text-status-reserved" data-icon="contact_mail">contact_mail</span>
+<span class="text-body-md">Institutional email verification if physical ID is unavailable.</span>
+</div>
+</div>
+</div>
+<div class="bg-primary p-lg rounded-xl text-on-primary">
+<h4 class="font-label-caps text-label-caps mb-md">VERIFICATION STATS</h4>
+<div class="space-y-md">
+<div>
+<p class="text-body-md opacity-70">Daily Success Rate</p>
+<p class="text-headline-display">99.2%</p>
+</div>
+<div class="w-full h-1.5 bg-on-primary/20 rounded-full overflow-hidden">
+<div class="w-[99%] h-full bg-secondary-fixed"></div>
+</div>
+<p class="text-label-sm opacity-80 leading-relaxed italic">High verification accuracy ensures lower inventory loss and better data integrity for annual audits.</p>
+</div>
+</div>
+</div>
+</article>
+<!-- Section: Security Protocols -->
+<article class="doc-section space-y-md" id="security-protocols">
+<div class="flex items-center gap-sm text-primary">
+<span class="material-symbols-outlined text-[28px]" data-icon="gpp_maybe">gpp_maybe</span>
+<h3 class="font-headline-display text-headline-display">Security Protocols</h3>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant/30 shadow-sm">
+<p class="text-body-md text-on-surface-variant mb-lg">In the event of a security breach or system discrepancy, librarians are mandated to follow the 'Lavender Lockdown' protocol.</p>
+<!-- Warning Box -->
+<div class="p-lg bg-error-container text-on-error-container rounded-xl border-2 border-error mb-lg flex gap-md">
+<span class="material-symbols-outlined text-[32px]" data-icon="report">report</span>
+<div>
+<h4 class="font-bold text-headline-sm mb-xs">Critical Warning</h4>
+<p class="text-body-md">Never share your librarian portal credentials. System logs are recorded per-user and are audited monthly for security compliance. Leaving your station logged in is a violation of institutional policy.</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+<div class="space-y-sm">
+<h5 class="font-bold text-primary uppercase text-xs tracking-widest">Protocol ALPHA: Data Breach</h5>
+<p class="text-body-md text-on-surface-variant">Immediate logout and notification of IT Support. All 'Click' events are paused until security clearance is provided.</p>
+</div>
+<div class="space-y-sm">
+<h5 class="font-bold text-primary uppercase text-xs tracking-widest">Protocol BETA: Theft Recovery</h5>
+<p class="text-body-md text-on-surface-variant">Mark the item as 'Stolen' in inventory. The system will automatically flag the last verified borrower for review.</p>
+</div>
+</div>
+</div>
+</article>
+<!-- Footer Component (Shared) -->
+<footer class="pt-xl pb-md border-t border-outline-variant/30 flex flex-col items-center justify-center gap-sm opacity-60">
+<div class="font-wordmark-mobile text-wordmark-mobile text-primary">Click &amp; Collect</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 NMSCST Click &amp; Collect. Academic Library System.</p>
+<div class="flex gap-md">
+<a class="font-label-sm text-label-sm hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm hover:text-primary transition-colors" href="#">Contact Support</a>
+</div>
+</footer>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interactions for Table of Contents
+        document.querySelectorAll('aside nav a, aside ul a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+
+                    // Update active state visual
+                    document.querySelectorAll('aside ul a div').forEach(dot => dot.classList.replace('bg-primary', 'bg-primary/20'));
+                    this.querySelector('div').classList.replace('bg-primary/20', 'bg-primary');
+                }
+            });
+        });
+
+        // Simple scroll spy for active navigation
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.doc-section');
+            const navLinks = document.querySelectorAll('aside ul a');
+            
+            let current = "";
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 120) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                const dot = link.querySelector('div');
+                link.classList.remove('text-primary', 'font-bold');
+                dot.classList.replace('bg-primary', 'bg-primary/20');
+                
+                if (link.getAttribute('href').substring(1) === current) {
+                    link.classList.add('text-primary', 'font-bold');
+                    dot.classList.replace('bg-primary/20', 'bg-primary');
+                }
+            });
+        });
+    </script>
+</body></html>
