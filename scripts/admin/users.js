@@ -1,8 +1,11 @@
+/**
+ * User table rendering with enhanced styling and better UX
+ */
+
 function showNotification(message, type = 'info') {
   if (window.showNotification) window.showNotification(message, type);
   else console.log(`[${type}] ${message}`);
 }
-
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -12,6 +15,82 @@ function escapeHtml(value) {
     '"': '&quot;',
     "'": '&#39;',
   }[char]));
+}
+
+/**
+ * Get initials from a name
+ */
+function getInitials(name) {
+  return (name || '')
+    .split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+/**
+ * Get status badge HTML with icon and color
+ */
+function getStatusBadge(user) {
+  let status = 'active';
+  let label = 'Active';
+  let className = 'status-active';
+
+  // Check if user is suspended or has any restrictions
+  if (user.account_suspended || user.is_suspended) {
+    status = 'suspended';
+    label = 'Suspended';
+    className = 'status-suspended';
+  } else if (user.restricted || user.is_restricted) {
+    status = 'restricted';
+    label = 'Restricted';
+    className = 'status-restricted';
+  }
+
+  return `<span class="status-badge ${className}"><span class="status-dot"></span>${label}</span>`;
+}
+
+/**
+ * Get permission badge HTML
+ */
+function getPermissionBadge(user) {
+  if (user.admin_id) {
+    // Determine admin level
+    const role = (user.role || 'admin').toLowerCase();
+    if (role.includes('full') || role.includes('chief')) {
+      return '<span class="permission-badge permission-full-access">FULL_ACCESS</span>';
+    } else if (role.includes('system') || role.includes('it')) {
+      return '<span class="permission-badge permission-system-ops">SYSTEM_OPS</span>';
+    }
+    return '<span class="permission-badge permission-full-access">ADMIN</span>';
+  }
+  return '<span class="permission-badge permission-read-only">STUDENT</span>';
+}
+
+/**
+ * Format last login time
+ */
+function formatLastLogin(timestamp) {
+  if (!timestamp) return '—';
+  try {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } catch (e) {
+    return timestamp;
+  }
 }
 
 function applyIdFormat(inputEl) {
@@ -38,21 +117,19 @@ function applyContactFormat(inputEl) {
 }
 
 const ADMIN_COLUMNS = [
-  { key: 'admin_id', label: 'ID No.' },
-  { key: 'full_name', label: 'Full Name' },
-  { key: 'lbc_no', label: 'LBC No.' },
-  { key: 'gmail', label: 'Gmail account' },
-  { key: 'address', label: 'Address' },
-  { key: 'action', label: 'Action' },
+  { key: 'name', label: 'Name & Role' },
+  { key: 'permissions', label: 'Permissions' },
+  { key: 'status', label: 'Status' },
+  { key: 'lastLogin', label: 'Last Login' },
+  { key: 'action', label: 'Actions' },
 ];
 
 const STUDENT_COLUMNS_BASE = [
-  { key: 'student_id', label: 'ID No.' },
-  { key: 'full_name', label: 'Full Name' },
-  { key: 'course', label: 'Course' },
-  { key: 'gmail', label: 'Gmail account' },
-  { key: 'address', label: 'Address' },
-  { key: 'action', label: 'Action' },
+  { key: 'name', label: 'Student & ID' },
+  { key: 'course', label: 'Course/Department' },
+  { key: 'status', label: 'Account Status' },
+  { key: 'dueBooks', label: 'Due Books' },
+  { key: 'action', label: 'Actions' },
 ];
 
 const YEAR_COLUMN = { key: 'year_level', label: 'Year' };
@@ -67,14 +144,15 @@ let adminPollInterval = null;
 let adminConfirmTimeout = null;
 let adminFlowStep = 'idle';
 
-
 function getYearSuffix(n) { return ({ 1: 'st', 2: 'nd', 3: 'rd', 4: 'th' }[String(n)] || 'th'); }
 
 function getStudentColumns(users) {
   const cols = [...STUDENT_COLUMNS_BASE];
-  const idx = cols.findIndex((c) => c.key === 'course');
   const hasJHS = users.some((u) => !u.course || u.course === 'N/A');
-  cols.splice(idx + 1, 0, hasJHS ? LEVEL_COLUMN : YEAR_COLUMN);
+  if (hasJHS) {
+    const idx = cols.findIndex((c) => c.key === 'course');
+    cols.splice(idx + 1, 0, LEVEL_COLUMN);
+  }
   return cols;
 }
 
@@ -84,26 +162,92 @@ function buildHeaders(users) {
   return columns;
 }
 
+/**
+ * Render table with modern styling
+ */
 function renderTable(users) {
   const tbody = document.getElementById('users-tbody');
   if (!tbody) return;
+
   const columns = buildHeaders(users);
   let sorted = [...users];
+
   if (currentSecondary === 'course') sorted.sort((a, b) => (a.course || '').localeCompare(b.course || ''));
   if (currentSecondary === 'year' || currentSecondary === 'level') sorted.sort((a, b) => String(a.year_level || '').localeCompare(String(b.year_level || '')));
-  if (!sorted.length) { tbody.innerHTML = `<tr><td colspan="${columns.length}" style="text-align:center;padding:20px;color:#888;">No records found.</td></tr>`; return; }
-  tbody.innerHTML = sorted.map((user) => `<tr>${columns.map((col) => {
-    if (col.key === 'action') {
-      const id = user.admin_id || user.student_id || '';
-      return `<td><button class="btn-delete" type="button" onclick="initiateDelete('${escapeHtml(id)}','${currentSort}','${escapeHtml(user.full_name || '')}','${escapeHtml(user.gmail || '')}')">Delete</button></td>`;
-    }
-    if (col.key === 'course') { const v = user.course || 'N/A'; return `<td>${v === 'N/A' ? '<span class="badge-jhs">JHS / N/A</span>' : escapeHtml(v)}</td>`; }
-    if (col.key === 'year_level') {
-      const v = user.year_level || '—'; const isJHS = !user.course || user.course === 'N/A';
-      return `<td>${isJHS ? `Grade ${escapeHtml(v)}` : `${escapeHtml(v)}${getYearSuffix(v)} Year`}</td>`;
-    }
-    return `<td>${escapeHtml(user[col.key] || '—')}</td>`;
-  }).join('')}</tr>`).join('');
+
+  if (!sorted.length) {
+    tbody.innerHTML = `<tr><td colspan="${columns.length}" style="text-align:center;padding:20px;color:#999;">No records found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = sorted.map((user) => {
+    const cells = columns.map((col) => {
+      if (col.key === 'name') {
+        // User profile cell with avatar and info
+        const name = user.admin_id ? user.full_name : user.full_name;
+        const role = user.admin_id ? (user.role || 'Admin') : `ID: ${user.student_id}`;
+        const initials = getInitials(name);
+        return `<td>
+          <div class="user-profile-cell">
+            <div class="user-avatar">${initials}</div>
+            <div class="user-info">
+              <div class="user-name">${escapeHtml(name || '—')}</div>
+              <div class="user-role">${escapeHtml(role)}</div>
+            </div>
+          </div>
+        </td>`;
+      }
+
+      if (col.key === 'permissions') {
+        return `<td>${getPermissionBadge(user)}</td>`;
+      }
+
+      if (col.key === 'status') {
+        return `<td>${getStatusBadge(user)}</td>`;
+      }
+
+      if (col.key === 'lastLogin') {
+        return `<td>${formatLastLogin(user.last_login_time)}</td>`;
+      }
+
+      if (col.key === 'dueBooks') {
+        const dueCount = user.due_books_count || 0;
+        const className = dueCount > 0 ? 'status-suspended' : 'status-active';
+        const label = dueCount > 0 ? `${dueCount} Book${dueCount > 1 ? 's' : ''}` : 'None';
+        return `<td><span class="status-badge ${className}" style="color: ${dueCount > 0 ? '#ef4444' : '#22c55e'};">${label}</span></td>`;
+      }
+
+      if (col.key === 'course') {
+        const v = user.course || 'N/A';
+        if (v === 'N/A') {
+          return `<td><span class="badge-jhs">JHS / N/A</span></td>`;
+        }
+        return `<td>${escapeHtml(v)}</td>`;
+      }
+
+      if (col.key === 'year_level') {
+        const v = user.year_level || '—';
+        const isJHS = !user.course || user.course === 'N/A';
+        const label = isJHS ? `Grade ${escapeHtml(v)}` : `${escapeHtml(v)}${getYearSuffix(v)} Year`;
+        return `<td>${label}</td>`;
+      }
+
+      if (col.key === 'action') {
+        const id = user.admin_id || user.student_id || '';
+        const type = currentSort;
+        return `<td style="text-align: right;">
+          <button class="btn-delete" type="button" onclick="initiateDelete('${escapeHtml(id)}','${type}','${escapeHtml(user.full_name || '')}','${escapeHtml(user.gmail || '')}')">
+            Delete
+          </button>
+        </td>`;
+      }
+
+      return `<td>${escapeHtml(user[col.key] || '—')}</td>`;
+    }).join('');
+
+    return `<tr>${cells}</tr>`;
+  }).join('');
+
   if (typeof padTableRows === 'function') padTableRows('users-tbody', columns.length, 8);
 }
 
