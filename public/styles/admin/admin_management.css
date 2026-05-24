@@ -579,6 +579,105 @@
   padding: 24px;
 }
 
+
+/* Admin registration modal form redesign */
+.admin-registration-body {
+  padding: 20px 24px 10px;
+}
+
+.admin-registration-card {
+  background: #fcf8ff;
+  border: 1px solid #e4e0ee;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+}
+
+.admin-registration-card-header {
+  text-align: center;
+  padding: 18px 20px 14px;
+  background: linear-gradient(180deg, #f6f2ff 0%, #fff 100%);
+  border-bottom: 1px solid #e4e0ee;
+}
+
+.admin-nmsc-seal { width: 56px; height: 56px; object-fit: cover; border-radius: 50%; border: 2px solid #dbb8ff; }
+.admin-school-link { display:block; margin-top: 8px; font-size: 12px; color: #4b4451; font-weight: 600; }
+.admin-brand-lockup { display:flex; justify-content:center; align-items:center; gap:8px; margin-top:8px; }
+.admin-brand-name { font-family: 'Dancing Script', cursive; font-size: 27px; color: #431076; }
+.admin-brand-book { width: 20px; height:20px; }
+.admin-form-subtitle { margin-top: 6px; font-size: 12px; color: #705d00; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+
+.admin-registration-form { padding: 16px; display: grid; gap: 14px; }
+.admin-form-section-title {
+  font-size: 11px;
+  letter-spacing: .08em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #5b2d8e;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-form-section-title::after { content: ''; height: 1px; flex: 1; background: #cdc3d2; }
+
+.admin-underline-field, .admin-box-field { display: grid; gap: 6px; }
+.admin-underline-field > span, .admin-box-field > span { font-size: 12px; font-weight: 600; color: #4b4451; }
+
+.admin-input-underline, .admin-input-gmail {
+  width: 100%;
+  border: 1px solid #cdc3d2;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #1b1b24;
+  background: #ffffff;
+  transition: .2s ease;
+}
+.admin-input-underline:focus, .admin-input-gmail:focus {
+  outline: none;
+  border-color: #7548a9;
+  box-shadow: 0 0 0 3px rgba(117,72,169,.14);
+}
+
+.admin-id-lbc-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.admin-field-with-hint small { color: #7c7482; font-size: 11px; }
+
+.admin-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: #4b4451;
+  background: #f6f2ff;
+  border: 1px dashed #cdc3d2;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.admin-confirm-button {
+  width: 100%;
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #431076 0%, #5b2d8e 100%);
+  border: none;
+}
+
+.modal-note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #544600;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .admin-id-lbc-row { grid-template-columns: 1fr; }
+}
+
 /* =====================================================
    RESPONSIVE DESIGN
    ===================================================== */
