@@ -154,26 +154,23 @@
 ## DEPLOYMENT ORDER
 
 ```
-Week 1:
-  Day 1-2: Rate limiting + JWT
-  Day 3: CSRF + IP whitelist
-  Day 4-5: Testing + monitoring setup
+   1-2: Rate limiting + JWT
+   3: CSRF + IP whitelist
+  4-5: Testing + monitoring setup
 
-Week 2-3:
-  Day 1-2: Database indexes + connection pooling
-  Day 3-4: Redis setup (sessions + caching)
-  Day 5+: Load testing + optimization
 
-Month 2:
-  Week 1: Celery + async tasks
-  Week 2: 2FA for admins
-  Week 3: Request signing
-  Week 4: Progressive throttling + alerting
+  6-7: Database indexes + connection pooling
+  8-9: Redis setup (sessions + caching)
+  10: Load testing + optimization
 
-Month 3:
-  Week 1-2: WAF integration
-  Week 3: CDN setup
-  Week 4: Full load testing (10,000+ users)
+   11: Celery + async tasks
+  12: 2FA for admins
+  13: Request signing
+  14: Progressive throttling + alerting
+
+  15: WAF integration
+  16: CDN setup
+  17: Full load testing (10,000+ users)
 ```
 
 ---

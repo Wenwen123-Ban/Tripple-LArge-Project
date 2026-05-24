@@ -89,6 +89,18 @@ PUBLIC_DIR = os.path.join(BASE_DIR, 'public')
 PAGES_DIR = os.path.join(PUBLIC_DIR, 'pages')
 register_api_blueprints(app)
 
+# Initialize database schema on app startup
+@app.before_request
+def ensure_schema_initialized():
+    """Ensure database schema is initialized before processing requests."""
+    if not hasattr(app, '_schema_initialized'):
+        try:
+            initialize_schema()
+            app._schema_initialized = True
+        except Exception as e:
+            app.logger.error(f"Failed to initialize schema: {e}")
+            raise
+
 _rate_window = {}
 
 def _check_rate_limit(key, limit, period):
@@ -133,17 +145,20 @@ def enforce_blocked_ips_on_login():
         try:
             c.execute("SELECT is_blocked, blocked_until FROM ip_token_buckets WHERE ip_address=%s", (ip,))
             row = c.fetchone()
+            if row and row.get('is_blocked') and row.get('blocked_until'):
+                from datetime import datetime
+                if datetime.now() < row['blocked_until']:
+                    if session.get('saw_timeout'):
+                        return ('Access Denied. This page is not available from your current connection.', 403)
+                    session['saw_timeout'] = True
+                    session['blocked_until'] = str(row['blocked_until'])
+                    return ('Access Temporarily Suspended', 429)
+        except Exception as e:
+            app.logger.warning(f"Error checking IP blocks: {e}")
         finally:
             c.close()
-        if row and row.get('is_blocked') and row.get('blocked_until'):
-            from datetime import datetime
-            if datetime.now() < row['blocked_until']:
-                if session.get('saw_timeout'):
-                    return ('Access Denied. This page is not available from your current connection.', 403)
-                session['saw_timeout'] = True
-                session['blocked_until'] = str(row['blocked_until'])
-                return ('Access Temporarily Suspended', 429)
     if request.path.startswith('/user/') or request.path.startswith('/api/users/'):
+        ip = request.remote_addr or 'unknown'
         if not _check_rate_limit(f'student:{ip}', 50, 60):
             rate_limit_hits.labels(endpoint='student').inc()
             security_logger.warning('rate_limit student ip=%s', ip)
