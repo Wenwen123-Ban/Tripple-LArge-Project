@@ -29,7 +29,7 @@
       <div class="brand-row">
         <img src="../../assets/logo/NMSC%20LOGO.jpg" alt="NMSCST Logo" class="school-logo" />
         <div>
-          <h2 id="admin-modal-title">Register Administrator</h2>
+          <h2 id="admin-modal-title">Add an Administrator</h2>
           <p>NMSCST Library Click &amp; Collect Portal</p>
         </div>
       </div>
@@ -55,11 +55,17 @@
         <div class="form-grid">
           <label>
             <span>Password</span>
-            <input type="password" name="password" placeholder="••••••••" required />
+            <div class="input-wrap">
+              <input id="passwordField" type="password" name="password" placeholder="••••••••" required />
+              <button class="pass-toggle" data-target="passwordField" type="button" aria-label="Show password">Show</button>
+            </div>
           </label>
           <label>
             <span>Confirm Password</span>
-            <input type="password" name="confirm_password" placeholder="••••••••" required />
+            <div class="input-wrap">
+              <input id="confirmPasswordField" type="password" name="confirm_password" placeholder="••••••••" required />
+              <button class="pass-toggle" data-target="confirmPasswordField" type="button" aria-label="Show confirm password">Show</button>
+            </div>
           </label>
         </div>
 
