@@ -3,11 +3,26 @@
  * Handles book grid loading, filtering, searching, and reservation entry points.
  */
 
-const PAGE_SIZE = 15;
+const MOBILE_PAGE_SIZE = 10;
+const TABLET_PAGE_SIZE = 20;
+const LAPTOP_PAGE_SIZE = 25;
+const DESKTOP_PAGE_SIZE = 40;
+
+let activePageSize = 10;
 let currentPage = 0;
 let allLoaded = false;
 let isLoading = false;
 let searchDebounce = null;
+let resizeDebounce = null;
+
+function getPageSize() {
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+
+  if (viewportWidth >= 1536) return DESKTOP_PAGE_SIZE;
+  if (viewportWidth >= 1280) return LAPTOP_PAGE_SIZE;
+  if (viewportWidth >= 768) return TABLET_PAGE_SIZE;
+  return MOBILE_PAGE_SIZE;
+}
 
 function escapeHtml(value) {
   const text = String(value ?? '').trim();
@@ -88,7 +103,7 @@ async function loadBooks(reset = false) {
 
     const params = new URLSearchParams({
       page: currentPage + 1,
-      per_page: PAGE_SIZE,
+      per_page: activePageSize,
       search: searchTerm,
       category: categoryId,
     });
@@ -98,7 +113,7 @@ async function loadBooks(reset = false) {
     const books = await response.json();
     const rows = Array.isArray(books) ? books : [];
 
-    if (rows.length < PAGE_SIZE) allLoaded = true;
+    if (rows.length < activePageSize) allLoaded = true;
 
     const bookGrid = document.getElementById('book-grid');
     if (bookGrid) {
@@ -183,6 +198,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const bookGrid = document.getElementById('book-grid');
   const scrollSentinel = document.getElementById('scroll-sentinel');
 
+  activePageSize = getPageSize();
+
   await loadCategories();
   loadBooks(true);
   loadTrending();
@@ -228,6 +245,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, { threshold: 0.1 });
     observer.observe(scrollSentinel);
   }
+
+  window.addEventListener('resize', () => {
+    window.clearTimeout(resizeDebounce);
+    resizeDebounce = window.setTimeout(() => {
+      const nextPageSize = getPageSize();
+      if (nextPageSize !== activePageSize) {
+        activePageSize = nextPageSize;
+        loadBooks(true);
+      }
+    }, 200);
+  });
 });
 
 window.loadBooks = loadBooks;
