@@ -521,9 +521,19 @@ def get_user_notifications():
     where = "recipient_id=%s"
     params = [student_id]
     if flt == 'unread': where += " AND is_read=0"
-    c.execute(f"SELECT id,title,message,is_read,created_at FROM notifications WHERE {where} ORDER BY created_at DESC LIMIT 100", params)
-    items = c.fetchall()
-    c.execute("SELECT SUM(CASE WHEN is_read=0 THEN 1 ELSE 0 END) unread, COUNT(*) total FROM notifications WHERE recipient_id=%s", (student_id,))
+    c.execute("SHOW TABLES LIKE 'user_notifications'")
+    if c.fetchone():
+        where = "user_id=%s"
+        params = [student_id]
+        if flt == 'unread':
+            where += " AND is_read=0"
+        c.execute(f"SELECT id,type,title,message,is_read,created_at FROM user_notifications WHERE {where} ORDER BY created_at DESC LIMIT 100", params)
+        items = c.fetchall()
+        c.execute("SELECT SUM(CASE WHEN is_read=0 THEN 1 ELSE 0 END) unread, COUNT(*) total FROM user_notifications WHERE user_id=%s", (student_id,))
+    else:
+        c.execute(f"SELECT id,title,message,is_read,created_at FROM notifications WHERE {where} ORDER BY created_at DESC LIMIT 100", params)
+        items = c.fetchall()
+        c.execute("SELECT SUM(CASE WHEN is_read=0 THEN 1 ELSE 0 END) unread, COUNT(*) total FROM notifications WHERE recipient_id=%s", (student_id,))
     stats = c.fetchone() or {'unread':0,'total':0}
     c.close()
     for it in items:
@@ -535,4 +545,24 @@ def clear_user_notifications():
     student_id = session.get('student_id') or request.get_json(silent=True) or {}
     sid = student_id if isinstance(student_id, str) else student_id.get('student_id')
     if not sid: return jsonify({'status': 'ok'})
-    db = get_db(); c = db.cursor(); c.execute("UPDATE notifications SET is_read=1 WHERE recipient_id=%s", (sid,)); db.commit(); c.close(); return jsonify({'status':'cleared'})
+    db = get_db(); c = db.cursor()
+    c.execute("SHOW TABLES LIKE 'user_notifications'")
+    if c.fetchone():
+        c.execute("DELETE FROM user_notifications WHERE user_id=%s AND is_read=1", (sid,))
+    else:
+        c.execute("UPDATE notifications SET is_read=1 WHERE recipient_id=%s", (sid,))
+    db.commit(); c.close(); return jsonify({'status':'cleared'})
+
+
+def mark_user_notification_read(notif_id):
+    sid = session.get('student_id') or request.args.get('student_id')
+    if not sid:
+        return jsonify({'error': 'Not authenticated'}), 401
+    db = get_db(); c = db.cursor()
+    c.execute("SHOW TABLES LIKE 'user_notifications'")
+    if c.fetchone():
+        c.execute("UPDATE user_notifications SET is_read=1 WHERE id=%s AND user_id=%s", (notif_id, sid))
+    else:
+        c.execute("UPDATE notifications SET is_read=1 WHERE id=%s AND recipient_id=%s", (notif_id, sid))
+    db.commit(); c.close()
+    return jsonify({'status': 'read'})

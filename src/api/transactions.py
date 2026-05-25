@@ -13,6 +13,7 @@ from src.core.notifications import (
     ready_message,
     send_semaphore_sms,
 )
+from src.api.auth import send_html_email
 from src.core.metrics import reservations_created, reservations_cancelled, books_borrowed, books_returned
 
 
@@ -67,6 +68,38 @@ def _ensure_tables(cursor):
         )
         """
     )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_notifications (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id VARCHAR(40) NOT NULL,
+            type VARCHAR(60) NOT NULL,
+            title VARCHAR(120) NOT NULL,
+            message TEXT NOT NULL,
+            reservation_id INT DEFAULT NULL,
+            loan_id INT DEFAULT NULL,
+            book_id INT DEFAULT NULL,
+            is_read TINYINT(1) DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS admin_notifications (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            type VARCHAR(60) NOT NULL,
+            title VARCHAR(120) NOT NULL,
+            message TEXT NOT NULL,
+            reservation_id INT DEFAULT NULL,
+            loan_id INT DEFAULT NULL,
+            student_id VARCHAR(40) DEFAULT NULL,
+            book_id INT DEFAULT NULL,
+            is_read TINYINT(1) DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
 
 
 def get_book_effective_status(cursor, book_id):
@@ -97,7 +130,7 @@ def get_book_effective_status(cursor, book_id):
 def get_admin_rules(cursor):
     cursor.execute(
         """
-        SELECT return_days, return_hours, expire_days, expire_hours, expire_mins
+        SELECT nearest_day_rule, return_days, return_hours, expire_days, expire_hours, expire_mins
         FROM admin_rules ORDER BY id DESC LIMIT 1
         """
     )
@@ -197,6 +230,21 @@ def _notify_admins_of_reservation(cursor, reservation_id, student_id, book_no, t
                 payload,
             ),
         )
+    cursor.execute("SELECT full_name FROM students WHERE student_id=%s", (student_id,))
+    student_name = (cursor.fetchone() or {}).get('full_name') or student_id
+    cursor.execute(
+        """
+        INSERT INTO admin_notifications (type, title, message, reservation_id, student_id, is_read)
+        VALUES (%s,%s,%s,%s,%s,0)
+        """,
+        (
+            'new_reservation',
+            'New reservation request',
+            f'{student_name} ({student_id}) has reserved "{title or "Untitled book"}" (Book No. {book_no}). Review and approve or reject in the Dashboard.',
+            reservation_id,
+            student_id,
+        ),
+    )
 
 
 def reserve_book():
@@ -255,6 +303,20 @@ def reserve_book():
     cursor.execute("SELECT book_no, title FROM books WHERE id=%s", (book_id,))
     book = cursor.fetchone() or {}
     _notify_admins_of_reservation(cursor, reservation_id, student_id, book.get('book_no'), book.get('title'), None, queue_position)
+    cursor.execute(
+        """
+        INSERT INTO user_notifications (user_id, type, title, message, reservation_id, book_id, is_read)
+        VALUES (%s,%s,%s,%s,%s,%s,0)
+        """,
+        (
+            student_id,
+            'reservation_pending',
+            'Reservation submitted',
+            f'Your reservation for "{book.get("title") or "Untitled book"}" (Book No. {book.get("book_no")}) has been received and is currently pending librarian approval. You will be notified once it is approved or if it expires.',
+            reservation_id,
+            book_id,
+        ),
+    )
     db.commit(); cursor.close()
     reservations_created.inc()
     return jsonify({
@@ -300,7 +362,8 @@ def borrow_book():
     book_id = data.get('book_id'); student_id = data.get('student_id')
     if get_book_effective_status(cursor, book_id) != 'Reserved':
         cursor.close(); return jsonify({'error': 'Book must be Reserved before it can be Borrowed.'}), 409
-    due_at = calculate_due_at(get_admin_rules(cursor))
+    rules = get_admin_rules(cursor)
+    due_at = calculate_due_at(rules)
     cursor.execute(
         """
         SELECT id FROM transactions
@@ -313,11 +376,12 @@ def borrow_book():
     tx = cursor.fetchone()
     if not tx:
         cursor.close(); return jsonify({'error': 'Reservation not found.'}), 404
+    pickup_at = _apply_nearest_pickup_day(datetime.now() + timedelta(days=1), rules)
     cursor.execute(
         """UPDATE transactions
-        SET action='borrowed', borrowed_at=NOW(), due_at=%s
+        SET action='borrowed', borrowed_at=NOW(), due_at=%s, pickup_at=COALESCE(pickup_at,%s), expected_return_at=%s
         WHERE id=%s""",
-        (due_at, tx['id']),
+        (due_at, pickup_at, due_at, tx['id']),
     )
     borrow_counter = _first_existing_book_counter(cursor, ['borrow_count', 'borrowed_count'])
     if borrow_counter:
@@ -327,6 +391,49 @@ def borrow_book():
         )
     else:
         cursor.execute("UPDATE books SET availability_hint='Borrowed' WHERE id=%s", (book_id,))
+    cursor.execute(
+        """
+        SELECT t.id, t.student_id, t.book_id, t.book_no, t.borrowed_at, b.title, b.accession_no, s.full_name, s.gmail
+        FROM transactions t
+        LEFT JOIN books b ON b.id=t.book_id
+        LEFT JOIN students s ON s.student_id=t.student_id
+        WHERE t.id=%s
+        """,
+        (tx['id'],),
+    )
+    info = cursor.fetchone() or {}
+    borrowed_at = info.get('borrowed_at') or datetime.now()
+    return_text = due_at.strftime('%A, %B %d, %Y at %I:%M %p') if due_at else 'No deadline set'
+    cursor.execute(
+        """
+        INSERT INTO user_notifications (user_id, type, title, message, reservation_id, loan_id, book_id, is_read)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,0)
+        """,
+        (
+            info.get('student_id'),
+            'borrowed',
+            f'Book borrowed — return by {due_at.strftime("%b %d, %Y") if due_at else "No deadline set"}',
+            f'"{info.get("title") or "Untitled book"}" (Book No. {info.get("book_no")}) has been checked out to you on {borrowed_at.strftime("%A, %B %d, %Y")}. Please return it by {return_text}. You can view this in your Manage Books page.',
+            tx['id'],
+            tx['id'],
+            info.get('book_id'),
+        ),
+    )
+    cursor.execute(
+        """
+        INSERT INTO admin_notifications (type, title, message, reservation_id, loan_id, student_id, book_id, is_read)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,0)
+        """,
+        (
+            'borrow_reminder_admin',
+            '⚠️ Do not mark as returned until book is physically back',
+            f'"{info.get("title") or "Untitled book"}" (Book No. {info.get("book_no")}) is now borrowed by {info.get("full_name") or info.get("student_id")} ({info.get("student_id")}) since {borrowed_at.strftime("%A, %B %d, %Y")}. Return deadline: {return_text}. Only click Return once the student physically hands the book back at the library desk.',
+            tx['id'],
+            tx['id'],
+            info.get('student_id'),
+            info.get('book_id'),
+        ),
+    )
     sms_result = _send_ready_alert(cursor, tx['id'])
     db.commit(); cursor.close()
     books_borrowed.inc()
