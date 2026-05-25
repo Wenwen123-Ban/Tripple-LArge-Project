@@ -594,6 +594,7 @@ app.add_url_rule('/api/admin/server-health', 'api_admin_server_health', admin.se
 from src.core.scheduler import start_scheduler
 
 app.add_url_rule('/api/transactions/reserve','reserve_book',tx_api.reserve_book,methods=['POST'])
+app.add_url_rule('/api/reserve','reserve_book_alias',tx_api.reserve_book,methods=['POST'])
 app.add_url_rule('/api/transaction/reserve','reserve_book_singular',tx_api.reserve_book,methods=['POST'])
 app.add_url_rule('/api/transactions/borrow','borrow_book',tx_api.borrow_book,methods=['POST'])
 app.add_url_rule('/api/transactions/return','return_book',tx_api.return_book,methods=['POST'])
@@ -610,6 +611,7 @@ app.add_url_rule('/api/transactions/manage','get_manage_transactions',tx_api.get
 app.add_url_rule('/api/user/card','get_user_card',users.get_user_card,methods=['GET'])
 app.add_url_rule('/api/users/profile','get_user_profile',users.get_user_profile,methods=['GET'])
 app.add_url_rule('/api/user/notifications','get_user_notifications',users.get_user_notifications,methods=['GET'])
+app.add_url_rule('/api/user/notifications/read/<int:notif_id>','mark_user_notification_read',users.mark_user_notification_read,methods=['POST'])
 app.add_url_rule('/api/user/notifications/clear','clear_user_notifications',users.clear_user_notifications,methods=['POST'])
 
 with app.app_context():

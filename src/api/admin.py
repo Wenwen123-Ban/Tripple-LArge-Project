@@ -619,17 +619,30 @@ def get_notifications():
     db = get_db()
     cursor = db.cursor(dictionary=True)
     _ensure_deletion_and_notification_tables(cursor)
-    cursor.execute(
-        """
-        SELECT id, recipient_id, COALESCE(NULLIF(notification_type, ''), type, 'general') AS notification_type, type, title, message, data, is_read, is_used, created_at
-        FROM notifications
-        WHERE recipient_id = %s
-        ORDER BY created_at DESC
-        LIMIT 30
-        """,
-        (admin_id,),
-    )
-    rows = cursor.fetchall()
+    cursor.execute("SHOW TABLES LIKE 'admin_notifications'")
+    has_new = bool(cursor.fetchone())
+    if has_new:
+        cursor.execute(
+            """
+            SELECT id, type AS notification_type, title, message, is_read, created_at
+            FROM admin_notifications
+            ORDER BY created_at DESC
+            LIMIT 30
+            """
+        )
+        rows = cursor.fetchall()
+    else:
+        cursor.execute(
+            """
+            SELECT id, recipient_id, COALESCE(NULLIF(notification_type, ''), type, 'general') AS notification_type, type, title, message, data, is_read, is_used, created_at
+            FROM notifications
+            WHERE recipient_id = %s
+            ORDER BY created_at DESC
+            LIMIT 30
+            """,
+            (admin_id,),
+        )
+        rows = cursor.fetchall()
     cursor.close()
     for row in rows:
         row['is_read'] = bool(row.get('is_read'))
@@ -648,14 +661,18 @@ def mark_notification_read(notif_id):
         return jsonify({'error': 'Admin login required'}), 401
     db = get_db()
     cursor = db.cursor()
-    cursor.execute(
-        """
-        UPDATE notifications
-        SET is_read = 1
-        WHERE id = %s AND recipient_id = %s
-        """,
-        (notif_id, admin_id),
-    )
+    cursor.execute("SHOW TABLES LIKE 'admin_notifications'")
+    if cursor.fetchone():
+        cursor.execute("UPDATE admin_notifications SET is_read=1 WHERE id=%s", (notif_id,))
+    else:
+        cursor.execute(
+            """
+            UPDATE notifications
+            SET is_read = 1
+            WHERE id = %s AND recipient_id = %s
+            """,
+            (notif_id, admin_id),
+        )
     db.commit()
     cursor.close()
     return jsonify({'status': 'read'})
@@ -668,21 +685,30 @@ def clear_notifications():
         return jsonify({'error': 'Admin login required'}), 401
     db = get_db()
     cursor = db.cursor()
-    cursor.execute(
-        """
-        UPDATE notifications
-        SET is_read = 1
-        WHERE recipient_id = %s AND (is_read = 1 OR is_used = 1)
-        """,
-        (admin_id,),
-    )
-    cursor.execute(
-        """
-        DELETE FROM notifications
-        WHERE recipient_id = %s AND is_read = 1 AND is_used = 1
-        """,
-        (admin_id,),
-    )
+    cursor.execute("SHOW TABLES LIKE 'admin_notifications'")
+    if cursor.fetchone():
+        cursor.execute(
+            """
+            DELETE FROM admin_notifications
+            WHERE is_read = 1 AND type <> 'borrow_reminder_admin'
+            """
+        )
+    else:
+        cursor.execute(
+            """
+            UPDATE notifications
+            SET is_read = 1
+            WHERE recipient_id = %s AND (is_read = 1 OR is_used = 1)
+            """,
+            (admin_id,),
+        )
+        cursor.execute(
+            """
+            DELETE FROM notifications
+            WHERE recipient_id = %s AND is_read = 1 AND is_used = 1
+            """,
+            (admin_id,),
+        )
     db.commit()
     cursor.close()
     return jsonify({'status': 'cleared'})
